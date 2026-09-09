@@ -1,0 +1,11 @@
+{
+  "background_color": "#552222",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "記帳記事",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "記帳記事",
+  "start_url": "/",
+  "theme_color": "#e5d4d4"
+}
