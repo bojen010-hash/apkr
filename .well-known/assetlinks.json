@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.bojen010_hash.twa",
+        "sha256_cert_fingerprints": ["8A:0C:B4:F3:72:E2:6F:B7:5A:1B:85:AD:C0:2D:82:82:85:E0:08:FC:02:0F:0A:C4:B6:CA:5A:32:92:4C:5D:39"]
+      }
+    }]
