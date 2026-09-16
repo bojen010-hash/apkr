@@ -503,7 +503,6 @@
 
 
 
-
  <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
 <div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
@@ -550,13 +549,17 @@
 
     <!-- 通關密碼輸入與驗證 -->
     <div style="margin-bottom:14px;">
-      <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入通關授權碼：</label>
+      <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入 6 位純數字通關密碼：</label>
       <div style="display:flex; gap:8px;">
-        <input id="cbjm-input-passcode" type="text" placeholder="例如: 8K9P-4X2M" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:15px; text-align:center; text-transform:uppercase; outline:none; box-sizing:border-box;" />
+        <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入 6 位數字 (如: 739201)" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box;" maxlength="10" />
         <button id="cbjm-btn-verify" type="button" style="background:#d97706; color:#ffffff; border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:bold; cursor:pointer; shrink:0; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
-          驗證解鎖
+          送出驗證
         </button>
       </div>
+      <!-- 額外醒目滿版送出按鍵 -->
+      <button id="cbjm-btn-verify-big" type="button" style="width:100%; margin-top:8px; background:linear-gradient(to right, #d97706, #b45309); color:#ffffff; border:none; border-radius:10px; padding:11px 16px; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
+        🚀 送出通關密碼並解鎖進入
+      </button>
       <div id="cbjm-verify-msg" style="display:none; font-size:11px; font-weight:bold; text-align:center; margin-top:8px;"></div>
     </div>
 
@@ -652,54 +655,63 @@
     var clean = (devId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     var h1 = simpleHash(clean + '_' + SALT);
     var h2 = simpleHash(SALT + '_' + clean + '_REVERSE');
-    var CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    var p1 = '', p2 = '';
-    var t1 = h1, t2 = h2;
-    for (var i = 0; i < 4; i++) {
-      p1 += CHARS.charAt(t1 % CHARS.length);
-      t1 = Math.floor(t1 / CHARS.length) + (i * 7);
-    }
-    for (var j = 0; j < 4; j++) {
-      p2 += CHARS.charAt(t2 % CHARS.length);
-      t2 = Math.floor(t2 / CHARS.length) + (j * 13);
-    }
-    return p1 + '-' + p2;
+    // 6 位純阿拉伯數字
+    var num = (h1 * 31 + h2 * 17) % 900000 + 100000;
+    return num.toString();
   }
 
   // 8. 驗證輸入邏輯
   var verifyBtn = document.getElementById('cbjm-btn-verify');
+  var verifyBtnBig = document.getElementById('cbjm-btn-verify-big');
   var inputEl = document.getElementById('cbjm-input-passcode');
   var msgEl = document.getElementById('cbjm-verify-msg');
 
-  if (verifyBtn && inputEl && msgEl) {
-    verifyBtn.onclick = function() {
-      var val = (inputEl.value || '').trim().toUpperCase();
-      var correct = computeValidPasscode(deviceId);
-      
-      // 支援計算密碼與通用萬用密碼
-      if (val === correct || val === '8K9P-4X2M' || val === '739201') {
-        msgEl.style.display = 'block';
-        msgEl.style.color = '#059669';
-        msgEl.textContent = '✓ 認證成功！正在為您開啟軟體...';
-        try {
-          localStorage.setItem(AUTH_STORAGE_KEY, 'true');
-        } catch(e) {}
-        setTimeout(function() {
-          overlay.style.display = 'none';
-        }, 500);
-      } else {
-        msgEl.style.display = 'block';
-        msgEl.style.color = '#e11d48';
-        msgEl.textContent = '✕ 密碼錯誤，請重新確認或聯繫作者！';
+  function doVerify() {
+    if (!inputEl || !msgEl) return;
+    var val = (inputEl.value || '').trim().toUpperCase();
+    if (!val) {
+      msgEl.style.display = 'block';
+      msgEl.style.color = '#d97706';
+      msgEl.textContent = '請先輸入 6 位數字通關密碼！';
+      inputEl.focus();
+      return;
+    }
+    var correct = computeValidPasscode(deviceId);
+    
+    // 支援 6 位純數字密碼、通用萬用密碼 (739201, 888888, 123456) 以及舊版 8K9P-4X2M
+    if (val === correct || val === '739201' || val === '888888' || val === '123456' || val === '8K9P-4X2M') {
+      msgEl.style.display = 'block';
+      msgEl.style.color = '#059669';
+      msgEl.textContent = '✓ 認證成功！正在為您開啟軟體...';
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, 'true');
+      } catch(e) {}
+      setTimeout(function() {
+        overlay.style.display = 'none';
+      }, 500);
+    } else {
+      msgEl.style.display = 'block';
+      msgEl.style.color = '#e11d48';
+      msgEl.textContent = '✕ 密碼錯誤，請重新確認或聯繫作者！';
+    }
+  }
+
+  if (verifyBtn) verifyBtn.onclick = doVerify;
+  if (verifyBtnBig) verifyBtnBig.onclick = doVerify;
+  if (inputEl) {
+    inputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doVerify();
       }
-    };
+    });
   }
 })();
 </script>
-
-
-
-
 <!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
+
+
+
+
 </body>
 </html>
