@@ -1,1400 +1,705 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>APK 首次啟動隨機通關密碼系統設計室與記帳記事 (離線單一檔案版)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>記帳記事 Pro</title>
 
-    <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
 
-    <style>
-      /* Inlined Global Application Styles */
-      .aistudio-hover-highlight { box-shadow: white 0px 0px 0px 0.5px inset, rgba(128, 128, 128, 0.6) 0px 0px 0px 1.5px inset !important; }
-.aistudio-active-highlight { outline: rgb(135, 169, 255) solid 2px !important; outline-offset: -2px !important; box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 0px 0.5px, rgba(0, 0, 0, 0.3) 0px 0px 0px 0.5px inset !important; }
-.aistudio-generating-blur { transition: filter 0.3s; filter: blur(5px) grayscale(100%) brightness(28%) !important; }
-#aistudio-focus-mode-tag { position: absolute; display: none; align-items: center; gap: 4px; background: rgb(135, 169, 255); border-radius: 12px; z-index: 10000; padding: 8px; color: rgb(50, 48, 44); font-family: Inter, sans-serif; font-size: 14px; font-style: normal; font-weight: 500; line-height: 21px; pointer-events: none; }
-#aistudio-hover-mode-tag { position: absolute; display: none; align-items: center; gap: 4px; background: rgba(128, 128, 128, 0.6); border-radius: 12px; z-index: 10000; padding: 8px; color: white; font-family: Inter, sans-serif; font-size: 14px; font-style: normal; font-weight: 500; line-height: 21px; pointer-events: none; }
-.aistudio-img-icon { display: none; vertical-align: middle; pointer-events: auto; cursor: pointer; }
-.aistudio-img-icon.visible { display: inline-flex; }
-#aistudio-focus-mode-tag .aistudio-img-icon { position: relative; width: 26px; height: 26px; background: rgb(50, 48, 44); border-radius: 6px; margin: -4px -4px -4px 0px; }
-#aistudio-focus-mode-tag .aistudio-img-icon::before { content: ""; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; background-color: white; mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); mask-size: contain; mask-repeat: no-repeat; }
-#aistudio-hover-mode-tag .aistudio-img-icon { position: relative; width: 18px; height: 18px; margin-left: 4px; }
-#aistudio-hover-mode-tag .aistudio-img-icon::before { content: ""; position: absolute; top: 0px; left: 0px; width: 18px; height: 18px; background-color: white; mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); mask-size: contain; mask-repeat: no-repeat; }
-#aistudio-focus-mode-tag .aistudio-img-icon:hover, #aistudio-hover-mode-tag .aistudio-img-icon:hover { background: rgb(66, 66, 66) !important; }
-#aistudio-focus-mode-tag .aistudio-img-icon:active, #aistudio-hover-mode-tag .aistudio-img-icon:active { background: rgb(57, 63, 81) !important; }
-@layer properties;
-@layer theme, base, components, utilities;
-@layer theme {
-  :root, :host { --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-      "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-      "Segoe UI Symbol", "Noto Color Emoji"; --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-      "Courier New", monospace; --color-orange-500: oklch(70.5% 0.213 47.604); --color-amber-50: oklch(98.7% 0.022 95.277); --color-amber-100: oklch(96.2% 0.059 95.617); --color-amber-200: oklch(92.4% 0.12 95.746); --color-amber-300: oklch(87.9% 0.169 91.605); --color-amber-400: oklch(82.8% 0.189 84.429); --color-amber-500: oklch(76.9% 0.188 70.08); --color-amber-600: oklch(66.6% 0.179 58.318); --color-amber-700: oklch(55.5% 0.163 48.998); --color-amber-800: oklch(47.3% 0.137 46.201); --color-amber-900: oklch(41.4% 0.112 45.904); --color-amber-950: oklch(27.9% 0.077 45.635); --color-emerald-50: oklch(97.9% 0.021 166.113); --color-emerald-100: oklch(95% 0.052 163.051); --color-emerald-200: oklch(90.5% 0.093 164.15); --color-emerald-300: oklch(84.5% 0.143 164.978); --color-emerald-400: oklch(76.5% 0.177 163.223); --color-emerald-500: oklch(69.6% 0.17 162.48); --color-emerald-600: oklch(59.6% 0.145 163.225); --color-emerald-700: oklch(50.8% 0.118 165.612); --color-emerald-800: oklch(43.2% 0.095 166.913); --color-emerald-900: oklch(37.8% 0.077 168.94); --color-emerald-950: oklch(26.2% 0.051 172.552); --color-teal-50: oklch(98.4% 0.014 180.72); --color-teal-100: oklch(95.3% 0.051 180.801); --color-teal-200: oklch(91% 0.096 180.426); --color-teal-300: oklch(85.5% 0.138 181.071); --color-teal-400: oklch(77.7% 0.152 181.912); --color-teal-500: oklch(70.4% 0.14 182.503); --color-teal-600: oklch(60% 0.118 184.704); --color-teal-700: oklch(51.1% 0.096 186.391); --color-teal-800: oklch(43.7% 0.078 188.216); --color-teal-950: oklch(27.7% 0.046 192.524); --color-cyan-200: oklch(91.7% 0.08 205.041); --color-cyan-300: oklch(86.5% 0.127 207.078); --color-cyan-400: oklch(78.9% 0.154 211.53); --color-cyan-500: oklch(71.5% 0.143 215.221); --color-cyan-600: oklch(60.9% 0.126 221.723); --color-cyan-900: oklch(39.8% 0.07 227.392); --color-cyan-950: oklch(30.2% 0.056 229.695); --color-blue-50: oklch(97% 0.014 254.604); --color-blue-200: oklch(88.2% 0.059 254.128); --color-blue-300: oklch(80.9% 0.105 251.813); --color-blue-400: oklch(70.7% 0.165 254.624); --color-blue-500: oklch(62.3% 0.214 259.815); --color-blue-600: oklch(54.6% 0.245 262.881); --color-blue-700: oklch(48.8% 0.243 264.376); --color-indigo-50: oklch(96.2% 0.018 272.314); --color-indigo-100: oklch(93% 0.034 272.788); --color-indigo-200: oklch(87% 0.065 274.039); --color-indigo-300: oklch(78.5% 0.115 274.713); --color-indigo-400: oklch(67.3% 0.182 276.935); --color-indigo-500: oklch(58.5% 0.233 277.117); --color-indigo-600: oklch(51.1% 0.262 276.966); --color-indigo-700: oklch(45.7% 0.24 277.023); --color-indigo-800: oklch(39.8% 0.195 277.366); --color-indigo-900: oklch(35.9% 0.144 278.697); --color-indigo-950: oklch(25.7% 0.09 281.288); --color-violet-500: oklch(60.6% 0.25 292.717); --color-rose-50: oklch(96.9% 0.015 12.422); --color-rose-100: oklch(94.1% 0.03 12.58); --color-rose-200: oklch(89.2% 0.058 10.001); --color-rose-300: oklch(81% 0.117 11.638); --color-rose-400: oklch(71.2% 0.194 13.428); --color-rose-500: oklch(64.5% 0.246 16.439); --color-rose-600: oklch(58.6% 0.253 17.585); --color-rose-700: oklch(51.4% 0.222 16.935); --color-rose-800: oklch(45.5% 0.188 13.697); --color-rose-900: oklch(41% 0.159 10.272); --color-rose-950: oklch(27.1% 0.105 12.094); --color-slate-50: oklch(98.4% 0.003 247.858); --color-slate-100: oklch(96.8% 0.007 247.896); --color-slate-200: oklch(92.9% 0.013 255.508); --color-slate-300: oklch(86.9% 0.022 252.894); --color-slate-400: oklch(70.4% 0.04 256.788); --color-slate-500: oklch(55.4% 0.046 257.417); --color-slate-600: oklch(44.6% 0.043 257.281); --color-slate-700: oklch(37.2% 0.044 257.287); --color-slate-800: oklch(27.9% 0.041 260.031); --color-slate-900: oklch(20.8% 0.042 265.755); --color-slate-950: oklch(12.9% 0.042 264.695); --color-stone-50: oklch(98.5% 0.001 106.423); --color-stone-100: oklch(97% 0.001 106.424); --color-stone-200: oklch(92.3% 0.003 48.717); --color-stone-300: oklch(86.9% 0.005 56.366); --color-stone-400: oklch(70.9% 0.01 56.259); --color-stone-500: oklch(55.3% 0.013 58.071); --color-stone-600: oklch(44.4% 0.011 73.639); --color-stone-700: oklch(37.4% 0.01 67.558); --color-stone-800: oklch(26.8% 0.007 34.298); --color-stone-900: oklch(21.6% 0.006 56.043); --color-black: #000; --color-white: #fff; --spacing: 0.25rem; --container-md: 28rem; --container-4xl: 56rem; --container-7xl: 80rem; --text-xs: 0.75rem; --text-xs--line-height: calc(1 / 0.75); --text-sm: 0.875rem; --text-sm--line-height: calc(1.25 / 0.875); --text-base: 1rem; --text-base--line-height: calc(1.5 / 1); --text-lg: 1.125rem; --text-lg--line-height: calc(1.75 / 1.125); --text-xl: 1.25rem; --text-xl--line-height: calc(1.75 / 1.25); --text-2xl: 1.5rem; --text-2xl--line-height: calc(2 / 1.5); --text-3xl: 1.875rem; --text-3xl--line-height: calc(2.25 / 1.875); --text-4xl: 2.25rem; --text-4xl--line-height: calc(2.5 / 2.25); --font-weight-light: 300; --font-weight-normal: 400; --font-weight-medium: 500; --font-weight-semibold: 600; --font-weight-bold: 700; --font-weight-extrabold: 800; --font-weight-black: 900; --tracking-tight: -0.025em; --tracking-normal: 0em; --tracking-wide: 0.025em; --tracking-wider: 0.05em; --tracking-widest: 0.1em; --leading-tight: 1.25; --leading-snug: 1.375; --leading-relaxed: 1.625; --radius-xs: 0.125rem; --radius-md: 0.375rem; --radius-lg: 0.5rem; --radius-xl: 0.75rem; --radius-2xl: 1rem; --animate-spin: spin 1s linear infinite; --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; --animate-bounce: bounce 1s infinite; --blur-xs: 4px; --blur-sm: 8px; --blur-md: 12px; --blur-xl: 24px; --blur-2xl: 40px; --blur-3xl: 64px; --default-transition-duration: 150ms; --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); --default-font-family: var(--font-sans); --default-mono-font-family: var(--font-mono); }
-}
-@layer base {
-  *, ::after, ::before, ::backdrop, ::file-selector-button { box-sizing: border-box; margin: 0px; padding: 0px; border: 0px solid; }
-  html, :host { line-height: 1.5; text-size-adjust: 100%; tab-size: 4; font-family: var(--default-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"); font-feature-settings: var(--default-font-feature-settings, normal); font-variation-settings: var(--default-font-variation-settings, normal); -webkit-tap-highlight-color: transparent; }
-  hr { height: 0px; color: inherit; border-top-width: 1px; }
-  abbr:where([title]) { text-decoration: underline dotted; }
-  h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
-  a { color: inherit; text-decoration: inherit; }
-  b, strong { font-weight: bolder; }
-  code, kbd, samp, pre { font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace); font-feature-settings: var(--default-mono-font-feature-settings, normal); font-variation-settings: var(--default-mono-font-variation-settings, normal); font-size: 1em; }
-  small { font-size: 80%; }
-  sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
-  sub { bottom: -0.25em; }
-  sup { top: -0.5em; }
-  table { text-indent: 0px; border-color: inherit; border-collapse: collapse; }
-  progress { vertical-align: baseline; }
-  summary { display: list-item; }
-  ol, ul, menu { list-style: none; }
-  img, svg, video, canvas, audio, iframe, embed, object { display: block; vertical-align: middle; }
-  img, video { max-width: 100%; height: auto; }
-  button, input, select, optgroup, textarea, ::file-selector-button { font: inherit; letter-spacing: inherit; color: inherit; border-radius: 0px; background-color: transparent; opacity: 1; }
-  :where(select:is([multiple], [size])) optgroup { font-weight: bolder; }
-  :where(select:is([multiple], [size])) optgroup option { padding-inline-start: 20px; }
-  ::file-selector-button { margin-inline-end: 4px; }
-  ::placeholder { opacity: 1; }
-  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
-  ::placeholder {
-  color: currentcolor;
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(currentcolor, transparent);
-}
-}
-}
-  textarea { resize: vertical; }
-  ::-webkit-search-decoration { appearance: none; }
-  ::-webkit-date-and-time-value { min-height: 1lh; text-align: inherit; }
-  ::-webkit-datetime-edit { display: inline-flex; }
-  ::-webkit-datetime-edit-fields-wrapper { padding: 0px; }
-  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field { padding-block: 0px; }
-  ::-webkit-calendar-picker-indicator { line-height: 1; }
-  button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-selector-button { appearance: button; }
-  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button { height: auto; }
-  [hidden]:where(:not([hidden="until-found"])) { display: none !important; }
-}
-@layer utilities {
-  .pointer-events-none { pointer-events: none; }
-  .absolute { position: absolute; }
-  .fixed { position: fixed; }
-  .relative { position: relative; }
-  .sticky { position: sticky; }
-  .inset-0 { inset: 0px; }
-  .-top-1 { top: calc(var(--spacing) * -1); }
-  .-top-1\.5 { top: calc(var(--spacing) * -1.5); }
-  .top-0 { top: 0px; }
-  .top-1\/2 { top: calc(50%); }
-  .top-2 { top: calc(var(--spacing) * 2); }
-  .top-2\.5 { top: calc(var(--spacing) * 2.5); }
-  .top-3 { top: calc(var(--spacing) * 3); }
-  .-right-2\.5 { right: calc(var(--spacing) * -2.5); }
-  .right-0 { right: 0px; }
-  .right-2 { right: calc(var(--spacing) * 2); }
-  .right-3 { right: calc(var(--spacing) * 3); }
-  .bottom-0 { bottom: 0px; }
-  .left-0 { left: 0px; }
-  .left-1\/2 { left: calc(50%); }
-  .left-2\.5 { left: calc(var(--spacing) * 2.5); }
-  .z-10 { z-index: 10; }
-  .z-30 { z-index: 30; }
-  .z-50 { z-index: 50; }
-  .container {
-  width: 100%;
-  @media (width >= 40rem) {
-  max-width: 40rem;
-}
-  @media (width >= 48rem) {
-  max-width: 48rem;
-}
-  @media (width >= 64rem) {
-  max-width: 64rem;
-}
-  @media (width >= 80rem) {
-  max-width: 80rem;
-}
-  @media (width >= 96rem) {
-  max-width: 96rem;
-}
-}
-  .mx-auto { margin-inline: auto; }
-  .-mt-10 { margin-top: calc(var(--spacing) * -10); }
-  .-mt-16 { margin-top: calc(var(--spacing) * -16); }
-  .mt-0\.5 { margin-top: calc(var(--spacing) * 0.5); }
-  .mt-1 { margin-top: var(--spacing); }
-  .mt-1\.5 { margin-top: calc(var(--spacing) * 1.5); }
-  .mt-2 { margin-top: calc(var(--spacing) * 2); }
-  .mt-2\.5 { margin-top: calc(var(--spacing) * 2.5); }
-  .mt-3\.5 { margin-top: calc(var(--spacing) * 3.5); }
-  .mt-4 { margin-top: calc(var(--spacing) * 4); }
-  .mt-6 { margin-top: calc(var(--spacing) * 6); }
-  .mt-8 { margin-top: calc(var(--spacing) * 8); }
-  .-mr-10 { margin-right: calc(var(--spacing) * -10); }
-  .-mr-16 { margin-right: calc(var(--spacing) * -16); }
-  .-mb-8 { margin-bottom: calc(var(--spacing) * -8); }
-  .-mb-12 { margin-bottom: calc(var(--spacing) * -12); }
-  .mb-0\.5 { margin-bottom: calc(var(--spacing) * 0.5); }
-  .mb-1 { margin-bottom: var(--spacing); }
-  .mb-1\.5 { margin-bottom: calc(var(--spacing) * 1.5); }
-  .mb-2 { margin-bottom: calc(var(--spacing) * 2); }
-  .mb-3 { margin-bottom: calc(var(--spacing) * 3); }
-  .mb-4 { margin-bottom: calc(var(--spacing) * 4); }
-  .mb-5 { margin-bottom: calc(var(--spacing) * 5); }
-  .-ml-8 { margin-left: calc(var(--spacing) * -8); }
-  .-ml-12 { margin-left: calc(var(--spacing) * -12); }
-  .ml-0\.5 { margin-left: calc(var(--spacing) * 0.5); }
-  .ml-1 { margin-left: var(--spacing); }
-  .ml-2 { margin-left: calc(var(--spacing) * 2); }
-  .block { display: block; }
-  .flex { display: flex; }
-  .grid { display: grid; }
-  .hidden { display: none; }
-  .inline { display: inline; }
-  .inline-block { display: inline-block; }
-  .inline-flex { display: inline-flex; }
-  .table { display: table; }
-  .h-0 { height: 0px; }
-  .h-1\.5 { height: calc(var(--spacing) * 1.5); }
-  .h-2 { height: calc(var(--spacing) * 2); }
-  .h-2\.5 { height: calc(var(--spacing) * 2.5); }
-  .h-3 { height: calc(var(--spacing) * 3); }
-  .h-3\.5 { height: calc(var(--spacing) * 3.5); }
-  .h-4 { height: calc(var(--spacing) * 4); }
-  .h-5 { height: calc(var(--spacing) * 5); }
-  .h-6 { height: calc(var(--spacing) * 6); }
-  .h-7 { height: calc(var(--spacing) * 7); }
-  .h-8 { height: calc(var(--spacing) * 8); }
-  .h-9 { height: calc(var(--spacing) * 9); }
-  .h-10 { height: calc(var(--spacing) * 10); }
-  .h-11 { height: calc(var(--spacing) * 11); }
-  .h-12 { height: calc(var(--spacing) * 12); }
-  .h-16 { height: calc(var(--spacing) * 16); }
-  .h-28 { height: calc(var(--spacing) * 28); }
-  .h-32 { height: calc(var(--spacing) * 32); }
-  .h-36 { height: calc(var(--spacing) * 36); }
-  .h-48 { height: calc(var(--spacing) * 48); }
-  .h-\[720px\] { height: 720px; }
-  .h-\[860px\] { height: 860px; }
-  .h-\[960px\] { height: 960px; }
-  .h-full { height: 100%; }
-  .max-h-40 { max-height: calc(var(--spacing) * 40); }
-  .max-h-\[92\%\] { max-height: 92%; }
-  .max-h-\[380px\] { max-height: 380px; }
-  .max-h-\[460px\] { max-height: 460px; }
-  .min-h-screen { min-height: 100vh; }
-  .w-0 { width: 0px; }
-  .w-1\.5 { width: calc(var(--spacing) * 1.5); }
-  .w-1\/2 { width: calc(50%); }
-  .w-2 { width: calc(var(--spacing) * 2); }
-  .w-2\.5 { width: calc(var(--spacing) * 2.5); }
-  .w-3 { width: calc(var(--spacing) * 3); }
-  .w-3\.5 { width: calc(var(--spacing) * 3.5); }
-  .w-4 { width: calc(var(--spacing) * 4); }
-  .w-5 { width: calc(var(--spacing) * 5); }
-  .w-6 { width: calc(var(--spacing) * 6); }
-  .w-7 { width: calc(var(--spacing) * 7); }
-  .w-8 { width: calc(var(--spacing) * 8); }
-  .w-9 { width: calc(var(--spacing) * 9); }
-  .w-10 { width: calc(var(--spacing) * 10); }
-  .w-11 { width: calc(var(--spacing) * 11); }
-  .w-12 { width: calc(var(--spacing) * 12); }
-  .w-14 { width: calc(var(--spacing) * 14); }
-  .w-16 { width: calc(var(--spacing) * 16); }
-  .w-28 { width: calc(var(--spacing) * 28); }
-  .w-32 { width: calc(var(--spacing) * 32); }
-  .w-36 { width: calc(var(--spacing) * 36); }
-  .w-48 { width: calc(var(--spacing) * 48); }
-  .w-full { width: 100%; }
-  .max-w-4xl { max-width: var(--container-4xl); }
-  .max-w-7xl { max-width: var(--container-7xl); }
-  .max-w-\[280px\] { max-width: 280px; }
-  .max-w-\[340px\] { max-width: 340px; }
-  .max-w-\[420px\] { max-width: 420px; }
-  .max-w-full { max-width: 100%; }
-  .max-w-md { max-width: var(--container-md); }
-  .min-w-0 { min-width: 0px; }
-  .flex-1 { flex: 1 1 0%; }
-  .shrink-0 { flex-shrink: 0; }
-  .-translate-x-1\/2 { --tw-translate-x: calc(calc(1 / 2 * 100%) * -1); translate: var(--tw-translate-x) var(--tw-translate-y); }
-  .-translate-y-1\/2 { --tw-translate-y: calc(calc(1 / 2 * 100%) * -1); translate: var(--tw-translate-x) var(--tw-translate-y); }
-  .scale-105 { --tw-scale-x: 105%; --tw-scale-y: 105%; --tw-scale-z: 105%; scale: var(--tw-scale-x) var(--tw-scale-y); }
-  .-rotate-90 { rotate: calc(-90deg); }
-  .transform { transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,); }
-  .animate-bounce { animation: var(--animate-bounce); }
-  .animate-ping { animation: var(--animate-ping); }
-  .animate-pulse { animation: var(--animate-pulse); }
-  .animate-spin { animation: var(--animate-spin); }
-  .cursor-not-allowed { cursor: not-allowed; }
-  .cursor-pointer { cursor: pointer; }
-  .touch-pan-y { --tw-pan-y: pan-y; touch-action: var(--tw-pan-x,) var(--tw-pan-y,) var(--tw-pinch-zoom,); }
-  .scrollbar-none { scrollbar-width: none; }
-  .list-inside { list-style-position: inside; }
-  .list-disc { list-style-type: disc; }
-  .grid-cols-1 { grid-template-columns: repeat(1, minmax(0px, 1fr)); }
-  .grid-cols-2 { grid-template-columns: repeat(2, minmax(0px, 1fr)); }
-  .grid-cols-3 { grid-template-columns: repeat(3, minmax(0px, 1fr)); }
-  .grid-cols-4 { grid-template-columns: repeat(4, minmax(0px, 1fr)); }
-  .flex-col { flex-direction: column; }
-  .flex-wrap { flex-wrap: wrap; }
-  .items-center { align-items: center; }
-  .items-start { align-items: flex-start; }
-  .justify-around { justify-content: space-around; }
-  .justify-between { justify-content: space-between; }
-  .justify-center { justify-content: center; }
-  .justify-end { justify-content: flex-end; }
-  .justify-start { justify-content: flex-start; }
-  .gap-0\.5 { gap: calc(var(--spacing) * 0.5); }
-  .gap-1 { gap: var(--spacing); }
-  .gap-1\.5 { gap: calc(var(--spacing) * 1.5); }
-  .gap-2 { gap: calc(var(--spacing) * 2); }
-  .gap-2\.5 { gap: calc(var(--spacing) * 2.5); }
-  .gap-3 { gap: calc(var(--spacing) * 3); }
-  .gap-4 { gap: calc(var(--spacing) * 4); }
-  .gap-6 { gap: calc(var(--spacing) * 6); }
-  :where(.space-y-0\.5 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 0.5) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 0.5) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-1 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(var(--spacing) * var(--tw-space-y-reverse)); margin-block-end: calc(var(--spacing) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-1\.5 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 1.5) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-2 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-2\.5 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 2.5) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 2.5) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-3 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-3\.5 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 3.5) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 3.5) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-4 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-5 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-y-6 > :not(:last-child)) { --tw-space-y-reverse: 0; margin-block-start: calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse)); margin-block-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse))); }
-  :where(.space-x-1 > :not(:last-child)) { --tw-space-x-reverse: 0; margin-inline-start: calc(var(--spacing) * var(--tw-space-x-reverse)); margin-inline-end: calc(var(--spacing) * calc(1 - var(--tw-space-x-reverse))); }
-  :where(.space-x-1\.5 > :not(:last-child)) { --tw-space-x-reverse: 0; margin-inline-start: calc(calc(var(--spacing) * 1.5) * var(--tw-space-x-reverse)); margin-inline-end: calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-x-reverse))); }
-  :where(.space-x-2 > :not(:last-child)) { --tw-space-x-reverse: 0; margin-inline-start: calc(calc(var(--spacing) * 2) * var(--tw-space-x-reverse)); margin-inline-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-x-reverse))); }
-  :where(.space-x-2\.5 > :not(:last-child)) { --tw-space-x-reverse: 0; margin-inline-start: calc(calc(var(--spacing) * 2.5) * var(--tw-space-x-reverse)); margin-inline-end: calc(calc(var(--spacing) * 2.5) * calc(1 - var(--tw-space-x-reverse))); }
-  :where(.space-x-3 > :not(:last-child)) { --tw-space-x-reverse: 0; margin-inline-start: calc(calc(var(--spacing) * 3) * var(--tw-space-x-reverse)); margin-inline-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-x-reverse))); }
-  :where(.space-x-4 > :not(:last-child)) { --tw-space-x-reverse: 0; margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse)); margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse))); }
-  :where(.divide-y > :not(:last-child)) { --tw-divide-y-reverse: 0; border-bottom-style: var(--tw-border-style); border-top-style: var(--tw-border-style); border-top-width: calc(1px * var(--tw-divide-y-reverse)); border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse))); }
-  :where(.divide-slate-100 > :not(:last-child)) { border-color: var(--color-slate-100); }
-  .self-start { align-self: flex-start; }
-  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .overflow-hidden { overflow: hidden; }
-  .overflow-x-auto { overflow-x: auto; }
-  .overflow-y-auto { overflow-y: auto; }
-  .overscroll-contain { overscroll-behavior: contain; }
-  .rounded { border-radius: 0.25rem; }
-  .rounded-2xl { border-radius: var(--radius-2xl); }
-  .rounded-\[24px\] { border-radius: 24px; }
-  .rounded-\[28px\] { border-radius: 28px; }
-  .rounded-\[30px\] { border-radius: 30px; }
-  .rounded-\[38px\] { border-radius: 38px; }
-  .rounded-full { border-radius: calc(infinity * 1px); }
-  .rounded-lg { border-radius: var(--radius-lg); }
-  .rounded-md { border-radius: var(--radius-md); }
-  .rounded-xl { border-radius: var(--radius-xl); }
-  .rounded-xs { border-radius: var(--radius-xs); }
-  .border { border-style: var(--tw-border-style); border-width: 1px; }
-  .border-2 { border-style: var(--tw-border-style); border-width: 2px; }
-  .border-t { border-top-style: var(--tw-border-style); border-top-width: 1px; }
-  .border-t-4 { border-top-style: var(--tw-border-style); border-top-width: 4px; }
-  .border-r-6 { border-right-style: var(--tw-border-style); border-right-width: 6px; }
-  .border-b { border-bottom-style: var(--tw-border-style); border-bottom-width: 1px; }
-  .border-b-4 { border-bottom-style: var(--tw-border-style); border-bottom-width: 4px; }
-  .border-l-2 { border-left-style: var(--tw-border-style); border-left-width: 2px; }
-  .border-dashed { --tw-border-style: dashed; border-style: dashed; }
-  .border-amber-100 { border-color: var(--color-amber-100); }
-  .border-amber-200 { border-color: var(--color-amber-200); }
-  .border-amber-200\/80 {
-  border-color: color-mix(in srgb, oklch(0.924 0.12 95.746) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-amber-200) 80%, transparent);
-}
-}
-  .border-amber-300 { border-color: var(--color-amber-300); }
-  .border-amber-300\/60 {
-  border-color: color-mix(in srgb, oklch(0.879 0.169 91.605) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-amber-300) 60%, transparent);
-}
-}
-  .border-amber-300\/80 {
-  border-color: color-mix(in srgb, oklch(0.879 0.169 91.605) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-amber-300) 80%, transparent);
-}
-}
-  .border-blue-200 { border-color: var(--color-blue-200); }
-  .border-blue-400\/30 {
-  border-color: color-mix(in srgb, oklch(0.707 0.165 254.624) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-blue-400) 30%, transparent);
-}
-}
-  .border-cyan-400\/30 {
-  border-color: color-mix(in srgb, oklch(0.789 0.154 211.53) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-cyan-400) 30%, transparent);
-}
-}
-  .border-cyan-400\/40 {
-  border-color: color-mix(in srgb, oklch(0.789 0.154 211.53) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-cyan-400) 40%, transparent);
-}
-}
-  .border-cyan-500\/30 {
-  border-color: color-mix(in srgb, oklch(0.715 0.143 215.221) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-cyan-500) 30%, transparent);
-}
-}
-  .border-cyan-500\/40 {
-  border-color: color-mix(in srgb, oklch(0.715 0.143 215.221) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-cyan-500) 40%, transparent);
-}
-}
-  .border-emerald-100 { border-color: var(--color-emerald-100); }
-  .border-emerald-200 { border-color: var(--color-emerald-200); }
-  .border-emerald-300 { border-color: var(--color-emerald-300); }
-  .border-emerald-300\/80 {
-  border-color: color-mix(in srgb, oklch(0.845 0.143 164.978) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-300) 80%, transparent);
-}
-}
-  .border-emerald-400\/30 {
-  border-color: color-mix(in srgb, oklch(0.765 0.177 163.223) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-400) 30%, transparent);
-}
-}
-  .border-emerald-400\/40 {
-  border-color: color-mix(in srgb, oklch(0.765 0.177 163.223) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-400) 40%, transparent);
-}
-}
-  .border-emerald-500\/30 {
-  border-color: color-mix(in srgb, oklch(0.696 0.17 162.48) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-500) 30%, transparent);
-}
-}
-  .border-emerald-500\/35 {
-  border-color: color-mix(in srgb, oklch(0.696 0.17 162.48) 35%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-500) 35%, transparent);
-}
-}
-  .border-emerald-500\/40 {
-  border-color: color-mix(in srgb, oklch(0.696 0.17 162.48) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-500) 40%, transparent);
-}
-}
-  .border-emerald-800\/40 {
-  border-color: color-mix(in srgb, oklch(0.432 0.095 166.913) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-emerald-800) 40%, transparent);
-}
-}
-  .border-indigo-200 { border-color: var(--color-indigo-200); }
-  .border-indigo-300 { border-color: var(--color-indigo-300); }
-  .border-indigo-400\/30 {
-  border-color: color-mix(in srgb, oklch(0.673 0.182 276.935) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-indigo-400) 30%, transparent);
-}
-}
-  .border-indigo-800\/40 {
-  border-color: color-mix(in srgb, oklch(0.398 0.195 277.366) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-indigo-800) 40%, transparent);
-}
-}
-  .border-indigo-800\/50 {
-  border-color: color-mix(in srgb, oklch(0.398 0.195 277.366), transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-indigo-800) 50%, transparent);
-}
-}
-  .border-rose-200 { border-color: var(--color-rose-200); }
-  .border-rose-300 { border-color: var(--color-rose-300); }
-  .border-rose-600 { border-color: var(--color-rose-600); }
-  .border-slate-100 { border-color: var(--color-slate-100); }
-  .border-slate-200 { border-color: var(--color-slate-200); }
-  .border-slate-200\/80 {
-  border-color: color-mix(in srgb, oklch(0.929 0.013 255.508) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-slate-200) 80%, transparent);
-}
-}
-  .border-slate-200\/90 {
-  border-color: color-mix(in srgb, oklch(0.929 0.013 255.508) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-slate-200) 90%, transparent);
-}
-}
-  .border-slate-300 { border-color: var(--color-slate-300); }
-  .border-slate-400 { border-color: var(--color-slate-400); }
-  .border-slate-700 { border-color: var(--color-slate-700); }
-  .border-slate-700\/60 {
-  border-color: color-mix(in srgb, oklch(0.372 0.044 257.287) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-slate-700) 60%, transparent);
-}
-}
-  .border-slate-700\/70 {
-  border-color: color-mix(in srgb, oklch(0.372 0.044 257.287) 70%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-slate-700) 70%, transparent);
-}
-}
-  .border-slate-800 { border-color: var(--color-slate-800); }
-  .border-slate-800\/80 {
-  border-color: color-mix(in srgb, oklch(0.279 0.041 260.031) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-slate-800) 80%, transparent);
-}
-}
-  .border-stone-200 { border-color: var(--color-stone-200); }
-  .border-stone-200\/90 {
-  border-color: color-mix(in srgb, oklch(0.923 0.003 48.717) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-stone-200) 90%, transparent);
-}
-}
-  .border-stone-300 { border-color: var(--color-stone-300); }
-  .border-stone-300\/80 {
-  border-color: color-mix(in srgb, oklch(0.869 0.005 56.366) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-stone-300) 80%, transparent);
-}
-}
-  .border-teal-200 { border-color: var(--color-teal-200); }
-  .border-white\/10 {
-  border-color: color-mix(in srgb, rgb(255, 255, 255) 10%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
-}
-}
-  .border-t-transparent { border-top-color: transparent; }
-  .border-r-slate-400 { border-right-color: var(--color-slate-400); }
-  .border-b-transparent { border-bottom-color: transparent; }
-  .bg-\[\#0b1329\] { background-color: rgb(11, 19, 41); }
-  .bg-\[\#0e3b3a\] { background-color: rgb(14, 59, 58); }
-  .bg-\[\#0f172a\] { background-color: rgb(15, 23, 42); }
-  .bg-\[\#00b074\] { background-color: rgb(0, 176, 116); }
-  .bg-\[\#1b253b\] { background-color: rgb(27, 37, 59); }
-  .bg-\[\#3f192b\] { background-color: rgb(63, 25, 43); }
-  .bg-amber-50 { background-color: var(--color-amber-50); }
-  .bg-amber-50\/50 {
-  background-color: color-mix(in srgb, oklch(0.987 0.022 95.277), transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-50) 50%, transparent);
-}
-}
-  .bg-amber-50\/70 {
-  background-color: color-mix(in srgb, oklch(0.987 0.022 95.277) 70%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-50) 70%, transparent);
-}
-}
-  .bg-amber-50\/80 {
-  background-color: color-mix(in srgb, oklch(0.987 0.022 95.277) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-50) 80%, transparent);
-}
-}
-  .bg-amber-100 { background-color: var(--color-amber-100); }
-  .bg-amber-400\/20 {
-  background-color: color-mix(in srgb, oklch(0.828 0.189 84.429) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-400) 20%, transparent);
-}
-}
-  .bg-amber-500 { background-color: var(--color-amber-500); }
-  .bg-amber-500\/10 {
-  background-color: color-mix(in srgb, oklch(0.769 0.188 70.08) 10%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-500) 10%, transparent);
-}
-}
-  .bg-amber-500\/80 {
-  background-color: color-mix(in srgb, oklch(0.769 0.188 70.08) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-500) 80%, transparent);
-}
-}
-  .bg-amber-600 { background-color: var(--color-amber-600); }
-  .bg-amber-700 { background-color: var(--color-amber-700); }
-  .bg-amber-950\/20 {
-  background-color: color-mix(in srgb, oklch(0.279 0.077 45.635) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-amber-950) 20%, transparent);
-}
-}
-  .bg-black\/20 {
-  background-color: color-mix(in srgb, rgb(0, 0, 0) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-black) 20%, transparent);
-}
-}
-  .bg-black\/70 {
-  background-color: color-mix(in srgb, rgb(0, 0, 0) 70%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-black) 70%, transparent);
-}
-}
-  .bg-blue-50 { background-color: var(--color-blue-50); }
-  .bg-blue-500\/10 {
-  background-color: color-mix(in srgb, oklch(0.623 0.214 259.815) 10%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-blue-500) 10%, transparent);
-}
-}
-  .bg-cyan-400 { background-color: var(--color-cyan-400); }
-  .bg-cyan-500\/10 {
-  background-color: color-mix(in srgb, oklch(0.715 0.143 215.221) 10%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-cyan-500) 10%, transparent);
-}
-}
-  .bg-cyan-500\/20 {
-  background-color: color-mix(in srgb, oklch(0.715 0.143 215.221) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-cyan-500) 20%, transparent);
-}
-}
-  .bg-cyan-600 { background-color: var(--color-cyan-600); }
-  .bg-cyan-950 { background-color: var(--color-cyan-950); }
-  .bg-cyan-950\/40 {
-  background-color: color-mix(in srgb, oklch(0.302 0.056 229.695) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-cyan-950) 40%, transparent);
-}
-}
-  .bg-cyan-950\/60 {
-  background-color: color-mix(in srgb, oklch(0.302 0.056 229.695) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-cyan-950) 60%, transparent);
-}
-}
-  .bg-cyan-950\/80 {
-  background-color: color-mix(in srgb, oklch(0.302 0.056 229.695) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-cyan-950) 80%, transparent);
-}
-}
-  .bg-emerald-50 { background-color: var(--color-emerald-50); }
-  .bg-emerald-50\/50 {
-  background-color: color-mix(in srgb, oklch(0.979 0.021 166.113), transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-emerald-50) 50%, transparent);
-}
-}
-  .bg-emerald-50\/70 {
-  background-color: color-mix(in srgb, oklch(0.979 0.021 166.113) 70%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-emerald-50) 70%, transparent);
-}
-}
-  .bg-emerald-100 { background-color: var(--color-emerald-100); }
-  .bg-emerald-400 { background-color: var(--color-emerald-400); }
-  .bg-emerald-500\/10 {
-  background-color: color-mix(in srgb, oklch(0.696 0.17 162.48) 10%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-emerald-500) 10%, transparent);
-}
-}
-  .bg-emerald-500\/20 {
-  background-color: color-mix(in srgb, oklch(0.696 0.17 162.48) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-emerald-500) 20%, transparent);
-}
-}
-  .bg-emerald-500\/80 {
-  background-color: color-mix(in srgb, oklch(0.696 0.17 162.48) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-emerald-500) 80%, transparent);
-}
-}
-  .bg-emerald-600 { background-color: var(--color-emerald-600); }
-  .bg-emerald-950\/40 {
-  background-color: color-mix(in srgb, oklch(0.262 0.051 172.552) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-emerald-950) 40%, transparent);
-}
-}
-  .bg-indigo-50 { background-color: var(--color-indigo-50); }
-  .bg-indigo-50\/80 {
-  background-color: color-mix(in srgb, oklch(0.962 0.018 272.314) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-indigo-50) 80%, transparent);
-}
-}
-  .bg-indigo-500\/20 {
-  background-color: color-mix(in srgb, oklch(0.585 0.233 277.117) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-indigo-500) 20%, transparent);
-}
-}
-  .bg-indigo-600 { background-color: var(--color-indigo-600); }
-  .bg-orange-500\/10 {
-  background-color: color-mix(in srgb, oklch(0.705 0.213 47.604) 10%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-orange-500) 10%, transparent);
-}
-}
-  .bg-rose-50 { background-color: var(--color-rose-50); }
-  .bg-rose-50\/20 {
-  background-color: color-mix(in srgb, oklch(0.969 0.015 12.422) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-rose-50) 20%, transparent);
-}
-}
-  .bg-rose-100 { background-color: var(--color-rose-100); }
-  .bg-rose-200 { background-color: var(--color-rose-200); }
-  .bg-rose-500 { background-color: var(--color-rose-500); }
-  .bg-rose-500\/80 {
-  background-color: color-mix(in srgb, oklch(0.645 0.246 16.439) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-rose-500) 80%, transparent);
-}
-}
-  .bg-rose-950\/60 {
-  background-color: color-mix(in srgb, oklch(0.271 0.105 12.094) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-rose-950) 60%, transparent);
-}
-}
-  .bg-slate-50 { background-color: var(--color-slate-50); }
-  .bg-slate-50\/50 {
-  background-color: color-mix(in srgb, oklch(0.984 0.003 247.858), transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-50) 50%, transparent);
-}
-}
-  .bg-slate-50\/90 {
-  background-color: color-mix(in srgb, oklch(0.984 0.003 247.858) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-50) 90%, transparent);
-}
-}
-  .bg-slate-100 { background-color: var(--color-slate-100); }
-  .bg-slate-100\/90 {
-  background-color: color-mix(in srgb, oklch(0.968 0.007 247.896) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-100) 90%, transparent);
-}
-}
-  .bg-slate-200 { background-color: var(--color-slate-200); }
-  .bg-slate-700 { background-color: var(--color-slate-700); }
-  .bg-slate-800 { background-color: var(--color-slate-800); }
-  .bg-slate-800\/80 {
-  background-color: color-mix(in srgb, oklch(0.279 0.041 260.031) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-800) 80%, transparent);
-}
-}
-  .bg-slate-800\/90 {
-  background-color: color-mix(in srgb, oklch(0.279 0.041 260.031) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-800) 90%, transparent);
-}
-}
-  .bg-slate-900 { background-color: var(--color-slate-900); }
-  .bg-slate-900\/50 {
-  background-color: color-mix(in srgb, oklch(0.208 0.042 265.755), transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-900) 50%, transparent);
-}
-}
-  .bg-slate-900\/70 {
-  background-color: color-mix(in srgb, oklch(0.208 0.042 265.755) 70%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-900) 70%, transparent);
-}
-}
-  .bg-slate-900\/90 {
-  background-color: color-mix(in srgb, oklch(0.208 0.042 265.755) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-900) 90%, transparent);
-}
-}
-  .bg-slate-950 { background-color: var(--color-slate-950); }
-  .bg-slate-950\/50 {
-  background-color: color-mix(in srgb, oklch(0.129 0.042 264.695), transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-950) 50%, transparent);
-}
-}
-  .bg-slate-950\/60 {
-  background-color: color-mix(in srgb, oklch(0.129 0.042 264.695) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-950) 60%, transparent);
-}
-}
-  .bg-slate-950\/70 {
-  background-color: color-mix(in srgb, oklch(0.129 0.042 264.695) 70%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-950) 70%, transparent);
-}
-}
-  .bg-slate-950\/80 {
-  background-color: color-mix(in srgb, oklch(0.129 0.042 264.695) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-950) 80%, transparent);
-}
-}
-  .bg-slate-950\/85 {
-  background-color: color-mix(in srgb, oklch(0.129 0.042 264.695) 85%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-950) 85%, transparent);
-}
-}
-  .bg-slate-950\/90 {
-  background-color: color-mix(in srgb, oklch(0.129 0.042 264.695) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-slate-950) 90%, transparent);
-}
-}
-  .bg-stone-50 { background-color: var(--color-stone-50); }
-  .bg-stone-50\/80 {
-  background-color: color-mix(in srgb, oklch(0.985 0.001 106.423) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-stone-50) 80%, transparent);
-}
-}
-  .bg-stone-100 { background-color: var(--color-stone-100); }
-  .bg-stone-200 { background-color: var(--color-stone-200); }
-  .bg-stone-200\/80 {
-  background-color: color-mix(in srgb, oklch(0.923 0.003 48.717) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-stone-200) 80%, transparent);
-}
-}
-  .bg-stone-900\/75 {
-  background-color: color-mix(in srgb, oklch(0.216 0.006 56.043) 75%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-stone-900) 75%, transparent);
-}
-}
-  .bg-stone-900\/95 {
-  background-color: color-mix(in srgb, oklch(0.216 0.006 56.043) 95%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-stone-900) 95%, transparent);
-}
-}
-  .bg-teal-50 { background-color: var(--color-teal-50); }
-  .bg-teal-100 { background-color: var(--color-teal-100); }
-  .bg-teal-500 { background-color: var(--color-teal-500); }
-  .bg-teal-600 { background-color: var(--color-teal-600); }
-  .bg-white { background-color: var(--color-white); }
-  .bg-white\/5 {
-  background-color: color-mix(in srgb, rgb(255, 255, 255) 5%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
-}
-}
-  .bg-white\/20 {
-  background-color: color-mix(in srgb, rgb(255, 255, 255) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-white) 20%, transparent);
-}
-}
-  .bg-white\/95 {
-  background-color: color-mix(in srgb, rgb(255, 255, 255) 95%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  background-color: color-mix(in oklab, var(--color-white) 95%, transparent);
-}
-}
-  .bg-gradient-to-b { --tw-gradient-position: to bottom in oklab; background-image: linear-gradient(var(--tw-gradient-stops)); }
-  .bg-gradient-to-br { --tw-gradient-position: to bottom right in oklab; background-image: linear-gradient(var(--tw-gradient-stops)); }
-  .bg-gradient-to-r { --tw-gradient-position: to right in oklab; background-image: linear-gradient(var(--tw-gradient-stops)); }
-  .bg-gradient-to-tr { --tw-gradient-position: to top right in oklab; background-image: linear-gradient(var(--tw-gradient-stops)); }
-  .from-\[\#0f172a\] { --tw-gradient-from: #0f172a; --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-\[\#00b074\] { --tw-gradient-from: #00b074; --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-amber-700 { --tw-gradient-from: var(--color-amber-700); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-blue-500\/30 {
-  --tw-gradient-from: color-mix(in srgb, oklch(62.3% 0.214 259.815) 30%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-gradient-from: color-mix(in oklab, var(--color-blue-500) 30%, transparent);
-}
-  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
-}
-  .from-cyan-500 { --tw-gradient-from: var(--color-cyan-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-cyan-600 { --tw-gradient-from: var(--color-cyan-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-cyan-950\/80 {
-  --tw-gradient-from: color-mix(in srgb, oklch(30.2% 0.056 229.695) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-gradient-from: color-mix(in oklab, var(--color-cyan-950) 80%, transparent);
-}
-  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
-}
-  .from-emerald-600 { --tw-gradient-from: var(--color-emerald-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-emerald-900 { --tw-gradient-from: var(--color-emerald-900); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-emerald-900\/60 {
-  --tw-gradient-from: color-mix(in srgb, oklch(37.8% 0.077 168.94) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-gradient-from: color-mix(in oklab, var(--color-emerald-900) 60%, transparent);
-}
-  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
-}
-  .from-indigo-50\/60 {
-  --tw-gradient-from: color-mix(in srgb, oklch(96.2% 0.018 272.314) 60%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-gradient-from: color-mix(in oklab, var(--color-indigo-50) 60%, transparent);
-}
-  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
-}
-  .from-indigo-600 { --tw-gradient-from: var(--color-indigo-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-indigo-900 { --tw-gradient-from: var(--color-indigo-900); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .from-teal-500 { --tw-gradient-from: var(--color-teal-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .via-\[\#111e38\] { --tw-gradient-via: #111e38; --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-via-stops); }
-  .via-\[\#059669\] { --tw-gradient-via: #059669; --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-via-stops); }
-  .via-amber-800 { --tw-gradient-via: var(--color-amber-800); --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-via-stops); }
-  .via-slate-900 { --tw-gradient-via: var(--color-slate-900); --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-via-stops); }
-  .to-\[\#047857\] { --tw-gradient-to: #047857; --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-\[\#162033\] { --tw-gradient-to: #162033; --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-blue-600 { --tw-gradient-to: var(--color-blue-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-emerald-400 { --tw-gradient-to: var(--color-emerald-400); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-indigo-950 { --tw-gradient-to: var(--color-indigo-950); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-indigo-950\/80 {
-  --tw-gradient-to: color-mix(in srgb, oklch(25.7% 0.09 281.288) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-gradient-to: color-mix(in oklab, var(--color-indigo-950) 80%, transparent);
-}
-  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
-}
-  .to-slate-900 { --tw-gradient-to: var(--color-slate-900); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-slate-950 { --tw-gradient-to: var(--color-slate-950); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-stone-900 { --tw-gradient-to: var(--color-stone-900); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-teal-400\/20 {
-  --tw-gradient-to: color-mix(in srgb, oklch(77.7% 0.152 181.912) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-gradient-to: color-mix(in oklab, var(--color-teal-400) 20%, transparent);
-}
-  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
-}
-  .to-teal-600 { --tw-gradient-to: var(--color-teal-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-teal-700 { --tw-gradient-to: var(--color-teal-700); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-teal-950 { --tw-gradient-to: var(--color-teal-950); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-violet-500 { --tw-gradient-to: var(--color-violet-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .to-white { --tw-gradient-to: var(--color-white); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .stroke-\[2\.5\] { stroke-width: 2.5; }
-  .p-0\.5 { padding: calc(var(--spacing) * 0.5); }
-  .p-1 { padding: var(--spacing); }
-  .p-2 { padding: calc(var(--spacing) * 2); }
-  .p-2\.5 { padding: calc(var(--spacing) * 2.5); }
-  .p-3 { padding: calc(var(--spacing) * 3); }
-  .p-3\.5 { padding: calc(var(--spacing) * 3.5); }
-  .p-4 { padding: calc(var(--spacing) * 4); }
-  .p-5 { padding: calc(var(--spacing) * 5); }
-  .p-6 { padding: calc(var(--spacing) * 6); }
-  .p-8 { padding: calc(var(--spacing) * 8); }
-  .px-1 { padding-inline: var(--spacing); }
-  .px-1\.5 { padding-inline: calc(var(--spacing) * 1.5); }
-  .px-2 { padding-inline: calc(var(--spacing) * 2); }
-  .px-2\.5 { padding-inline: calc(var(--spacing) * 2.5); }
-  .px-3 { padding-inline: calc(var(--spacing) * 3); }
-  .px-3\.5 { padding-inline: calc(var(--spacing) * 3.5); }
-  .px-4 { padding-inline: calc(var(--spacing) * 4); }
-  .px-5 { padding-inline: calc(var(--spacing) * 5); }
-  .px-12 { padding-inline: calc(var(--spacing) * 12); }
-  .py-0\.5 { padding-block: calc(var(--spacing) * 0.5); }
-  .py-1 { padding-block: var(--spacing); }
-  .py-1\.5 { padding-block: calc(var(--spacing) * 1.5); }
-  .py-2 { padding-block: calc(var(--spacing) * 2); }
-  .py-2\.5 { padding-block: calc(var(--spacing) * 2.5); }
-  .py-3 { padding-block: calc(var(--spacing) * 3); }
-  .py-3\.5 { padding-block: calc(var(--spacing) * 3.5); }
-  .py-4 { padding-block: calc(var(--spacing) * 4); }
-  .py-6 { padding-block: calc(var(--spacing) * 6); }
-  .pt-0\.5 { padding-top: calc(var(--spacing) * 0.5); }
-  .pt-1 { padding-top: var(--spacing); }
-  .pt-1\.5 { padding-top: calc(var(--spacing) * 1.5); }
-  .pt-2 { padding-top: calc(var(--spacing) * 2); }
-  .pt-3 { padding-top: calc(var(--spacing) * 3); }
-  .pt-4 { padding-top: calc(var(--spacing) * 4); }
-  .pt-6 { padding-top: calc(var(--spacing) * 6); }
-  .pt-8 { padding-top: calc(var(--spacing) * 8); }
-  .pr-1 { padding-right: var(--spacing); }
-  .pr-3 { padding-right: calc(var(--spacing) * 3); }
-  .pb-1 { padding-bottom: var(--spacing); }
-  .pb-2 { padding-bottom: calc(var(--spacing) * 2); }
-  .pb-2\.5 { padding-bottom: calc(var(--spacing) * 2.5); }
-  .pb-3 { padding-bottom: calc(var(--spacing) * 3); }
-  .pb-4 { padding-bottom: calc(var(--spacing) * 4); }
-  .pb-8 { padding-bottom: calc(var(--spacing) * 8); }
-  .pl-3 { padding-left: calc(var(--spacing) * 3); }
-  .pl-4 { padding-left: calc(var(--spacing) * 4); }
-  .pl-6 { padding-left: calc(var(--spacing) * 6); }
-  .pl-7 { padding-left: calc(var(--spacing) * 7); }
-  .pl-8 { padding-left: calc(var(--spacing) * 8); }
-  .text-center { text-align: center; }
-  .text-left { text-align: left; }
-  .text-right { text-align: right; }
-  .font-mono { font-family: var(--font-mono); }
-  .font-sans { font-family: var(--font-sans); }
-  .text-2xl { font-size: var(--text-2xl); line-height: var(--tw-leading, var(--text-2xl--line-height)); }
-  .text-4xl { font-size: var(--text-4xl); line-height: var(--tw-leading, var(--text-4xl--line-height)); }
-  .text-base { font-size: var(--text-base); line-height: var(--tw-leading, var(--text-base--line-height)); }
-  .text-lg { font-size: var(--text-lg); line-height: var(--tw-leading, var(--text-lg--line-height)); }
-  .text-sm { font-size: var(--text-sm); line-height: var(--tw-leading, var(--text-sm--line-height)); }
-  .text-xs { font-size: var(--text-xs); line-height: var(--tw-leading, var(--text-xs--line-height)); }
-  .text-\[8px\] { font-size: 8px; }
-  .text-\[9px\] { font-size: 9px; }
-  .text-\[10px\] { font-size: 10px; }
-  .text-\[11px\] { font-size: 11px; }
-  .text-\[12px\] { font-size: 12px; }
-  .leading-relaxed { --tw-leading: var(--leading-relaxed); line-height: var(--leading-relaxed); }
-  .leading-snug { --tw-leading: var(--leading-snug); line-height: var(--leading-snug); }
-  .leading-tight { --tw-leading: var(--leading-tight); line-height: var(--leading-tight); }
-  .font-black { --tw-font-weight: var(--font-weight-black); font-weight: var(--font-weight-black); }
-  .font-bold { --tw-font-weight: var(--font-weight-bold); font-weight: var(--font-weight-bold); }
-  .font-extrabold { --tw-font-weight: var(--font-weight-extrabold); font-weight: var(--font-weight-extrabold); }
-  .font-light { --tw-font-weight: var(--font-weight-light); font-weight: var(--font-weight-light); }
-  .font-medium { --tw-font-weight: var(--font-weight-medium); font-weight: var(--font-weight-medium); }
-  .font-normal { --tw-font-weight: var(--font-weight-normal); font-weight: var(--font-weight-normal); }
-  .font-semibold { --tw-font-weight: var(--font-weight-semibold); font-weight: var(--font-weight-semibold); }
-  .tracking-tight { --tw-tracking: var(--tracking-tight); letter-spacing: var(--tracking-tight); }
-  .tracking-wide { --tw-tracking: var(--tracking-wide); letter-spacing: var(--tracking-wide); }
-  .tracking-wider { --tw-tracking: var(--tracking-wider); letter-spacing: var(--tracking-wider); }
-  .tracking-widest { --tw-tracking: var(--tracking-widest); letter-spacing: var(--tracking-widest); }
-  .whitespace-nowrap { white-space: nowrap; }
-  .whitespace-pre { white-space: pre; }
-  .whitespace-pre-line { white-space: pre-line; }
-  .text-amber-300 { color: var(--color-amber-300); }
-  .text-amber-400 { color: var(--color-amber-400); }
-  .text-amber-600 { color: var(--color-amber-600); }
-  .text-amber-700 { color: var(--color-amber-700); }
-  .text-amber-800 { color: var(--color-amber-800); }
-  .text-amber-900 { color: var(--color-amber-900); }
-  .text-blue-200 { color: var(--color-blue-200); }
-  .text-blue-300 { color: var(--color-blue-300); }
-  .text-blue-400 { color: var(--color-blue-400); }
-  .text-blue-700 { color: var(--color-blue-700); }
-  .text-cyan-200 { color: var(--color-cyan-200); }
-  .text-cyan-300 { color: var(--color-cyan-300); }
-  .text-cyan-400 { color: var(--color-cyan-400); }
-  .text-cyan-400\/80 {
-  color: color-mix(in srgb, oklch(0.789 0.154 211.53) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(in oklab, var(--color-cyan-400) 80%, transparent);
-}
-}
-  .text-emerald-100\/90 {
-  color: color-mix(in srgb, oklch(0.95 0.052 163.051) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(in oklab, var(--color-emerald-100) 90%, transparent);
-}
-}
-  .text-emerald-200 { color: var(--color-emerald-200); }
-  .text-emerald-300 { color: var(--color-emerald-300); }
-  .text-emerald-400 { color: var(--color-emerald-400); }
-  .text-emerald-600 { color: var(--color-emerald-600); }
-  .text-emerald-700 { color: var(--color-emerald-700); }
-  .text-emerald-800 { color: var(--color-emerald-800); }
-  .text-emerald-900 { color: var(--color-emerald-900); }
-  .text-emerald-950 { color: var(--color-emerald-950); }
-  .text-indigo-200 { color: var(--color-indigo-200); }
-  .text-indigo-300 { color: var(--color-indigo-300); }
-  .text-indigo-300\/80 {
-  color: color-mix(in srgb, oklch(0.785 0.115 274.713) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(in oklab, var(--color-indigo-300) 80%, transparent);
-}
-}
-  .text-indigo-400 { color: var(--color-indigo-400); }
-  .text-indigo-600 { color: var(--color-indigo-600); }
-  .text-indigo-700 { color: var(--color-indigo-700); }
-  .text-indigo-900\/90 {
-  color: color-mix(in srgb, oklch(0.359 0.144 278.697) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(in oklab, var(--color-indigo-900) 90%, transparent);
-}
-}
-  .text-indigo-950 { color: var(--color-indigo-950); }
-  .text-rose-300 { color: var(--color-rose-300); }
-  .text-rose-400 { color: var(--color-rose-400); }
-  .text-rose-500 { color: var(--color-rose-500); }
-  .text-rose-600 { color: var(--color-rose-600); }
-  .text-rose-700 { color: var(--color-rose-700); }
-  .text-rose-800 { color: var(--color-rose-800); }
-  .text-rose-900 { color: var(--color-rose-900); }
-  .text-slate-100 { color: var(--color-slate-100); }
-  .text-slate-200 { color: var(--color-slate-200); }
-  .text-slate-300 { color: var(--color-slate-300); }
-  .text-slate-400 { color: var(--color-slate-400); }
-  .text-slate-500 { color: var(--color-slate-500); }
-  .text-slate-600 { color: var(--color-slate-600); }
-  .text-slate-700 { color: var(--color-slate-700); }
-  .text-slate-800 { color: var(--color-slate-800); }
-  .text-slate-900 { color: var(--color-slate-900); }
-  .text-slate-950 { color: var(--color-slate-950); }
-  .text-stone-100 { color: var(--color-stone-100); }
-  .text-stone-300 { color: var(--color-stone-300); }
-  .text-stone-400 { color: var(--color-stone-400); }
-  .text-stone-500 { color: var(--color-stone-500); }
-  .text-stone-600 { color: var(--color-stone-600); }
-  .text-stone-700 { color: var(--color-stone-700); }
-  .text-stone-800 { color: var(--color-stone-800); }
-  .text-stone-900 { color: var(--color-stone-900); }
-  .text-teal-200 { color: var(--color-teal-200); }
-  .text-teal-300 { color: var(--color-teal-300); }
-  .text-teal-400 { color: var(--color-teal-400); }
-  .text-teal-600 { color: var(--color-teal-600); }
-  .text-teal-700 { color: var(--color-teal-700); }
-  .text-teal-800 { color: var(--color-teal-800); }
-  .text-white { color: var(--color-white); }
-  .text-white\/80 {
-  color: color-mix(in srgb, rgb(255, 255, 255) 80%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(in oklab, var(--color-white) 80%, transparent);
-}
-}
-  .text-white\/90 {
-  color: color-mix(in srgb, rgb(255, 255, 255) 90%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  color: color-mix(in oklab, var(--color-white) 90%, transparent);
-}
-}
-  .uppercase { text-transform: uppercase; }
-  .line-through { text-decoration-line: line-through; }
-  .underline { text-decoration-line: underline; }
-  .opacity-0 { opacity: 0; }
-  .opacity-60 { opacity: 0.6; }
-  .opacity-70 { opacity: 0.7; }
-  .opacity-90 { opacity: 0.9; }
-  .shadow-2xl { --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-2xs { --tw-shadow: 0 1px var(--tw-shadow-color, rgb(0 0 0 / 0.05)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_8px_rgba\(52\,211\,153\,0\.8\)\] { --tw-shadow: 0 0 8px var(--tw-shadow-color, rgba(52,211,153,0.8)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_10px_rgba\(6\,182\,212\,0\.3\)\] { --tw-shadow: 0 0 10px var(--tw-shadow-color, rgba(6,182,212,0.3)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_12px_rgba\(6\,182\,212\,0\.3\)\] { --tw-shadow: 0 0 12px var(--tw-shadow-color, rgba(6,182,212,0.3)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_12px_rgba\(6\,182\,212\,0\.15\)\] { --tw-shadow: 0 0 12px var(--tw-shadow-color, rgba(6,182,212,0.15)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_12px_rgba\(16\,185\,129\,0\.15\)\] { --tw-shadow: 0 0 12px var(--tw-shadow-color, rgba(16,185,129,0.15)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_15px_rgba\(6\,182\,212\,0\.3\)\] { --tw-shadow: 0 0 15px var(--tw-shadow-color, rgba(6,182,212,0.3)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_15px_rgba\(6\,182\,212\,0\.35\)\] { --tw-shadow: 0 0 15px var(--tw-shadow-color, rgba(6,182,212,0.35)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_20px_rgba\(16\,185\,129\,0\.15\)\] { --tw-shadow: 0 0 20px var(--tw-shadow-color, rgba(16,185,129,0.15)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_25px_rgba\(6\,182\,212\,0\.15\)\] { --tw-shadow: 0 0 25px var(--tw-shadow-color, rgba(6,182,212,0.15)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_30px_rgba\(6\,182\,212\,0\.12\)\] { --tw-shadow: 0 0 30px var(--tw-shadow-color, rgba(6,182,212,0.12)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_0_30px_rgba\(16\,185\,129\,0\.2\)\] { --tw-shadow: 0 0 30px var(--tw-shadow-color, rgba(16,185,129,0.2)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[0_4px_25px_rgba\(180\,83\,9\,0\.12\)\] { --tw-shadow: 0 4px 25px var(--tw-shadow-color, rgba(180,83,9,0.12)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[inset_0_0_8px_rgba\(6\,182\,212\,0\.2\)\] { --tw-shadow: inset 0 0 8px var(--tw-shadow-color, rgba(6,182,212,0.2)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[inset_0_0_10px_rgba\(6\,182\,212\,0\.25\)\] { --tw-shadow: inset 0 0 10px var(--tw-shadow-color, rgba(6,182,212,0.25)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[inset_0_0_12px_rgba\(6\,182\,212\,0\.15\)\] { --tw-shadow: inset 0 0 12px var(--tw-shadow-color, rgba(6,182,212,0.15)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-\[inset_0_0_12px_rgba\(16\,185\,129\,0\.2\)\] { --tw-shadow: inset 0 0 12px var(--tw-shadow-color, rgba(16,185,129,0.2)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-inner { --tw-shadow: inset 0 2px 4px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-lg { --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-md { --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-sm { --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-xl { --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-xs { --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .ring { --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .ring-1 { --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .ring-2 { --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .shadow-amber-950\/20 {
-  --tw-shadow-color: color-mix(in srgb, oklch(27.9% 0.077 45.635) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-amber-950) 20%, transparent) var(--tw-shadow-alpha), transparent);
-}
-}
-  .shadow-cyan-500\/20 {
-  --tw-shadow-color: color-mix(in srgb, oklch(71.5% 0.143 215.221) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-cyan-500) 20%, transparent) var(--tw-shadow-alpha), transparent);
-}
-}
-  .shadow-indigo-200 {
-  --tw-shadow-color: oklch(87% 0.065 274.039);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-shadow-color: color-mix(in oklab, var(--color-indigo-200) var(--tw-shadow-alpha), transparent);
-}
-}
-  .shadow-indigo-500\/40 {
-  --tw-shadow-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 40%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-indigo-500) 40%, transparent) var(--tw-shadow-alpha), transparent);
-}
-}
-  .ring-indigo-500\/20 {
-  --tw-ring-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 20%, transparent);
-  @supports (color: color-mix(in lab, red, red)) {
-  --tw-ring-color: color-mix(in oklab, var(--color-indigo-500) 20%, transparent);
-}
-}
-  .ring-rose-200 { --tw-ring-color: var(--color-rose-200); }
-  .ring-slate-800 { --tw-ring-color: var(--color-slate-800); }
-  .outline { outline-style: var(--tw-outline-style); outline-width: 1px; }
-  .blur { --tw-blur: blur(8px); filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,); }
-  .blur-2xl { --tw-blur: blur(var(--blur-2xl)); filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,); }
-  .blur-3xl { --tw-blur: blur(var(--blur-3xl)); filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,); }
-  .blur-xl { --tw-blur: blur(var(--blur-xl)); filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,); }
-  .filter { filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,); }
-  .backdrop-blur-md { --tw-backdrop-blur: blur(var(--blur-md)); backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,); }
-  .backdrop-blur-sm { --tw-backdrop-blur: blur(var(--blur-sm)); backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,); }
-  .backdrop-blur-xs { --tw-backdrop-blur: blur(var(--blur-xs)); backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,); }
-  .transition { transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events; transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)); transition-duration: var(--tw-duration, var(--default-transition-duration)); }
-  .transition-all { transition-property: all; transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)); transition-duration: var(--tw-duration, var(--default-transition-duration)); }
-  .transition-colors { transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to; transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)); transition-duration: var(--tw-duration, var(--default-transition-duration)); }
-  .transition-transform { transition-property: transform, translate, scale, rotate; transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)); transition-duration: var(--tw-duration, var(--default-transition-duration)); }
-  .duration-200 { --tw-duration: 200ms; transition-duration: 200ms; }
-  .duration-300 { --tw-duration: 300ms; transition-duration: 300ms; }
-  .outline-none { --tw-outline-style: none; outline-style: none; }
-  .select-all { user-select: all; }
-  .select-none { user-select: none; }
-  @media (hover: hover) {
-  .group-hover\:scale-105:is(:where(.group):hover *) { --tw-scale-x: 105%; --tw-scale-y: 105%; --tw-scale-z: 105%; scale: var(--tw-scale-x) var(--tw-scale-y); }
-}
-  .placeholder\:font-sans::placeholder { font-family: var(--font-sans); }
-  .placeholder\:tracking-normal::placeholder { --tw-tracking: var(--tracking-normal); letter-spacing: var(--tracking-normal); }
-  .placeholder\:text-slate-600::placeholder { color: var(--color-slate-600); }
-  .placeholder\:text-stone-400::placeholder { color: var(--color-stone-400); }
-  @media (hover: hover) {
-  .hover\:border-cyan-400:hover { border-color: var(--color-cyan-400); }
-  .hover\:border-emerald-400:hover { border-color: var(--color-emerald-400); }
-  .hover\:border-teal-300:hover { border-color: var(--color-teal-300); }
-  .hover\:border-teal-400\/80:hover { border-color: color-mix(in srgb, oklch(0.777 0.152 181.912) 80%, transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:border-teal-400\/80:hover { border-color: color-mix(in oklab, var(--color-teal-400) 80%, transparent); }
-}
-  .hover\:bg-\[\#222e47\]:hover { background-color: rgb(34, 46, 71); }
-  .hover\:bg-amber-50:hover { background-color: var(--color-amber-50); }
-  .hover\:bg-amber-100:hover { background-color: var(--color-amber-100); }
-  .hover\:bg-amber-200:hover { background-color: var(--color-amber-200); }
-  .hover\:bg-cyan-500:hover { background-color: var(--color-cyan-500); }
-  .hover\:bg-cyan-900\/40:hover { background-color: color-mix(in srgb, oklch(0.398 0.07 227.392) 40%, transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:bg-cyan-900\/40:hover { background-color: color-mix(in oklab, var(--color-cyan-900) 40%, transparent); }
-}
-  .hover\:bg-emerald-50:hover { background-color: var(--color-emerald-50); }
-  .hover\:bg-emerald-100:hover { background-color: var(--color-emerald-100); }
-  .hover\:bg-emerald-100\/50:hover { background-color: color-mix(in srgb, oklch(0.95 0.052 163.051), transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:bg-emerald-100\/50:hover { background-color: color-mix(in oklab, var(--color-emerald-100) 50%, transparent); }
-}
-  .hover\:bg-emerald-500:hover { background-color: var(--color-emerald-500); }
-  .hover\:bg-emerald-900\/40:hover { background-color: color-mix(in srgb, oklch(0.378 0.077 168.94) 40%, transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:bg-emerald-900\/40:hover { background-color: color-mix(in oklab, var(--color-emerald-900) 40%, transparent); }
-}
-  .hover\:bg-emerald-950\/30:hover { background-color: color-mix(in srgb, oklch(0.262 0.051 172.552) 30%, transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:bg-emerald-950\/30:hover { background-color: color-mix(in oklab, var(--color-emerald-950) 30%, transparent); }
-}
-  .hover\:bg-indigo-100:hover { background-color: var(--color-indigo-100); }
-  .hover\:bg-indigo-700:hover { background-color: var(--color-indigo-700); }
-  .hover\:bg-rose-50:hover { background-color: var(--color-rose-50); }
-  .hover\:bg-rose-100:hover { background-color: var(--color-rose-100); }
-  .hover\:bg-rose-200:hover { background-color: var(--color-rose-200); }
-  .hover\:bg-rose-900:hover { background-color: var(--color-rose-900); }
-  .hover\:bg-slate-50:hover { background-color: var(--color-slate-50); }
-  .hover\:bg-slate-50\/80:hover { background-color: color-mix(in srgb, oklch(0.984 0.003 247.858) 80%, transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:bg-slate-50\/80:hover { background-color: color-mix(in oklab, var(--color-slate-50) 80%, transparent); }
-}
-  .hover\:bg-slate-100:hover { background-color: var(--color-slate-100); }
-  .hover\:bg-slate-200:hover { background-color: var(--color-slate-200); }
-  .hover\:bg-slate-300:hover { background-color: var(--color-slate-300); }
-  .hover\:bg-slate-600:hover { background-color: var(--color-slate-600); }
-  .hover\:bg-slate-700:hover { background-color: var(--color-slate-700); }
-  .hover\:bg-slate-800:hover { background-color: var(--color-slate-800); }
-  .hover\:bg-stone-200:hover { background-color: var(--color-stone-200); }
-  .hover\:bg-teal-100:hover { background-color: var(--color-teal-100); }
-  .hover\:bg-teal-700:hover { background-color: var(--color-teal-700); }
-  .hover\:bg-white\/15:hover { background-color: color-mix(in srgb, rgb(255, 255, 255) 15%, transparent); }
-  @supports (color: color-mix(in lab, red, red)) {
-  .hover\:bg-white\/15:hover { background-color: color-mix(in oklab, var(--color-white) 15%, transparent); }
-}
-  .hover\:from-amber-600:hover { --tw-gradient-from: var(--color-amber-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:from-cyan-400:hover { --tw-gradient-from: var(--color-cyan-400); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:from-cyan-500:hover { --tw-gradient-from: var(--color-cyan-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:from-emerald-500:hover { --tw-gradient-from: var(--color-emerald-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:to-blue-500:hover { --tw-gradient-to: var(--color-blue-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:to-stone-800:hover { --tw-gradient-to: var(--color-stone-800); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:to-teal-500:hover { --tw-gradient-to: var(--color-teal-500); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:to-teal-600:hover { --tw-gradient-to: var(--color-teal-600); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
-  .hover\:text-amber-600:hover { color: var(--color-amber-600); }
-  .hover\:text-amber-900:hover { color: var(--color-amber-900); }
-  .hover\:text-cyan-200:hover { color: var(--color-cyan-200); }
-  .hover\:text-cyan-300:hover { color: var(--color-cyan-300); }
-  .hover\:text-indigo-600:hover { color: var(--color-indigo-600); }
-  .hover\:text-rose-600:hover { color: var(--color-rose-600); }
-  .hover\:text-rose-700:hover { color: var(--color-rose-700); }
-  .hover\:text-slate-200:hover { color: var(--color-slate-200); }
-  .hover\:text-slate-800:hover { color: var(--color-slate-800); }
-  .hover\:text-slate-900:hover { color: var(--color-slate-900); }
-  .hover\:text-stone-700:hover { color: var(--color-stone-700); }
-  .hover\:text-white:hover { color: var(--color-white); }
-  .hover\:shadow-md:hover { --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-}
-  .focus\:border-amber-600:focus { border-color: var(--color-amber-600); }
-  .focus\:border-cyan-400:focus { border-color: var(--color-cyan-400); }
-  .focus\:border-teal-500:focus { border-color: var(--color-teal-500); }
-  .focus\:bg-white:focus { background-color: var(--color-white); }
-  .focus\:shadow-\[0_0_12px_rgba\(6\,182\,212\,0\.25\)\]:focus { --tw-shadow: 0 0 12px var(--tw-shadow-color, rgba(6,182,212,0.25)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .focus\:shadow-\[0_0_15px_rgba\(6\,182\,212\,0\.3\)\]:focus { --tw-shadow: 0 0 15px var(--tw-shadow-color, rgba(6,182,212,0.3)); box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); }
-  .focus\:ring-indigo-500:focus { --tw-ring-color: var(--color-indigo-500); }
-  .focus\:ring-teal-500:focus { --tw-ring-color: var(--color-teal-500); }
-  .focus\:outline-hidden:focus {
-  --tw-outline-style: none; outline-style: none;
-  @media (forced-colors: active) {
-  outline: transparent solid 2px; outline-offset: 2px;
-}
-}
-  .focus\:outline-amber-600:focus { outline-color: var(--color-amber-600); }
-  .focus\:outline-indigo-500:focus { outline-color: var(--color-indigo-500); }
-  .focus\:outline-indigo-600:focus { outline-color: var(--color-indigo-600); }
-  .focus\:outline-none:focus { --tw-outline-style: none; outline-style: none; }
-  .active\:scale-95:active { --tw-scale-x: 95%; --tw-scale-y: 95%; --tw-scale-z: 95%; scale: var(--tw-scale-x) var(--tw-scale-y); }
-  .active\:scale-\[0\.98\]:active { scale: 0.98; }
-  .active\:bg-amber-600:active { background-color: var(--color-amber-600); }
-  .active\:bg-indigo-200:active { background-color: var(--color-indigo-200); }
-  .active\:bg-indigo-600:active { background-color: var(--color-indigo-600); }
-  .active\:bg-indigo-800:active { background-color: var(--color-indigo-800); }
-  .active\:bg-rose-600:active { background-color: var(--color-rose-600); }
-  .active\:bg-rose-800:active { background-color: var(--color-rose-800); }
-  .active\:text-white:active { color: var(--color-white); }
-  @media (width >= 40rem) {
-  .sm\:inline { display: inline; }
-  .sm\:inline-flex { display: inline-flex; }
-  .sm\:h-6 { height: calc(var(--spacing) * 6); }
-  .sm\:h-10 { height: calc(var(--spacing) * 10); }
-  .sm\:h-16 { height: calc(var(--spacing) * 16); }
-  .sm\:w-1\/2 { width: calc(50%); }
-  .sm\:w-6 { width: calc(var(--spacing) * 6); }
-  .sm\:w-10 { width: calc(var(--spacing) * 10); }
-  .sm\:w-auto { width: auto; }
-  .sm\:flex-none { flex: 0 0 auto; }
-  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0px, 1fr)); }
-  .sm\:flex-col { flex-direction: column; }
-  .sm\:flex-row { flex-direction: row; }
-  .sm\:items-center { align-items: center; }
-  .sm\:justify-center { justify-content: center; }
-  .sm\:self-auto { align-self: auto; }
-  .sm\:rounded-\[34px\] { border-radius: 34px; }
-  .sm\:rounded-\[46px\] { border-radius: 46px; }
-  .sm\:p-3 { padding: calc(var(--spacing) * 3); }
-  .sm\:px-6 { padding-inline: calc(var(--spacing) * 6); }
-  .sm\:py-0 { padding-block: 0px; }
-  .sm\:text-3xl { font-size: var(--text-3xl); line-height: var(--tw-leading, var(--text-3xl--line-height)); }
-  .sm\:text-base { font-size: var(--text-base); line-height: var(--tw-leading, var(--text-base--line-height)); }
-  .sm\:text-lg { font-size: var(--text-lg); line-height: var(--tw-leading, var(--text-lg--line-height)); }
-  .sm\:text-sm { font-size: var(--text-sm); line-height: var(--tw-leading, var(--text-sm--line-height)); }
-  .sm\:text-xl { font-size: var(--text-xl); line-height: var(--tw-leading, var(--text-xl--line-height)); }
-  .sm\:text-\[42px\] { font-size: 42px; }
-}
-  @media (width >= 48rem) {
-  .md\:block { display: block; }
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0px, 1fr)); }
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0px, 1fr)); }
-}
-  @media (width >= 64rem) {
-  .lg\:col-span-5 { grid-column: span 5 / span 5; }
-  .lg\:col-span-7 { grid-column: span 7 / span 7; }
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0px, 1fr)); }
-  .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0px, 1fr)); }
-  .lg\:grid-cols-12 { grid-template-columns: repeat(12, minmax(0px, 1fr)); }
-  .lg\:px-8 { padding-inline: calc(var(--spacing) * 8); }
-}
-  @media (width >= 80rem) {
-  .xl\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0px, 1fr)); }
-}
-}
-@property --tw-translate-x { syntax: "*"; inherits: false; initial-value: 0; }
-@property --tw-translate-y { syntax: "*"; inherits: false; initial-value: 0; }
-@property --tw-translate-z { syntax: "*"; inherits: false; initial-value: 0; }
-@property --tw-scale-x { syntax: "*"; inherits: false; initial-value: 1; }
-@property --tw-scale-y { syntax: "*"; inherits: false; initial-value: 1; }
-@property --tw-scale-z { syntax: "*"; inherits: false; initial-value: 1; }
-@property --tw-rotate-x { syntax: "*"; inherits: false; }
-@property --tw-rotate-y { syntax: "*"; inherits: false; }
-@property --tw-rotate-z { syntax: "*"; inherits: false; }
-@property --tw-skew-x { syntax: "*"; inherits: false; }
-@property --tw-skew-y { syntax: "*"; inherits: false; }
-@property --tw-pan-x { syntax: "*"; inherits: false; }
-@property --tw-pan-y { syntax: "*"; inherits: false; }
-@property --tw-pinch-zoom { syntax: "*"; inherits: false; }
-@property --tw-space-y-reverse { syntax: "*"; inherits: false; initial-value: 0; }
-@property --tw-space-x-reverse { syntax: "*"; inherits: false; initial-value: 0; }
-@property --tw-divide-y-reverse { syntax: "*"; inherits: false; initial-value: 0; }
-@property --tw-border-style { syntax: "*"; inherits: false; initial-value: solid; }
-@property --tw-gradient-position { syntax: "*"; inherits: false; }
-@property --tw-gradient-from { syntax: "<color>"; inherits: false; initial-value: #0000; }
-@property --tw-gradient-via { syntax: "<color>"; inherits: false; initial-value: #0000; }
-@property --tw-gradient-to { syntax: "<color>"; inherits: false; initial-value: #0000; }
-@property --tw-gradient-stops { syntax: "*"; inherits: false; }
-@property --tw-gradient-via-stops { syntax: "*"; inherits: false; }
-@property --tw-gradient-from-position { syntax: "<length-percentage>"; inherits: false; initial-value: 0%; }
-@property --tw-gradient-via-position { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
-@property --tw-gradient-to-position { syntax: "<length-percentage>"; inherits: false; initial-value: 100%; }
-@property --tw-leading { syntax: "*"; inherits: false; }
-@property --tw-font-weight { syntax: "*"; inherits: false; }
-@property --tw-tracking { syntax: "*"; inherits: false; }
-@property --tw-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
-@property --tw-shadow-color { syntax: "*"; inherits: false; }
-@property --tw-shadow-alpha { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
-@property --tw-inset-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
-@property --tw-inset-shadow-color { syntax: "*"; inherits: false; }
-@property --tw-inset-shadow-alpha { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
-@property --tw-ring-color { syntax: "*"; inherits: false; }
-@property --tw-ring-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
-@property --tw-inset-ring-color { syntax: "*"; inherits: false; }
-@property --tw-inset-ring-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
-@property --tw-ring-inset { syntax: "*"; inherits: false; }
-@property --tw-ring-offset-width { syntax: "<length>"; inherits: false; initial-value: 0px; }
-@property --tw-ring-offset-color { syntax: "*"; inherits: false; initial-value: #fff; }
-@property --tw-ring-offset-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
-@property --tw-outline-style { syntax: "*"; inherits: false; initial-value: solid; }
-@property --tw-blur { syntax: "*"; inherits: false; }
-@property --tw-brightness { syntax: "*"; inherits: false; }
-@property --tw-contrast { syntax: "*"; inherits: false; }
-@property --tw-grayscale { syntax: "*"; inherits: false; }
-@property --tw-hue-rotate { syntax: "*"; inherits: false; }
-@property --tw-invert { syntax: "*"; inherits: false; }
-@property --tw-opacity { syntax: "*"; inherits: false; }
-@property --tw-saturate { syntax: "*"; inherits: false; }
-@property --tw-sepia { syntax: "*"; inherits: false; }
-@property --tw-drop-shadow { syntax: "*"; inherits: false; }
-@property --tw-drop-shadow-color { syntax: "*"; inherits: false; }
-@property --tw-drop-shadow-alpha { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
-@property --tw-drop-shadow-size { syntax: "*"; inherits: false; }
-@property --tw-backdrop-blur { syntax: "*"; inherits: false; }
-@property --tw-backdrop-brightness { syntax: "*"; inherits: false; }
-@property --tw-backdrop-contrast { syntax: "*"; inherits: false; }
-@property --tw-backdrop-grayscale { syntax: "*"; inherits: false; }
-@property --tw-backdrop-hue-rotate { syntax: "*"; inherits: false; }
-@property --tw-backdrop-invert { syntax: "*"; inherits: false; }
-@property --tw-backdrop-opacity { syntax: "*"; inherits: false; }
-@property --tw-backdrop-saturate { syntax: "*"; inherits: false; }
-@property --tw-backdrop-sepia { syntax: "*"; inherits: false; }
-@property --tw-duration { syntax: "*"; inherits: false; }
-@keyframes spin { 
-  100% { transform: rotate(360deg); }
-}
-@keyframes ping { 
-  75%, 100% { transform: scale(2); opacity: 0; }
-}
-@keyframes pulse { 
-  50% { opacity: 0.5; }
-}
-@keyframes bounce { 
-  0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-  50% { transform: none; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
-}
-@layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
-  *, ::before, ::after, ::backdrop { --tw-translate-x: 0; --tw-translate-y: 0; --tw-translate-z: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-scale-z: 1; --tw-rotate-x: initial; --tw-rotate-y: initial; --tw-rotate-z: initial; --tw-skew-x: initial; --tw-skew-y: initial; --tw-pan-x: initial; --tw-pan-y: initial; --tw-pinch-zoom: initial; --tw-space-y-reverse: 0; --tw-space-x-reverse: 0; --tw-divide-y-reverse: 0; --tw-border-style: solid; --tw-gradient-position: initial; --tw-gradient-from: #0000; --tw-gradient-via: #0000; --tw-gradient-to: #0000; --tw-gradient-stops: initial; --tw-gradient-via-stops: initial; --tw-gradient-from-position: 0%; --tw-gradient-via-position: 50%; --tw-gradient-to-position: 100%; --tw-leading: initial; --tw-font-weight: initial; --tw-tracking: initial; --tw-shadow: 0 0 #0000; --tw-shadow-color: initial; --tw-shadow-alpha: 100%; --tw-inset-shadow: 0 0 #0000; --tw-inset-shadow-color: initial; --tw-inset-shadow-alpha: 100%; --tw-ring-color: initial; --tw-ring-shadow: 0 0 #0000; --tw-inset-ring-color: initial; --tw-inset-ring-shadow: 0 0 #0000; --tw-ring-inset: initial; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-offset-shadow: 0 0 #0000; --tw-outline-style: solid; --tw-blur: initial; --tw-brightness: initial; --tw-contrast: initial; --tw-grayscale: initial; --tw-hue-rotate: initial; --tw-invert: initial; --tw-opacity: initial; --tw-saturate: initial; --tw-sepia: initial; --tw-drop-shadow: initial; --tw-drop-shadow-color: initial; --tw-drop-shadow-alpha: 100%; --tw-drop-shadow-size: initial; --tw-backdrop-blur: initial; --tw-backdrop-brightness: initial; --tw-backdrop-contrast: initial; --tw-backdrop-grayscale: initial; --tw-backdrop-hue-rotate: initial; --tw-backdrop-invert: initial; --tw-backdrop-opacity: initial; --tw-backdrop-saturate: initial; --tw-backdrop-sepia: initial; --tw-duration: initial; }
-}
-}
-
-      
-      /* Print & Offline optimization */
-      @media print {
-        body { background: #fff !important; color: #000 !important; }
+  <meta name="theme-color" content="#047857" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- Tailwind CSS CDN for pure standalone single-file execution -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
       }
-    </style>
-  </head>
-  <body>
-    <div id="root"><div class="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans"><header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"><div class="flex items-center space-x-3"><div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg></div><div class="min-w-0"><div class="flex items-center space-x-2"><h1 class="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">APK 首次啟動隨機通關密碼系統設計室</h1><span class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">Android Guard &amp; Issuer</span></div><p class="text-xs text-slate-500 hidden md:block">解答「做成函數還是程式？」、「是否可行？」並提供雙屏模擬與可抄作業的完整代碼</p></div></div><nav class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 overflow-x-auto max-w-full scrollbar-none"><button class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer text-emerald-700 hover:bg-emerald-50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-git2 lucide-folder-git-2 w-3.5 h-3.5" aria-hidden="true"><path d="M9 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v5"></path><circle cx="13" cy="12" r="2"></circle><path d="M18 19c-2.8 0-5-2.2-5-5v8"></path><circle cx="20" cy="19" r="2"></circle></svg><span>套用至現有記帳 App</span><span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full font-bold ml-0.5">手把手</span></button><button class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer bg-white text-indigo-700 shadow-xs"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg><span>雙屏互動模擬</span></button><button class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer text-slate-600 hover:text-slate-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open w-3.5 h-3.5" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg><span>可行性與架構指南</span></button><button class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer text-slate-600 hover:text-slate-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code-xml w-3.5 h-3.5" aria-hidden="true"><path d="m18 16 4-4-4-4"></path><path d="m6 8-4 4 4 4"></path><path d="m14.5 4-5 16"></path></svg><span>開箱即用代碼</span></button></nav><div class="flex items-center space-x-2"><button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white" title="將本系統安裝至手機或電腦桌面"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg><span>安裝至桌面/手機</span></button></div></div></header><main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6"><div class="space-y-5"><div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-3 text-xs"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5"><div class="flex items-center space-x-2"><div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-4 h-4" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg></div><div><h2 class="font-bold text-slate-800 text-sm">3 步驟快速上手體驗</h2><p class="text-slate-500 text-[11px]">模擬真實 APK 首次安裝分發授權的完整閉環流程</p></div></div><div class="flex items-center space-x-2"><button class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-xs transition-colors flex items-center space-x-1 cursor-pointer"><span>⚡ 一鍵自動帶入測試密碼</span></button><button class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-colors cursor-pointer"><span>查看 Android 整合代碼 →</span></button></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3"><div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80"><div class="flex items-center space-x-1.5 font-bold text-slate-800 mb-1"><span class="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-mono">1</span><span>客戶端打開 APK 獲取特徵碼</span></div><p class="text-slate-500 text-[11px] leading-relaxed">左側模擬手機首次打開 APK 時彈出通關框，展示該手機專屬指紋：<strong class="text-slate-700 font-mono">DEV-8F92-K3</strong>。</p></div><div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80"><div class="flex items-center space-x-1.5 font-bold text-slate-800 mb-1"><span class="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-mono">2</span><span>管理端生成並派發隨機密碼</span></div><p class="text-slate-500 text-[11px] leading-relaxed">在右側控制台設定格式或有效期限，點擊列表中的「<strong>填入手機測試</strong>」即可直接送達手機。</p></div><div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80"><div class="flex items-center space-x-1.5 font-bold text-slate-800 mb-1"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-mono">3</span><span>通關進入系統：修改、警示、自動備份</span></div><p class="text-slate-500 text-[11px] leading-relaxed">解鎖後可使用記帳與記事備忘，支援「<strong>✏️ 修改舊資料</strong>」、「<strong>⏰ 提前警示鬧鐘</strong>」與「<strong>🛡️ 即時自動快照備份</strong>」！</p></div></div></div><div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"><div class="lg:col-span-5 flex justify-center"><div class="flex flex-col items-center"><div class="w-full flex items-center justify-between pb-3 px-2"><div class="flex items-center space-x-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone w-5 h-5 text-indigo-600" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg><span class="font-semibold text-slate-800 text-sm">Android 目標終端模擬</span><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">Pixel 8 Pro (Android 14)</span></div><div class="flex items-center space-x-2 text-xs"><button class="flex items-center space-x-1 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer" title="模擬重新開啟 App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw w-3.5 h-3.5" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg><span>重啟 App</span></button><button class="flex items-center space-x-1 text-rose-600 hover:text-rose-700 transition-colors font-medium ml-2 cursor-pointer" title="清除 App 資料，模擬重新安裝"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw w-3.5 h-3.5" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg><span>重新安裝模擬</span></button></div></div><div class="w-full mb-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"><div class="flex items-center space-x-1.5 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round w-3.5 h-3.5 text-indigo-600" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle></svg><span class="text-[11px] font-bold text-slate-700">模式：</span><div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg text-[11px]"><button type="button" class="px-2 py-1 rounded font-medium transition-all cursor-pointer bg-indigo-600 text-white shadow-xs font-bold">特徵碼模式</button><button type="button" class="px-2 py-1 rounded font-medium transition-all cursor-pointer text-slate-600 hover:text-slate-900">通用密碼模式</button></div></div><div class="flex items-center space-x-1.5 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette w-3.5 h-3.5 text-amber-600" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"></path><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle></svg><span class="text-[11px] font-bold text-slate-700">介面色調：</span><div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg text-[11px]"><button type="button" class="px-2.5 py-1 rounded font-medium transition-all cursor-pointer bg-amber-600 text-white shadow-xs font-bold">🏛️ 溫暖商務風</button><button type="button" class="px-2 py-1 rounded font-medium transition-all cursor-pointer text-slate-600 hover:text-slate-900">暗夜科技風</button></div></div><div class="flex items-center space-x-1.5 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-down w-3.5 h-3.5 text-emerald-600" aria-hidden="true"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg><span class="text-[11px] font-bold text-slate-700">模擬器長度：</span><div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg text-[11px]"><button type="button" class="px-2 py-1 rounded font-medium transition-all cursor-pointer text-slate-600 hover:text-slate-900" title="標準高度 (720px)">標準</button><button type="button" class="px-2 py-1 rounded font-medium transition-all cursor-pointer bg-emerald-600 text-white shadow-xs font-bold" title="舒適加長 (860px)">加長 (推薦)</button><button type="button" class="px-2 py-1 rounded font-medium transition-all cursor-pointer text-slate-600 hover:text-slate-900" title="超長視野 (960px)">超長視野</button></div></div></div><div class="relative w-full max-w-[420px] transition-all duration-300 bg-slate-900 rounded-[38px] sm:rounded-[46px] p-2.5 sm:p-3 shadow-2xl ring-1 ring-slate-800 flex flex-col justify-between overflow-hidden mx-auto h-[860px]"><div class="relative w-full h-full bg-slate-50 rounded-[30px] sm:rounded-[34px] overflow-hidden flex flex-col text-slate-900 font-sans select-none border border-slate-200 shadow-inner"><div class="h-6 bg-[#00b074] text-white px-5 flex items-center justify-between text-[11px] font-medium tracking-tight shrink-0"><span>09:41</span><div class="w-14 h-3 bg-black/20 rounded-full mx-auto"></div><div class="flex items-center space-x-1.5 opacity-90"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-signal w-3 h-3" aria-hidden="true"><path d="M2 20h.01"></path><path d="M7 20v-4"></path><path d="M12 20v-8"></path><path d="M17 20V8"></path><path d="M22 4v16"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wifi w-3 h-3" aria-hidden="true"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-battery w-3.5 h-3.5" aria-hidden="true"><path d="M 22 14 L 22 10"></path><rect x="2" y="6" width="16" height="12" rx="2"></rect></svg></div></div><div class="bg-gradient-to-r from-[#00b074] via-[#059669] to-[#047857] text-white px-3.5 py-2 flex items-center justify-between shrink-0 shadow-xs"><button type="button" class="p-1 hover:bg-white/15 rounded-lg transition-colors cursor-pointer text-white/90" title="關閉返回"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4 stroke-[2.5]" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button><div class="flex items-center gap-1 font-semibold text-sm tracking-wide"><span class="text-white/80 font-normal">・</span><span class="font-mono">github.io</span></div><div class="flex items-center gap-2"><button type="button" class="p-1 hover:bg-white/15 rounded-lg transition-colors cursor-pointer text-white/90" title="分享"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share2 lucide-share-2 w-4 h-4" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line></svg></button><button type="button" class="p-1 hover:bg-white/15 rounded-lg transition-colors cursor-pointer text-white/90" title="選單"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ellipsis-vertical w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></div></div><div class="flex-1 flex flex-col overflow-hidden"><div class="flex-1 flex flex-col bg-[#0f172a] text-stone-100 overflow-hidden relative select-none"><div class="bg-gradient-to-b from-[#0f172a] via-[#111e38] to-[#162033] px-4 pt-3 pb-3 shrink-0"><div class="flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/30 to-teal-400/20 border border-blue-400/30 flex items-center justify-center text-blue-200 shadow-inner shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet w-5 h-5 text-teal-300" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg></div><div><div class="flex items-center gap-2"><h1 class="text-lg font-black tracking-tight text-white flex items-center gap-1">記帳記事 <span class="font-mono text-blue-400">Pro</span></h1></div><div class="flex items-center gap-1.5 text-xs text-stone-300 mt-0.5"><span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></span><span class="text-[11px] text-teal-200 font-medium">自動備份啟用中</span></div></div></div><button type="button" class="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 font-black flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer" title="記一筆"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus w-5 h-5 stroke-[2.5]" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></div><div class="mt-2.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/70 flex items-center justify-between text-xs text-slate-300"><div class="flex items-center gap-1.5 text-[11px]"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-3.5 h-3.5 text-teal-400 shrink-0" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg><span class="font-mono text-white">2026/09/16</span><span class="text-slate-400 text-[10px]">(星期三)</span></div><div class="flex items-center gap-1 text-[11px] font-medium text-amber-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon w-3 h-3 text-amber-400" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg><span>丙午马年 農曆八月初六</span></div></div></div><div class="flex-1 overflow-y-auto bg-slate-100 text-slate-800 p-3 space-y-3"><div class="space-y-3"><div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3"><div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check w-4 h-4" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg></div><div><h3 class="text-xs font-bold text-slate-900">雙重資料自動備份防護</h3><p class="text-[10px] text-slate-500">每次修改即刻同步建立本機快照</p></div></div><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">運行中</span></div><div class="p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs text-slate-700 border border-slate-100 font-mono"><div class="flex justify-between"><span class="text-slate-500 font-sans">最近快照時間：</span><span class="font-bold text-slate-900">下午04:54:49</span></div><div class="flex justify-between"><span class="text-slate-500 font-sans">累積自動備份：</span><span class="font-bold text-emerald-700">14 次</span></div><div class="flex justify-between"><span class="text-slate-500 font-sans">目前受保護項目：</span><span class="font-bold text-slate-900">3 筆記帳 / 3 筆記事</span></div></div></div><div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2"><h4 class="font-bold text-xs text-slate-900 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw w-3.5 h-3.5 text-slate-600" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg><span>一鍵回復本機最新快照</span></h4><p class="text-[11px] text-slate-500 leading-relaxed">若不小心誤改或刪除資料，可立刻倒回至上一次自動備份點。</p><button type="button" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw w-3.5 h-3.5" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg><span>立即回復至本機自動快照</span></button></div><div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3"><h4 class="font-bold text-xs text-slate-900 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download w-3.5 h-3.5 text-slate-600" aria-hidden="true"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg><span>離線匯出與跨裝置匯入</span></h4><p class="text-[11px] text-slate-500 leading-relaxed">將所有帳目與備忘下載為 JSON 檔案，更換手機或瀏覽器時一鍵復原。</p><div class="grid grid-cols-2 gap-2 pt-1"><button type="button" class="py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download w-3.5 h-3.5" aria-hidden="true"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg><span>匯出備份檔</span></button><button type="button" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-upload w-3.5 h-3.5" aria-hidden="true"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg><span>匯入還原檔</span></button><input accept=".json" class="hidden" type="file"></div></div></div></div><div class="bg-white border-t border-slate-200 px-4 py-2.5 flex items-center justify-around shrink-0 shadow-lg"><button type="button" class="flex flex-col items-center gap-0.5 cursor-pointer transition-all text-slate-500 hover:text-slate-800"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet w-5 h-5" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg><span class="text-[11px]">記帳管理</span></button><button type="button" class="flex flex-col items-center gap-0.5 cursor-pointer transition-all relative text-slate-500 hover:text-slate-800"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg><span class="text-[11px]">記事警示</span><span class="absolute -top-1 right-2 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">3</span></button><button type="button" class="flex flex-col items-center gap-0.5 cursor-pointer transition-all relative text-teal-600 font-bold scale-105"><div class="relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-database w-5 h-5" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg><span class="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">9+</span></div><span class="text-[11px]">備份中心</span></button></div></div><div class="bg-white px-3 py-1.5 border-t border-stone-200 flex items-center justify-between text-[10px] text-stone-500 shrink-0"><span class="truncate">已解鎖金鑰: <strong class="font-mono text-stone-700">8K9P-4X2M</strong></span><button type="button" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded font-medium cursor-pointer transition-colors" title="重新測試門禁攔截">測試重新鎖上</button></div></div><div class="h-6 bg-slate-900 flex items-center justify-around px-12 shrink-0"><div class="w-3 h-3 border-2 border-slate-400 rounded-xs opacity-70"></div><div class="w-3 h-3 border-2 border-slate-400 rounded-full opacity-70"></div><div class="w-0 h-0 border-t-4 border-t-transparent border-r-6 border-r-slate-400 border-b-4 border-b-transparent opacity-70"></div></div></div></div></div></div><div class="lg:col-span-7 space-y-5"><div class="bg-slate-900 border border-cyan-500/30 rounded-2xl p-5 shadow-[0_0_30px_rgba(6,182,212,0.12)] text-slate-100 flex flex-col space-y-4 relative overflow-hidden"><div class="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16"></div><div class="absolute bottom-0 left-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none -ml-12 -mb-12"></div><div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800"><div class="flex items-center space-x-3"><div class="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.3)]"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cpu w-5 h-5 animate-pulse" aria-hidden="true"><path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect></svg></div><div><h3 class="text-sm font-bold text-slate-100 tracking-wide flex items-center gap-2"><span>⚡ 作者專用【特徵碼一鍵算號器】</span><span class="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30">OFFLINE CRYPTO</span></h3><p class="text-xs text-slate-400">收到用戶 LINE 傳來的特徵碼後，在此貼上即可秒速算出他專屬的通關密碼！</p></div></div><div class="flex items-center gap-2 self-start sm:self-auto flex-wrap"><button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white" title="將本系統安裝至手機或電腦桌面"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg><span>安裝至桌面/手機</span></button><button type="button" class="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition-all cursor-pointer" title="下載備用單一 HTML 原始檔案 (僅供電腦備份存檔用)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download w-3 h-3 text-slate-400" aria-hidden="true"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg><span class="text-[11px]">備份 HTML 檔</span></button></div></div><div class="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 border border-cyan-500/40 rounded-xl p-4 text-slate-200 shadow-lg space-y-3"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"><div class="flex items-center space-x-3"><div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone w-5 h-5" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg></div><div><div class="flex items-center space-x-2"><h4 class="text-sm font-bold text-white flex items-center gap-1.5"><span>安裝為桌面 / 手機專用 App (PWA)</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">推薦首選</span></h4></div><p class="text-xs text-slate-400 mt-0.5">徹底解決「下載 HTML 後因 127.0.0.1 臨時伺服器關閉而無法連線」的問題！離線秒開、免記網址、無網址列干擾。</p></div></div><div class="flex items-center gap-2 shrink-0"><button type="button" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs rounded-xl shadow-md shadow-cyan-500/20 flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download w-4 h-4" aria-hidden="true"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg><span>⚡ 立即安裝到桌面 / 手機</span></button></div></div></div><div class="relative space-y-2"><div class="flex items-center justify-between text-xs"><label class="font-medium text-slate-300 flex items-center space-x-1.5"><span class="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[10px] flex items-center justify-center font-bold">1</span><span>貼上用戶 LINE / Email 傳來的「設備特徵碼」：</span></label><button type="button" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-mono underline cursor-pointer flex items-center space-x-1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone w-3 h-3" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg><span>帶入左側模擬手機 (DEV-8F92-K3)</span></button></div><div class="flex gap-2"><input placeholder="例如: DEV-8F92-K3 或 DEV-9K2A-4F8X" class="flex-1 bg-slate-950/90 border border-slate-700 focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(6,182,212,0.25)] rounded-xl px-3.5 py-2.5 font-mono text-cyan-200 font-bold tracking-wider text-sm outline-none transition-all placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-sans" type="text" value="DEV-8F92-K3"><button type="button" class="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all cursor-pointer shrink-0 flex items-center space-x-1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-4 h-4" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg><span>計算通關密碼</span></button></div></div><div class="text-[11px] text-slate-400 bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 space-y-1"><div class="font-bold text-slate-300">💡 作者實戰提示：</div><ul class="list-disc list-inside space-y-0.5 text-slate-400"><li><strong>一機一密碼</strong>：此密碼經由演算法與用戶特徵碼綁定，換到別人的手機輸入會無效。</li><li><strong>免架設伺服器</strong>：演算法純前端離線運算，任何時候有人敲您 LINE，您打開此算號器貼上特徵碼即可秒回！</li><li><strong>通用測試金鑰</strong>：如果不想針對特徵碼算號，您隨時回傳通用密碼 <code class="bg-slate-800 text-cyan-300 px-1 rounded font-mono">8K9P-4X2M</code> 或 <code class="bg-slate-800 text-cyan-300 px-1 rounded font-mono">739201</code> 也保證都能通關。</li></ul></div></div><div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col space-y-5"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100"><div class="flex items-center space-x-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key w-5 h-5" aria-hidden="true"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"></path><path d="m21 2-9.6 9.6"></path><circle cx="7.5" cy="15.5" r="5.5"></circle></svg></div><div><h2 class="text-base font-bold text-slate-900">隨機動態通關密碼發行中心 (Issuer Console)</h2><p class="text-xs text-slate-500">模擬管理端程式：即時派發「隨機、非固定、可綁定設備」之通關驗證碼</p></div></div><div class="flex items-center space-x-2 text-xs"><span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">有效可用：<strong>2</strong></span><span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">已通關核銷：<strong>0</strong></span><span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">已作廢/過期：<strong>1</strong></span></div></div><form class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4"><div class="flex items-center justify-between"><h3 class="text-xs font-bold text-slate-800 flex items-center space-x-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-4 h-4 text-indigo-600" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg><span>生成全新動態隨機密碼</span></h3><span class="text-[11px] text-slate-500">隨機生成演算法：CSPRNG 加密安全偽隨機數</span></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs"><div><label class="block text-slate-600 font-medium mb-1">密碼格式與長度</label><div class="flex space-x-2"><select class="w-1/2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-indigo-500"><option value="6">6 位數</option><option value="8">8 位數</option><option value="10">10 位數</option></select><select class="w-1/2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-indigo-500"><option value="alphanumeric">英數混合 (如 8K9P-4X)</option><option value="digits">純數字 (如 948271)</option></select></div></div><div><label class="block text-slate-600 font-medium mb-1">授權與綁定模式</label><select class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-indigo-500"><option value="device_bound">一機一碼綁定（最安全）</option><option value="cloud_otp">通用一次性動態碼 (OTP)</option><option value="totp_dynamic">離線時間動態碼 (TOTP)</option></select></div><div><label class="block text-slate-600 font-medium mb-1">有效期限</label><select class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-indigo-500"><option value="10">10 分鐘內有效 (防外流)</option><option value="120">2 小時內有效</option><option value="1440">24 小時內有效 (推薦)</option><option value="10080">7 天內有效</option><option value="never">永久有效 (直到核銷)</option></select></div><div><label class="block text-slate-600 font-medium mb-1">最大通關次數</label><select class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-indigo-500"><option value="1">單次通關即作廢 (1次)</option><option value="3">可通關 3 台設備</option><option value="5">可通關 5 台設備</option></select></div></div><div class="pt-2 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"><div class="flex items-center space-x-2"><input id="bindCurrent" class="rounded text-indigo-600 focus:ring-indigo-500" type="checkbox" checked=""><label for="bindCurrent" class="text-slate-700 font-medium cursor-pointer">直接鎖定左側模擬手機設備：<span class="font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded ml-1">DEV-8F92-K3</span></label></div></div><div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2"><div class="w-full sm:w-1/2 flex items-center space-x-2 text-xs"><span class="text-slate-500 shrink-0">授權備註：</span><input placeholder="例：發放給測試人員 A、業務展示機" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 text-xs focus:outline-indigo-500" type="text" value="首次分發授權"></div><button type="submit" class="w-full sm:w-auto px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-sm transition-colors cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus w-4 h-4" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg><span>立即生成隨機密碼 (Generate)</span></button></div></form><div class="space-y-3"><div class="flex items-center justify-between text-xs text-slate-600"><h3 class="font-bold text-slate-800">已派發之隨機通關密碼池 (3)</h3><span class="text-[11px] text-slate-500">支持一鍵複製或發送至模擬手機快速通關</span></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium"><tr><th class="py-2.5 px-3">通關密碼</th><th class="py-2.5 px-3">模式 / 綁定設備</th><th class="py-2.5 px-3">使用情況</th><th class="py-2.5 px-3">到期時間</th><th class="py-2.5 px-3">狀態</th><th class="py-2.5 px-3 text-right">操作</th></tr></thead><tbody class="divide-y divide-slate-100"><tr class="hover:bg-slate-50/80 transition-colors"><td class="py-2.5 px-3"><div class="flex items-center space-x-2"><span class="font-mono font-bold text-sm text-slate-900 tracking-wider">8K9P-4X2M</span><button type="button" class="text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer p-0.5" title="複製密碼"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button></div><p class="text-[10px] text-slate-400 mt-0.5">首次分發：已鎖定左側模擬手機</p></td><td class="py-2.5 px-3"><div class="space-y-0.5"><span class="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">一機一碼</span><p class="text-[11px] font-mono text-slate-600">鎖定: DEV-8F92-K3<span class="text-[10px] text-indigo-600 font-sans ml-1">(此模擬機)</span></p></div></td><td class="py-2.5 px-3 font-mono text-slate-700">0 / 1 次</td><td class="py-2.5 px-3 text-slate-500"><span class="">下午04:49<span class="text-[10px] text-slate-400 block">9/17</span></span></td><td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium">待通關使用</span></td><td class="py-2.5 px-3 text-right"><div class="flex items-center justify-end space-x-1.5"><button type="button" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[11px] font-medium flex items-center space-x-1 transition-colors cursor-pointer" title="填入左側模擬手機進行測試"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send w-3 h-3" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg><span>填入手機測試</span></button><button type="button" class="p-1 text-slate-400 hover:text-amber-600 transition-colors cursor-pointer" title="立即註銷/作廢"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban w-3.5 h-3.5" aria-hidden="true"><path d="M4.929 4.929 19.07 19.071"></path><circle cx="12" cy="12" r="10"></circle></svg></button><button type="button" class="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer" title="刪除紀錄"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 lucide-trash-2 w-3.5 h-3.5" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div></td></tr><tr class="hover:bg-slate-50/80 transition-colors"><td class="py-2.5 px-3"><div class="flex items-center space-x-2"><span class="font-mono font-bold text-sm text-slate-900 tracking-wider">739201</span><button type="button" class="text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer p-0.5" title="複製密碼"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button></div><p class="text-[10px] text-slate-400 mt-0.5">通用 6 位動態 OTP (不限設備)</p></td><td class="py-2.5 px-3"><div class="space-y-0.5"><span class="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">通用 OTP</span><p class="text-[11px] text-slate-400">不限設備</p></div></td><td class="py-2.5 px-3 font-mono text-slate-700">0 / 1 次</td><td class="py-2.5 px-3 text-slate-500"><span class="">下午06:49<span class="text-[10px] text-slate-400 block">9/16</span></span></td><td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium">待通關使用</span></td><td class="py-2.5 px-3 text-right"><div class="flex items-center justify-end space-x-1.5"><button type="button" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[11px] font-medium flex items-center space-x-1 transition-colors cursor-pointer" title="填入左側模擬手機進行測試"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send w-3 h-3" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg><span>填入手機測試</span></button><button type="button" class="p-1 text-slate-400 hover:text-amber-600 transition-colors cursor-pointer" title="立即註銷/作廢"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban w-3.5 h-3.5" aria-hidden="true"><path d="M4.929 4.929 19.07 19.071"></path><circle cx="12" cy="12" r="10"></circle></svg></button><button type="button" class="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer" title="刪除紀錄"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 lucide-trash-2 w-3.5 h-3.5" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div></td></tr><tr class="hover:bg-slate-50/80 transition-colors"><td class="py-2.5 px-3"><div class="flex items-center space-x-2"><span class="font-mono font-bold text-sm text-slate-900 tracking-wider">EXPIRED-99</span><button type="button" class="text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer p-0.5" title="複製密碼"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button></div><p class="text-[10px] text-slate-400 mt-0.5">測試用已過期密碼</p></td><td class="py-2.5 px-3"><div class="space-y-0.5"><span class="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">通用 OTP</span><p class="text-[11px] text-slate-400">不限設備</p></div></td><td class="py-2.5 px-3 font-mono text-slate-700">0 / 1 次</td><td class="py-2.5 px-3 text-slate-500"><span class="text-rose-500 font-medium">下午04:39<span class="text-[10px] text-slate-400 block">9/16</span></span></td><td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">已過期</span></td><td class="py-2.5 px-3 text-right"><div class="flex items-center justify-end space-x-1.5"><button type="button" class="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer" title="刪除紀錄"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 lucide-trash-2 w-3.5 h-3.5" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div></td></tr></tbody></table></div></div></div></div></div></div></main><footer class="bg-white border-t border-slate-200 mt-8 py-4 text-center text-xs text-slate-500"><p>APK 首次啟動隨機通關密碼系統設計室 • 採用 Android First-Launch Intercept &amp; EncryptedSharedPreferences 規範</p></footer></div></div>
-    
+    }
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+    /* Hide scrollbars for app-like feeling */
+    ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+    .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 flex justify-center min-h-screen">
   
+  <!-- APP SHELL CONTAINER (Responsive: Fullscreen on mobile, Max-w-md on desktop) -->
+  <div id="app-container" class="w-full max-w-md min-h-screen bg-white flex flex-col shadow-2xl relative overflow-hidden">
+    
+    <!-- TOP HEADER -->
+    <header class="bg-gradient-to-r from-emerald-700 via-teal-700 to-slate-900 text-white px-4 py-3.5 flex items-center justify-between shrink-0 shadow-md">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-emerald-300 font-black text-lg">
+          📒
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+            <span>記帳記事 Pro</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              PRO
+            </span>
+          </h1>
+          <div class="flex items-center gap-1.5 text-[10px] text-emerald-200/90">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>離線本機儲存 · 自動備份</span>
+          </div>
+        </div>
+      </div>
+      <button id="add-btn" class="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white flex items-center justify-center font-bold text-xl shadow-md transition-transform active:scale-95 cursor-pointer">
+        +
+      </button>
+    </header>
+
+    <!-- DATE & LUNAR BANNER -->
+    <div id="date-banner" class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between text-xs border-b border-slate-800">
+      <div class="flex items-center space-x-2 font-medium">
+        <span class="text-emerald-400">📅</span>
+        <span id="current-solar-date">2026/09/16 (三)</span>
+      </div>
+      <div class="text-[11px] text-amber-300 font-serif" id="current-lunar-date">
+        農曆八月初六
+      </div>
+    </div>
+
+    <!-- MAIN SCROLLABLE CONTENT AREA -->
+    <main id="tab-content" class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+      <!-- Injected via JavaScript based on Active Tab -->
+    </main>
+
+    <!-- BOTTOM 3-TAB NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-around z-20 shadow-lg">
+      <button id="tab-btn-accounting" class="flex flex-col items-center gap-0.5 text-teal-600 font-bold transition-transform active:scale-95">
+        <span class="text-lg">👛</span>
+        <span class="text-[11px]">記帳管理</span>
+      </button>
+      <button id="tab-btn-notes" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800 transition-transform active:scale-95 relative">
+        <span class="text-lg">📝</span>
+        <span class="text-[11px]">記事警示</span>
+        <span id="note-badge" class="hidden absolute -top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
+      </button>
+      <button id="tab-btn-backup" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800 transition-transform active:scale-95">
+        <span class="text-lg">🛡️</span>
+        <span class="text-[11px]">備份中心</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL FOR ADDING/EDITING EXPENSE OR NOTE -->
+  <div id="modal-container" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div id="modal-box" class="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+      <!-- Modal Content Dynamic -->
+    </div>
+  </div>
+
+  <!-- APP JAVASCRIPT LOGIC -->
+  <script>
+    (function() {
+      // 1. Initial State & Persistent Keys
+      var STORAGE_EXPENSES_KEY = 'pure_app_expenses_v1';
+      var STORAGE_NOTES_KEY = 'pure_app_notes_v1';
+
+      var defaultExpenses = [
+        { id: 'exp-1', type: 'expense', category: '餐飲飲食', amount: 120, date: '2026-09-16', note: '午餐牛肉麵 + 滷蛋' },
+        { id: 'exp-2', type: 'expense', category: '日常購物', amount: 350, date: '2026-09-15', note: '全聯生活用品' },
+        { id: 'exp-3', type: 'income', category: '薪資收入', amount: 52000, date: '2026-09-05', note: '九月份本薪匯入' },
+        { id: 'exp-4', type: 'expense', category: '交通出行', amount: 80, date: '2026-09-14', note: '捷運儲值' }
+      ];
+
+      var defaultNotes = [
+        { id: 'note-1', title: '繳納自來水與天然氣帳單', content: '記得於 20 日前線上繳款完畢，避免產生滯納金。', date: '2026-09-18', tag: '帳單', priority: 'high' },
+        { id: 'note-2', title: '每週車輛保養檢查', content: '五油三水檢查、輪胎胎壓確認。', date: '2026-09-22', tag: '生活', priority: 'normal' }
+      ];
+
+      var expenses = [];
+      try {
+        var savedExp = localStorage.getItem(STORAGE_EXPENSES_KEY);
+        expenses = savedExp ? JSON.parse(savedExp) : defaultExpenses;
+      } catch(e) { expenses = defaultExpenses; }
+
+      var notes = [];
+      try {
+        var savedNotes = localStorage.getItem(STORAGE_NOTES_KEY);
+        notes = savedNotes ? JSON.parse(savedNotes) : defaultNotes;
+      } catch(e) { notes = defaultNotes; }
+
+      var activeTab = 'accounting'; // 'accounting' | 'notes' | 'backup'
+
+      function saveExpenses() {
+        localStorage.setItem(STORAGE_EXPENSES_KEY, JSON.stringify(expenses));
+      }
+      function saveNotes() {
+        localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+      }
+
+      // Date update
+      var now = new Date();
+      var solarStr = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
+      var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+      document.getElementById('current-solar-date').textContent = solarStr + ' (' + dayNames[now.getDay()] + ')';
+
+      // Navigation handler
+      function setTab(tab) {
+        activeTab = tab;
+        var btnAcc = document.getElementById('tab-btn-accounting');
+        var btnNotes = document.getElementById('tab-btn-notes');
+        var btnBackup = document.getElementById('tab-btn-backup');
+
+        btnAcc.className = 'flex flex-col items-center gap-0.5 ' + (tab === 'accounting' ? 'text-teal-600 font-bold scale-105' : 'text-slate-500 hover:text-slate-800');
+        btnNotes.className = 'flex flex-col items-center gap-0.5 relative ' + (tab === 'notes' ? 'text-teal-600 font-bold scale-105' : 'text-slate-500 hover:text-slate-800');
+        btnBackup.className = 'flex flex-col items-center gap-0.5 ' + (tab === 'backup' ? 'text-teal-600 font-bold scale-105' : 'text-slate-500 hover:text-slate-800');
+
+        renderContent();
+      }
+
+      document.getElementById('tab-btn-accounting').onclick = function() { setTab('accounting'); };
+      document.getElementById('tab-btn-notes').onclick = function() { setTab('notes'); };
+      document.getElementById('tab-btn-backup').onclick = function() { setTab('backup'); };
+
+      // Render tab views
+      function renderContent() {
+        var container = document.getElementById('tab-content');
+        if (activeTab === 'accounting') {
+          renderAccountingView(container);
+        } else if (activeTab === 'notes') {
+          renderNotesView(container);
+        } else if (activeTab === 'backup') {
+          renderBackupView(container);
+        }
+      }
+
+      function renderAccountingView(container) {
+        var totalIncome = 0;
+        var totalExpense = 0;
+        expenses.forEach(function(e) {
+          if (e.type === 'income') totalIncome += Number(e.amount);
+          else totalExpense += Number(e.amount);
+        });
+        var balance = totalIncome - totalExpense;
+
+        var html = '' +
+          '<div class="bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-4 shadow-md space-y-3">' +
+            '<div class="text-xs text-emerald-100 font-medium">當前收支總結餘</div>' +
+            '<div class="text-3xl font-black tracking-tight">NT$ ' + balance.toLocaleString() + '</div>' +
+            '<div class="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-500/30 text-xs">' +
+              '<div><span class="text-emerald-200">總收入：</span><strong class="text-emerald-100 font-mono">+' + totalIncome.toLocaleString() + '</strong></div>' +
+              '<div><span class="text-emerald-200">總支出：</span><strong class="text-emerald-100 font-mono">-' + totalExpense.toLocaleString() + '</strong></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="space-y-2">' +
+            '<div class="flex items-center justify-between">' +
+              '<h3 class="font-bold text-xs text-slate-800">最新帳目明細 (' + expenses.length + ' 筆)</h3>' +
+            '</div>' +
+            '<div class="space-y-2">';
+
+        if (expenses.length === 0) {
+          html += '<div class="text-center py-8 text-slate-400 text-xs">目前尚無帳目記錄，點擊右上角「+」開始記帳！</div>';
+        } else {
+          expenses.forEach(function(item) {
+            var isInc = item.type === 'income';
+            html += '' +
+              '<div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">' +
+                '<div class="flex items-center space-x-3">' +
+                  '<div class="w-8 h-8 rounded-lg ' + (isInc ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700') + ' flex items-center justify-center text-sm font-bold">' +
+                    (isInc ? '入' : '支') +
+                  '</div>' +
+                  '<div>' +
+                    '<div class="font-bold text-xs text-slate-900">' + item.category + '</div>' +
+                    '<div class="text-[10px] text-slate-500">' + item.date + (item.note ? ' · ' + item.note : '') + '</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="text-right">' +
+                  '<div class="font-mono font-bold text-xs ' + (isInc ? 'text-emerald-600' : 'text-rose-600') + '">' +
+                    (isInc ? '+' : '-') + Number(item.amount).toLocaleString() +
+                  '</div>' +
+                  '<button onclick="window.deleteExpense(\'' + item.id + '\')" class="text-[10px] text-slate-400 hover:text-rose-500">刪除</button>' +
+                '</div>' +
+              '</div>';
+          });
+        }
+
+        html += '</div></div>';
+        container.innerHTML = html;
+      }
+
+      function renderNotesView(container) {
+        var html = '' +
+          '<div class="space-y-3">' +
+            '<div class="flex items-center justify-between">' +
+              '<h3 class="font-bold text-xs text-slate-800">代辦備忘與重要警示 (' + notes.length + ' 則)</h3>' +
+            '</div>' +
+            '<div class="space-y-2.5">';
+
+        if (notes.length === 0) {
+          html += '<div class="text-center py-8 text-slate-400 text-xs">目前無記事，點擊右上角「+」新增備忘！</div>';
+        } else {
+          notes.forEach(function(n) {
+            html += '' +
+              '<div class="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2">' +
+                '<div class="flex items-center justify-between">' +
+                  '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">' + (n.tag || '記事') + '</span>' +
+                  '<div class="flex items-center gap-2">' +
+                    '<span class="text-[10px] text-slate-400 font-mono">' + n.date + '</span>' +
+                    '<button onclick="window.deleteNote(\'' + n.id + '\')" class="text-[10px] text-slate-400 hover:text-rose-500">刪除</button>' +
+                  '</div>' +
+                '</div>' +
+                '<h4 class="font-bold text-xs text-slate-900">' + n.title + '</h4>' +
+                '<p class="text-[11px] text-slate-600 leading-relaxed">' + n.content + '</p>' +
+              '</div>';
+          });
+        }
+
+        html += '</div></div>';
+        container.innerHTML = html;
+      }
+
+      function renderBackupView(container) {
+        var html = '' +
+          '<div class="space-y-4">' +
+            '<div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-emerald-950 space-y-2">' +
+              '<h3 class="font-bold text-xs flex items-center gap-1.5">' +
+                '<span>🛡️ 本機資料快照與離線安全防護</span>' +
+              '</h3>' +
+              '<p class="text-[11px] text-emerald-800 leading-relaxed">' +
+                '所有資料均安全存放在您的手機本機空間，斷網離線皆可完整使用。更換新手機或清除快取前，請先匯出備份檔案。' +
+              '</p>' +
+            '</div>' +
+
+            '<div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-xs">' +
+              '<h4 class="font-bold text-xs text-slate-900">資料手動備份與跨設備還原</h4>' +
+              '<div class="grid grid-cols-2 gap-2">' +
+                '<button onclick="window.exportDataJson()" class="bg-teal-600 hover:bg-teal-500 text-white py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1 shadow-xs cursor-pointer">' +
+                  '<span>匯出備份 JSON</span>' +
+                '</button>' +
+                '<label class="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1 cursor-pointer">' +
+                  '<span>匯入還原檔</span>' +
+                  '<input type="file" accept=".json" onchange="window.importDataJson(event)" class="hidden" />' +
+                '</label>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="bg-stone-50 border border-stone-200 rounded-2xl p-4 space-y-2 text-stone-600 text-xs">' +
+              '<div class="font-bold text-stone-800">軟體資訊</div>' +
+              '<div>版本：純淨專業版 (完全離線單機版)</div>' +
+              '<div>作者：Cbjm (LINE: bojen010)</div>' +
+            '</div>' +
+          '</div>';
+
+        container.innerHTML = html;
+      }
+
+      // Global helper actions
+      window.deleteExpense = function(id) {
+        if (!confirm('確定刪除此筆記錄？')) return;
+        expenses = expenses.filter(function(e) { return e.id !== id; });
+        saveExpenses();
+        renderContent();
+      };
+
+      window.deleteNote = function(id) {
+        if (!confirm('確定刪除此記事？')) return;
+        notes = notes.filter(function(n) { return n.id !== id; });
+        saveNotes();
+        renderContent();
+      };
+
+      window.exportDataJson = function() {
+        var data = {
+          version: '1.0',
+          appName: '記帳記事 Pro',
+          exportTime: new Date().toISOString(),
+          expenses: expenses,
+          notes: notes
+        };
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '記帳記事 Pro_完整資料備份_' + (new Date().toISOString().split('T')[0]) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      window.importDataJson = function(evt) {
+        var file = evt.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            var parsed = JSON.parse(e.target.result);
+            if (parsed.expenses && Array.isArray(parsed.expenses)) {
+              expenses = parsed.expenses;
+              saveExpenses();
+            }
+            if (parsed.notes && Array.isArray(parsed.notes)) {
+              notes = parsed.notes;
+              saveNotes();
+            }
+            alert('✓ 備份資料還原成功！');
+            renderContent();
+          } catch(err) {
+            alert('檔案格式錯誤，無法解析！');
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      // Modal Add New Item
+      var modalContainer = document.getElementById('modal-container');
+      var modalBox = document.getElementById('modal-box');
+      document.getElementById('add-btn').onclick = function() {
+        if (activeTab === 'notes') {
+          openAddNoteModal();
+        } else {
+          openAddExpenseModal();
+        }
+      };
+
+      function openAddExpenseModal() {
+        modalBox.innerHTML = '' +
+          '<div class="space-y-4">' +
+            '<div class="flex items-center justify-between border-b border-slate-100 pb-2">' +
+              '<h3 class="font-bold text-sm text-slate-800">新增帳目記錄</h3>' +
+              '<button id="modal-close-btn" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">✕</button>' +
+            '</div>' +
+            '<div class="grid grid-cols-2 gap-2">' +
+              '<button type="button" id="type-exp" class="py-2 bg-rose-600 text-white rounded-xl text-xs font-bold cursor-pointer">支出</button>' +
+              '<button type="button" id="type-inc" class="py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold cursor-pointer">收入</button>' +
+            '</div>' +
+            '<div>' +
+              '<label class="text-[11px] font-bold text-slate-600 block mb-1">金額 (NT$)</label>' +
+              '<input id="inp-amount" type="number" placeholder="0" class="w-full border border-slate-300 rounded-xl p-2.5 text-base font-mono font-bold" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="text-[11px] font-bold text-slate-600 block mb-1">類別</label>' +
+              '<select id="inp-category" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-medium">' +
+                '<option>餐飲飲食</option><option>日常購物</option><option>交通出行</option><option>娛樂休閒</option><option>醫療保健</option><option>薪資收入</option><option>其他雜支</option>' +
+              '</select>' +
+            '</div>' +
+            '<div>' +
+              '<label class="text-[11px] font-bold text-slate-600 block mb-1">備註說明</label>' +
+              '<input id="inp-note" type="text" placeholder="例如：跟同事聚餐" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs" />' +
+            '</div>' +
+            '<button id="save-exp-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm shadow-md cursor-pointer">' +
+              '儲存記錄' +
+            '</button>' +
+          '</div>';
+
+        modalContainer.classList.remove('hidden');
+        var selectedType = 'expense';
+
+        document.getElementById('type-exp').onclick = function() {
+          selectedType = 'expense';
+          this.className = 'py-2 bg-rose-600 text-white rounded-xl text-xs font-bold cursor-pointer';
+          document.getElementById('type-inc').className = 'py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold cursor-pointer';
+        };
+        document.getElementById('type-inc').onclick = function() {
+          selectedType = 'income';
+          this.className = 'py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold cursor-pointer';
+          document.getElementById('type-exp').className = 'py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold cursor-pointer';
+        };
+
+        document.getElementById('modal-close-btn').onclick = function() {
+          modalContainer.classList.add('hidden');
+        };
+
+        document.getElementById('save-exp-btn').onclick = function() {
+          var amt = document.getElementById('inp-amount').value;
+          if (!amt || Number(amt) <= 0) {
+            alert('請輸入有效金額！');
+            return;
+          }
+          var cat = document.getElementById('inp-category').value;
+          var note = document.getElementById('inp-note').value;
+          var item = {
+            id: 'exp-' + Date.now(),
+            type: selectedType,
+            category: cat,
+            amount: Number(amt),
+            date: new Date().toISOString().split('T')[0],
+            note: note
+          };
+          expenses.unshift(item);
+          saveExpenses();
+          modalContainer.classList.add('hidden');
+          renderContent();
+        };
+      }
+
+      function openAddNoteModal() {
+        modalBox.innerHTML = '' +
+          '<div class="space-y-4">' +
+            '<div class="flex items-center justify-between border-b border-slate-100 pb-2">' +
+              '<h3 class="font-bold text-sm text-slate-800">新增記事備忘</h3>' +
+              '<button id="modal-close-btn" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">✕</button>' +
+            '</div>' +
+            '<div>' +
+              '<label class="text-[11px] font-bold text-slate-600 block mb-1">記事標題</label>' +
+              '<input id="inp-note-title" type="text" placeholder="例如：定期繳水費" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-bold" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="text-[11px] font-bold text-slate-600 block mb-1">分類標籤</label>' +
+              '<input id="inp-note-tag" type="text" placeholder="帳單 / 生活 / 工作" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="text-[11px] font-bold text-slate-600 block mb-1">詳細內容</label>' +
+              '<textarea id="inp-note-content" rows="3" placeholder="請填寫詳細說明..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs"></textarea>' +
+            '</div>' +
+            '<button id="save-note-btn" class="w-full bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-xl font-bold text-sm shadow-md cursor-pointer">' +
+              '儲存記事' +
+            '</button>' +
+          '</div>';
+
+        modalContainer.classList.remove('hidden');
+
+        document.getElementById('modal-close-btn').onclick = function() {
+          modalContainer.classList.add('hidden');
+        };
+
+        document.getElementById('save-note-btn').onclick = function() {
+          var title = document.getElementById('inp-note-title').value;
+          if (!title) {
+            alert('請輸入記事標題！');
+            return;
+          }
+          var tag = document.getElementById('inp-note-tag').value || '備忘';
+          var content = document.getElementById('inp-note-content').value;
+          var item = {
+            id: 'note-' + Date.now(),
+            title: title,
+            content: content,
+            tag: tag,
+            date: new Date().toISOString().split('T')[0]
+          };
+          notes.unshift(item);
+          saveNotes();
+          modalContainer.classList.add('hidden');
+          renderContent();
+        };
+      }
+
+      // Initial Render
+      renderContent();
+    })();
+  </script>
 
 
 
+
+ <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
+<!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
+<div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="background:#ffffff; width:100%; max-width:380px; border-radius:24px; padding:24px 20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
+    <!-- 頂部標題列 -->
+    <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
+      <div style="width:40px; height:40px; border-radius:12px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; shrink:0;">
+        🛡️
+      </div>
+      <div>
+        <div style="font-size:15px; font-weight:800; color:#0f172a; line-height:1.2;">首次啟動授權認證</div>
+        <div style="font-size:10px; font-family:monospace; color:#64748b; margin-top:2px;">OFFICIAL ACCESS VERIFICATION</div>
+      </div>
+    </div>
+
+    <!-- 作者聯繫資訊 -->
+    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:14px; padding:12px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#92400e; margin-bottom:8px;">
+        <span>軟體作者：Cbjm</span>
+        <span style="font-size:10px; background:#fde68a; color:#78350f; padding:2px 8px; border-radius:9999px;">正版授權</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button id="cbjm-btn-line" type="button" style="background:#059669; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+          加 LINE 索取密碼
+        </button>
+        <button id="cbjm-btn-email" type="button" style="background:#334155; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+          發郵件索取
+        </button>
+      </div>
+    </div>
+
+    <!-- 本機特徵碼顯示 (一機一碼) -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:6px;">
+        <span>本機設備特徵碼 (一機一碼)</span>
+        <button id="cbjm-btn-copy" type="button" style="background:none; border:none; color:#d97706; font-size:11px; font-weight:bold; cursor:pointer; text-decoration:underline;">
+          [點擊複製]
+        </button>
+      </div>
+      <div id="cbjm-display-device-id" style="font-family:monospace; font-weight:800; font-size:16px; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:8px; text-align:center; color:#0f172a; letter-spacing:1px;">
+        DEV-XXXX-XX
+      </div>
+    </div>
+
+    <!-- 通關密碼輸入與驗證 -->
+    <div style="margin-bottom:14px;">
+      <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入通關授權碼：</label>
+      <div style="display:flex; gap:8px;">
+        <input id="cbjm-input-passcode" type="text" placeholder="例如: 8K9P-4X2M" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:15px; text-align:center; text-transform:uppercase; outline:none; box-sizing:border-box;" />
+        <button id="cbjm-btn-verify" type="button" style="background:#d97706; color:#ffffff; border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:bold; cursor:pointer; shrink:0; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
+          驗證解鎖
+        </button>
+      </div>
+      <div id="cbjm-verify-msg" style="display:none; font-size:11px; font-weight:bold; text-align:center; margin-top:8px;"></div>
+    </div>
+
+    <div style="font-size:10px; color:#94a3b8; text-align:center; line-height:1.4;">
+      ✓ 首次驗證成功後本機永久放行，後續使用不再出現提示。
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var AUTH_STORAGE_KEY = 'cbjm_app_passcode_unlocked_v1';
+  var DEVICE_STORAGE_KEY = 'cbjm_app_device_id_v1';
+  var SALT = 'CBJM_SECURE_2026';
+
+  // 1. 檢查是否已經解鎖過
+  try {
+    if (localStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
+      return; // 已授權，完全不顯示門禁
+    }
+  } catch(e) {}
+
+  // 2. 獲取或產生專屬設備號 (一機一碼)
+  var deviceId = '';
+  try {
+    deviceId = localStorage.getItem(DEVICE_STORAGE_KEY);
+  } catch(e) {}
+
+  if (!deviceId) {
+    var chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    var p1 = '', p2 = '';
+    for (var i = 0; i < 4; i++) p1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (var j = 0; j < 2; j++) p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    deviceId = 'DEV-' + p1 + '-' + p2;
+    try {
+      localStorage.setItem(DEVICE_STORAGE_KEY, deviceId);
+    } catch(e) {}
+  }
+
+  // 3. 顯示門禁遮罩
+  var overlay = document.getElementById('cbjm-universal-gate-overlay');
+  var devDisplay = document.getElementById('cbjm-display-device-id');
+  if (overlay && devDisplay) {
+    devDisplay.textContent = deviceId;
+    overlay.style.display = 'flex';
+  }
+
+  // 4. 複製按鈕
+  var copyBtn = document.getElementById('cbjm-btn-copy');
+  if (copyBtn) {
+    copyBtn.onclick = function() {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(deviceId);
+      }
+      alert('已複製本機特徵碼：' + deviceId);
+    };
+  }
+
+  // 5. LINE 索取
+  var lineBtn = document.getElementById('cbjm-btn-line');
+  if (lineBtn) {
+    lineBtn.onclick = function() {
+      var msg = '作者 Cbjm 您好，我的軟體特徵碼為：' + deviceId;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(msg);
+      }
+      alert('已複製特徵碼！正在引導前往 LINE (bojen010)');
+      window.open('https://line.me/ti/p/~bojen010', '_blank');
+    };
+  }
+
+  // 6. 郵件索取
+  var emailBtn = document.getElementById('cbjm-btn-email');
+  if (emailBtn) {
+    emailBtn.onclick = function() {
+      var subject = encodeURIComponent('[專用軟體] 授權通關密碼申請 (' + deviceId + ')');
+      var body = encodeURIComponent('作者 Cbjm 您好：\n\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！');
+      window.location.href = 'mailto:bojen010@gmail.com?subject=' + subject + '&body=' + body;
+    };
+  }
+
+  // 7. 內建安全雜湊換算演算法
+  function simpleHash(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  }
+
+  function computeValidPasscode(devId) {
+    var clean = (devId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    var h1 = simpleHash(clean + '_' + SALT);
+    var h2 = simpleHash(SALT + '_' + clean + '_REVERSE');
+    var CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    var p1 = '', p2 = '';
+    var t1 = h1, t2 = h2;
+    for (var i = 0; i < 4; i++) {
+      p1 += CHARS.charAt(t1 % CHARS.length);
+      t1 = Math.floor(t1 / CHARS.length) + (i * 7);
+    }
+    for (var j = 0; j < 4; j++) {
+      p2 += CHARS.charAt(t2 % CHARS.length);
+      t2 = Math.floor(t2 / CHARS.length) + (j * 13);
+    }
+    return p1 + '-' + p2;
+  }
+
+  // 8. 驗證輸入邏輯
+  var verifyBtn = document.getElementById('cbjm-btn-verify');
+  var inputEl = document.getElementById('cbjm-input-passcode');
+  var msgEl = document.getElementById('cbjm-verify-msg');
+
+  if (verifyBtn && inputEl && msgEl) {
+    verifyBtn.onclick = function() {
+      var val = (inputEl.value || '').trim().toUpperCase();
+      var correct = computeValidPasscode(deviceId);
+      
+      // 支援計算密碼與通用萬用密碼
+      if (val === correct || val === '8K9P-4X2M' || val === '739201') {
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#059669';
+        msgEl.textContent = '✓ 認證成功！正在為您開啟軟體...';
+        try {
+          localStorage.setItem(AUTH_STORAGE_KEY, 'true');
+        } catch(e) {}
+        setTimeout(function() {
+          overlay.style.display = 'none';
+        }, 500);
+      } else {
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#e11d48';
+        msgEl.textContent = '✕ 密碼錯誤，請重新確認或聯繫作者！';
+      }
+    };
+  }
+})();
+</script>
+
+
+
+
+<!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
 </body>
 </html>
