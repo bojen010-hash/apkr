@@ -491,25 +491,25 @@
         html += '    <div class="text-5xl sm:text-[56px] font-black font-mono tracking-tight text-white leading-none">' + formattedBalance + '</div>';
         html += '  </div>';
 
-        html += '  <div class="grid grid-cols-2 gap-4 pt-1">';
-        html += '    <div class="flex items-center gap-3">';
-        html += '      <div class="w-9 h-9 rounded-full bg-[#0d2e25] text-[#22c55e] flex items-center justify-center shrink-0">';
-        html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+        html += '  <div class="grid grid-cols-2 gap-2.5 sm:gap-3 pt-2">';
+        html += '    <div class="min-w-0 bg-white/[0.04] rounded-2xl p-2.5 sm:p-3 border border-white/[0.06] flex flex-col justify-center">';
+        html += '      <div class="flex items-center gap-1.5 text-xs text-slate-300 font-medium mb-1">';
+        html += '        <span class="w-5 h-5 rounded-full bg-[#0d2e25] text-[#22c55e] flex items-center justify-center shrink-0 shadow-xs">';
+        html += '          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+        html += '        </span>';
+        html += '        <span class="truncate">總收入</span>';
         html += '      </div>';
-        html += '      <div>';
-        html += '        <div class="text-xs text-slate-300 font-medium">總收入</div>';
-        html += '        <div class="text-lg sm:text-xl font-bold font-mono text-[#22c55e] tracking-tight">+$' + totalIncome.toLocaleString() + '</div>';
-        html += '      </div>';
+        html += '      <div class="text-base sm:text-xl font-bold font-mono text-[#22c55e] tracking-tight truncate" title="+$' + totalIncome.toLocaleString() + '">+$' + totalIncome.toLocaleString() + '</div>';
         html += '    </div>';
 
-        html += '    <div class="flex items-center gap-3">';
-        html += '      <div class="w-9 h-9 rounded-full bg-[#3b1728] text-[#f43f5e] flex items-center justify-center shrink-0">';
-        html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+        html += '    <div class="min-w-0 bg-white/[0.04] rounded-2xl p-2.5 sm:p-3 border border-white/[0.06] flex flex-col justify-center">';
+        html += '      <div class="flex items-center gap-1.5 text-xs text-slate-300 font-medium mb-1">';
+        html += '        <span class="w-5 h-5 rounded-full bg-[#3b1728] text-[#f43f5e] flex items-center justify-center shrink-0 shadow-xs">';
+        html += '          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+        html += '        </span>';
+        html += '        <span class="truncate">總支出</span>';
         html += '      </div>';
-        html += '      <div>';
-        html += '        <div class="text-xs text-slate-300 font-medium">總支出</div>';
-        html += '        <div class="text-lg sm:text-xl font-bold font-mono text-[#f43f5e] tracking-tight">-$' + totalExpense.toLocaleString() + '</div>';
-        html += '      </div>';
+        html += '      <div class="text-base sm:text-xl font-bold font-mono text-[#f43f5e] tracking-tight truncate" title="-$' + totalExpense.toLocaleString() + '">-$' + totalExpense.toLocaleString() + '</div>';
         html += '    </div>';
         html += '  </div>';
         html += '</div>';
@@ -1245,7 +1245,6 @@
 
 
 
-
 <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
 <div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
@@ -1452,7 +1451,6 @@
 })();
 </script>
 <!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
-
 
 
 
