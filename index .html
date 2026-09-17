@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>記帳記事 Pro</title>
+
+  <link rel="manifest" href="manifest.json">
+
+  <meta name="theme-color" content="#0e608a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="記帳記事 Pro" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lunar JavaScript CDN for dynamic recalculations -->
+  <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      user-select: none;
+    }
+    ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+    .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+  </style>
+</head>
+<body class="bg-[#f1f5f9] text-slate-900 flex justify-center min-h-screen">
+
+  <!-- APP SHELL CONTAINER (Responsive max-w-md matching phone view) -->
+  <div id="app-container" class="w-full max-w-md min-h-screen bg-[#f8fafc] flex flex-col shadow-2xl relative">
+    
+    <!-- ================= TOP HEADER (#0e608a) ================= -->
+    <header class="bg-[#0e608a] text-white pt-4 pb-3.5 px-4 shadow-md relative shrink-0 border-b border-[#0a4868]/30">
+      <div class="flex items-center justify-between px-1">
+        <div class="flex items-center gap-3">
+          <!-- App Icon Square: glowing frosted petrol blue with wallet -->
+          <div class="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-white shadow-inner shrink-0 text-xl font-bold">
+            👛
+          </div>
+
+          <div>
+            <h1 class="text-lg font-black tracking-tight leading-tight text-white flex flex-col">
+              <span>記帳記事</span>
+              <span class="text-cyan-200 text-base font-bold">Pro</span>
+            </h1>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse"></span>
+              <span class="text-[11px] text-cyan-100 font-medium">自動備份啟用中</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Right Action Icons -->
+        <div class="flex items-center gap-2">
+          <button id="header-bell-btn" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="記事警示">
+            <span class="text-sm">🔔</span>
+            <span id="header-bell-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-bounce">0</span>
+          </button>
+
+          <button id="header-backup-btn" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer" title="備份中心">
+            <span class="text-sm">🛡️</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= MAIN SCROLLABLE CONTENT BODY ================= -->
+    <main id="main-content" class="flex-1 overflow-y-auto px-4 pt-3.5 pb-24 space-y-3.5">
+      <!-- Injected dynamically based on active tab -->
+    </main>
+
+    <!-- ================= FLOATING ACTION BUTTON (+) ================= -->
+    <button id="floating-add-btn" class="fixed bottom-20 right-4 sm:right-[max(1rem,calc(50%-13rem+1rem))] w-14 h-14 rounded-full bg-gradient-to-r from-[#0e608a] to-teal-600 hover:from-[#0a4868] hover:to-teal-700 text-white shadow-xl flex items-center justify-center text-3xl font-bold transition-all active:scale-95 cursor-pointer z-30 border-2 border-white/40">
+      +
+    </button>
+
+    <!-- ================= BOTTOM 3-TAB NAVIGATION ================= -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-2 flex items-center justify-around z-20 shadow-lg">
+      <button id="tab-btn-accounting" class="flex flex-col items-center gap-0.5 text-[#0e608a] font-black transition-all cursor-pointer">
+        <span class="text-xl">👛</span>
+        <span class="text-[11px]">記帳管理</span>
+      </button>
+
+      <button id="tab-btn-notes" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all relative cursor-pointer">
+        <span class="text-xl">📝</span>
+        <span class="text-[11px]">記事警示</span>
+        <span id="nav-note-badge" class="hidden absolute -top-1 right-2 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
+      </button>
+
+      <button id="tab-btn-backup" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all cursor-pointer">
+        <span class="text-xl">🛡️</span>
+        <span class="text-[11px]">備份中心</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ================= MODAL CONTAINER ================= -->
+  <div id="modal-container" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div id="modal-box" class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+      <!-- Injected Dynamically -->
+    </div>
+  </div>
+
+  <!-- ================= CLIENT JAVASCRIPT LOGIC ================= -->
+  <script>
+    (function() {
+      // 1. Initial State & Keys
+      var STORAGE_EXPENSES_KEY = 'pure_app_expenses_v2';
+      var STORAGE_NOTES_KEY = 'pure_app_notes_v2';
+
+      var CATEGORY_COLORS = {
+        '居家日常': '#f43f5e',
+        '生活日用': '#fb7185',
+        '交通出行': '#3b82f6',
+        '其他雜項': '#10b981',
+        '餐飲飲食': '#f59e0b',
+        '休閒娛樂': '#8b5cf6',
+        '醫療保健': '#ec4899',
+        '教育進修': '#06b6d4',
+        '其他支出': '#64748b',
+        '薪資獎金': '#10b981',
+        '投資收益': '#0ea5e9',
+        '副業分潤': '#8b5cf6',
+        '紅包獎金': '#f43f5e',
+        '其他收入': '#64748b'
+      };
+
+      var CATEGORY_ICONS = {
+        '居家日常': '🏠',
+        '生活日用': '🧴',
+        '交通出行': '🚗',
+        '其他雜項': '📦',
+        '餐飲飲食': '🍜',
+        '休閒娛樂': '🎮',
+        '醫療保健': '💊',
+        '教育進修': '📚',
+        '其他支出': '💸',
+        '薪資獎金': '💰',
+        '投資收益': '📈',
+        '副業分潤': '💼',
+        '紅包獎金': '🧧',
+        '其他收入': '💵'
+      };
+
+      var defaultExpenses = [
+  {
+    "id": "exp-1789654785404",
+    "type": "income",
+    "category": "投資收益",
+    "amount": 2000,
+    "date": "2026-09-17",
+    "note": "股利"
+  },
+  {
+    "id": "exp-1789654712126",
+    "type": "expense",
+    "category": "居家日常",
+    "amount": 300,
+    "date": "2026-09-17",
+    "note": "水果"
+  },
+  {
+    "id": "exp-1789615813065",
+    "type": "expense",
+    "category": "生活日用",
+    "amount": 500,
+    "date": "2026-09-17",
+    "note": "買菜"
+  },
+  {
+    "id": "exp-1",
+    "type": "expense",
+    "category": "餐飲飲食",
+    "amount": 100,
+    "date": "2026-09-15",
+    "note": "精緻午餐便當與熱美式"
+  },
+  {
+    "id": "exp-2",
+    "type": "expense",
+    "category": "交通出行",
+    "amount": 55,
+    "date": "2026-09-15",
+    "note": "捷運乘車加值"
+  },
+  {
+    "id": "exp-3",
+    "type": "income",
+    "category": "薪資獎金",
+    "amount": 300,
+    "date": "2026-09-14",
+    "note": "軟體授權獎金分潤"
+  }
+];
+      var defaultNotes = [
+  {
+    "id": "note-1789654898079",
+    "title": "繳牌照稅",
+    "content": "",
+    "tag": "生活",
+    "reminderDate": "2026-09-18",
+    "reminderTime": "09:00",
+    "earlyAlertDays": 1,
+    "priority": "normal",
+    "isCompleted": false,
+    "updatedAt": "2026-09-17 14:21"
+  },
+  {
+    "id": "note-1789486505726",
+    "title": "繳信用卡",
+    "content": "",
+    "tag": "生活",
+    "updatedAt": "2026-09-17 12:53",
+    "reminderDate": "2026-09-16",
+    "reminderTime": "09:00",
+    "earlyAlertDays": 1,
+    "priority": "normal",
+    "isCompleted": false
+  },
+  {
+    "id": "note-1",
+    "title": "門禁系統測試清單",
+    "content": "1. 檢查特徵碼一鍵複製是否正常。\n2. 確認 LINE 與 Email 自動帶出主題文字。\n3. 驗證本機永久放行與舊資料修改功能。",
+    "updatedAt": "2026-09-17 12:53",
+    "tag": "工作",
+    "reminderDate": "2026-09-16",
+    "reminderTime": "09:00",
+    "earlyAlertDays": 1,
+    "priority": "normal",
+    "isCompleted": false
+  },
+  {
+    "id": "note-2",
+    "title": "個人備忘事項",
+    "content": "週末安排備份手機資料與檢查離線算號器功能。",
+    "updatedAt": "2026-09-17 12:53",
+    "tag": "生活",
+    "reminderDate": "2026-09-16",
+    "reminderTime": "09:00",
+    "earlyAlertDays": 1,
+    "priority": "normal",
+    "isCompleted": false
+  }
+];
+
+      var expenses = [];
+      try {
+        var savedExp = localStorage.getItem(STORAGE_EXPENSES_KEY);
+        expenses = savedExp ? JSON.parse(savedExp) : defaultExpenses;
+      } catch (e) { expenses = defaultExpenses; }
+
+      var notes = [];
+      try {
+        var savedNotes = localStorage.getItem(STORAGE_NOTES_KEY);
+        notes = savedNotes ? JSON.parse(savedNotes) : defaultNotes;
+      } catch (e) { notes = defaultNotes; }
+
+      var activeTab = 'accounting'; // 'accounting' | 'notes' | 'backup'
+      var selectedMonth = '2026-09';
+      var filterType = 'all'; // 'all' | 'expense' | 'income'
+      var analysisMode = 'expense'; // 'expense' | 'income' | 'ratio'
+      var searchKeyword = '';
+
+      function saveExpenses() {
+        localStorage.setItem(STORAGE_EXPENSES_KEY, JSON.stringify(expenses));
+      }
+
+      function saveNotes() {
+        localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+      }
+
+      // Calculate Lunar String
+      function getLunarString(yearMonthDayStr) {
+        try {
+          if (window.Solar && window.Lunar) {
+            var parts = (yearMonthDayStr || '2026-09-17').split('-');
+            var s = window.Solar.fromYmd(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || '1', 10));
+            var l = s.getLunar();
+            return '農曆' + l.getMonthInChinese() + '月' + l.getDayInChinese();
+          }
+        } catch (err) {}
+        return '農曆八月初七';
+      }
+
+      // Update Header Bell Badge
+      function updateBadges() {
+        var alertingCount = 0;
+        var todayStr = new Date().toISOString().split('T')[0];
+        notes.forEach(function(n) {
+          if (!n.isCompleted && n.reminderDate && n.reminderDate <= todayStr) {
+            alertingCount++;
+          }
+        });
+
+        var bellBadge = document.getElementById('header-bell-badge');
+        var navBadge = document.getElementById('nav-note-badge');
+        if (alertingCount > 0) {
+          bellBadge.textContent = alertingCount;
+          bellBadge.classList.remove('hidden');
+          navBadge.textContent = alertingCount;
+          navBadge.classList.remove('hidden');
+        } else {
+          bellBadge.classList.add('hidden');
+          navBadge.classList.add('hidden');
+        }
+      }
+
+      // Navigation handler
+      function setTab(tab) {
+        activeTab = tab;
+        var btnAcc = document.getElementById('tab-btn-accounting');
+        var btnNotes = document.getElementById('tab-btn-notes');
+        var btnBackup = document.getElementById('tab-btn-backup');
+        var floatingBtn = document.getElementById('floating-add-btn');
+
+        if (tab === 'accounting') {
+          btnAcc.className = 'flex flex-col items-center gap-0.5 text-[#0e608a] font-black transition-all cursor-pointer scale-105';
+          btnNotes.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all relative cursor-pointer';
+          btnBackup.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all cursor-pointer';
+          floatingBtn.classList.remove('hidden');
+        } else if (tab === 'notes') {
+          btnAcc.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all cursor-pointer';
+          btnNotes.className = 'flex flex-col items-center gap-0.5 text-[#0e608a] font-black transition-all relative cursor-pointer scale-105';
+          btnBackup.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all cursor-pointer';
+          floatingBtn.classList.remove('hidden');
+        } else {
+          btnAcc.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all cursor-pointer';
+          btnNotes.className = 'flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 transition-all relative cursor-pointer';
+          btnBackup.className = 'flex flex-col items-center gap-0.5 text-[#0e608a] font-black transition-all cursor-pointer scale-105';
+          floatingBtn.classList.add('hidden');
+        }
+
+        renderMain();
+      }
+
+      document.getElementById('tab-btn-accounting').onclick = function() { setTab('accounting'); };
+      document.getElementById('tab-btn-notes').onclick = function() { setTab('notes'); };
+      document.getElementById('tab-btn-backup').onclick = function() { setTab('backup'); };
+      document.getElementById('header-bell-btn').onclick = function() { setTab('notes'); };
+      document.getElementById('header-backup-btn').onclick = function() { setTab('backup'); };
+
+      // Floating Add Button
+      document.getElementById('floating-add-btn').onclick = function() {
+        if (activeTab === 'notes') {
+          openNoteModal();
+        } else {
+          openExpenseModal();
+        }
+      };
+
+      // Main Render
+      function renderMain() {
+        updateBadges();
+        var container = document.getElementById('main-content');
+        if (activeTab === 'accounting') {
+          renderAccountingTab(container);
+        } else if (activeTab === 'notes') {
+          renderNotesTab(container);
+        } else if (activeTab === 'backup') {
+          renderBackupTab(container);
+        }
+      }
+
+      // ================= TAB 1: 記帳管理 =================
+      function renderAccountingTab(container) {
+        var filteredExpenses = expenses.filter(function(item) {
+          if (!item.date.startsWith(selectedMonth)) return false;
+          if (filterType === 'expense' && item.type !== 'expense') return false;
+          if (filterType === 'income' && item.type !== 'income') return false;
+          if (searchKeyword.trim()) {
+            var q = searchKeyword.toLowerCase();
+            var matchCat = (item.category || '').toLowerCase().indexOf(q) !== -1;
+            var matchNote = (item.note || '').toLowerCase().indexOf(q) !== -1;
+            if (!matchCat && !matchNote) return false;
+          }
+          return true;
+        });
+
+        var monthExpenses = expenses.filter(function(item) {
+          return item.date.startsWith(selectedMonth);
+        });
+
+        var totalIncome = 0;
+        var totalExpense = 0;
+        monthExpenses.forEach(function(item) {
+          if (item.type === 'income') totalIncome += Number(item.amount || 0);
+          else totalExpense += Number(item.amount || 0);
+        });
+
+        var netBalance = totalIncome - totalExpense;
+        var formattedBalance = (netBalance >= 0 ? '$' : '$-') + Math.abs(netBalance).toLocaleString();
+
+        // Analytics
+        var savingsRate = totalIncome > 0 ? Math.max(0, Math.round(((totalIncome - totalExpense) / totalIncome) * 100)) : 0;
+        var dailyAvg = Math.round(totalExpense / 30);
+
+        var expenseCatMap = {};
+        var maxExpenseCat = '無';
+        var maxExpenseAmt = 0;
+        monthExpenses.forEach(function(item) {
+          if (item.type === 'expense') {
+            var cat = item.category || '其他支出';
+            expenseCatMap[cat] = (expenseCatMap[cat] || 0) + Number(item.amount || 0);
+            if (expenseCatMap[cat] > maxExpenseAmt) {
+              maxExpenseAmt = expenseCatMap[cat];
+              maxExpenseCat = cat;
+            }
+          }
+        });
+
+        var lunarStr = getLunarString(selectedMonth + '-15');
+
+        var html = '';
+
+        // 1. 獨立餘結懸浮卡 (#0d1727)
+        html += '<div class="p-5 rounded-[1.75rem] bg-[#0d1727] border border-slate-800/80 shadow-xl text-white transition-all">';
+        html += '  <div class="flex items-center justify-between gap-2">';
+        html += '    <span class="text-slate-100 font-bold text-base sm:text-lg tracking-tight">本月淨收支結餘</span>';
+        html += '    <div class="flex items-center gap-1.5 shrink-0">';
+        html += '      <span class="px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-medium tracking-tight whitespace-nowrap">' + lunarStr + '</span>';
+        html += '      <div class="relative">';
+        html += '        <label class="px-3.5 py-1 rounded-full bg-[#1b2b42] border border-white/10 text-slate-200 text-xs font-mono font-bold flex items-center gap-1 cursor-pointer hover:bg-[#253956] transition-colors">';
+        html += '          <span>' + selectedMonth.replace('-', '/') + '</span>';
+        html += '          <input type="month" id="month-picker" value="' + selectedMonth + '" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />';
+        html += '        </label>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '  </div>';
+
+        html += '  <div class="my-4 text-left">';
+        html += '    <div class="text-5xl sm:text-[56px] font-black font-mono tracking-tight ' + (netBalance >= 0 ? 'text-white' : 'text-rose-300') + ' leading-none">' + formattedBalance + '</div>';
+        html += '  </div>';
+
+        html += '  <div class="grid grid-cols-2 gap-4 pt-1">';
+        html += '    <div class="flex items-center gap-3">';
+        html += '      <div class="w-9 h-9 rounded-full bg-[#0d2e25] text-[#22c55e] flex items-center justify-center shrink-0 font-bold text-base">↓</div>';
+        html += '      <div>';
+        html += '        <div class="text-xs text-slate-300 font-medium">總收入</div>';
+        html += '        <div class="text-xl font-bold font-mono text-[#22c55e] tracking-tight">+$' + totalIncome.toLocaleString() + '</div>';
+        html += '      </div>';
+        html += '    </div>';
+
+        html += '    <div class="flex items-center gap-3">';
+        html += '      <div class="w-9 h-9 rounded-full bg-[#3b1728] text-[#f43f5e] flex items-center justify-center shrink-0 font-bold text-base">↑</div>';
+        html += '      <div>';
+        html += '        <div class="text-xs text-slate-300 font-medium">總支出</div>';
+        html += '        <div class="text-xl font-bold font-mono text-[#f43f5e] tracking-tight">-$' + totalExpense.toLocaleString() + '</div>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+
+        // 2. 智能收支分析 (白底卡片)
+        html += '<div class="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/80 space-y-4">';
+        html += '  <div class="flex items-center justify-between">';
+        html += '    <div class="flex items-center gap-2">';
+        html += '      <span class="text-blue-600 text-xl font-black">📊</span>';
+        html += '      <div class="leading-tight">';
+        html += '        <div class="text-base font-extrabold text-slate-800 tracking-tight">智能收支</div>';
+        html += '        <div class="text-base font-extrabold text-slate-800 tracking-tight">分析</div>';
+        html += '      </div>';
+        html += '    </div>';
+
+        html += '    <div class="relative">';
+        html += '      <select id="filter-type-select" class="appearance-none pl-3 pr-7 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200/70 cursor-pointer focus:outline-hidden transition-colors">';
+        html += '        <option value="all"' + (filterType === 'all' ? ' selected' : '') + '>全部明細</option>';
+        html += '        <option value="expense"' + (filterType === 'expense' ? ' selected' : '') + '>僅看支出</option>';
+        html += '        <option value="income"' + (filterType === 'income' ? ' selected' : '') + '>僅看收入</option>';
+        html += '      </select>';
+        html += '      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">▼</span>';
+        html += '    </div>';
+        html += '  </div>';
+
+        // 3 Summary Metrics
+        html += '  <div class="grid grid-cols-3 gap-2 text-center pt-1">';
+        html += '    <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">';
+        html += '      <span class="text-xs text-slate-400 font-medium">儲蓄率</span>';
+        html += '      <span class="text-lg font-black font-mono text-emerald-600 mt-0.5">' + savingsRate + '%</span>';
+        html += '    </div>';
+        html += '    <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">';
+        html += '      <span class="text-xs text-slate-400 font-medium leading-tight">日均支出</span>';
+        html += '      <span class="text-sm sm:text-base font-black font-mono text-slate-800 mt-0.5">$' + dailyAvg.toLocaleString() + '</span>';
+        html += '    </div>';
+        html += '    <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">';
+        html += '      <span class="text-xs text-slate-400 font-medium leading-tight">最大開銷</span>';
+        html += '      <span class="text-sm sm:text-base font-black text-rose-500 mt-0.5 truncate max-w-full px-1">' + maxExpenseCat + '</span>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+
+        // 3. Search Bar
+        html += '<div class="relative">';
+        html += '  <input type="text" id="search-input" value="' + (searchKeyword || '') + '" placeholder="搜尋分類、說明或金額..." class="w-full pl-9 pr-8 py-2.5 bg-white rounded-2xl border border-slate-200/80 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#0e608a] shadow-xs" />';
+        html += '  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>';
+        if (searchKeyword) {
+          html += '  <button id="clear-search-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>';
+        }
+        html += '</div>';
+
+        // 4. List Items
+        html += '<div class="space-y-2.5">';
+        html += '  <div class="flex items-center justify-between px-1">';
+        html += '    <h3 class="font-extrabold text-sm text-slate-800">帳目明細 (' + filteredExpenses.length + ' 筆)</h3>';
+        html += '    <span class="text-xs text-slate-400">' + selectedMonth + '</span>';
+        html += '  </div>';
+
+        if (filteredExpenses.length === 0) {
+          html += '<div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs space-y-2">';
+          html += '  <div class="text-2xl">🍃</div>';
+          html += '  <div>本月份尚無符合的收支項目</div>';
+          html += '  <button id="empty-add-btn" class="px-4 py-1.5 bg-[#0e608a] text-white rounded-xl font-bold text-xs shadow-sm mt-1">立即記一筆</button>';
+          html += '</div>';
+        } else {
+          filteredExpenses.forEach(function(item) {
+            var color = CATEGORY_COLORS[item.category] || '#64748b';
+            var icon = CATEGORY_ICONS[item.category] || '💸';
+            var isIncome = item.type === 'income';
+
+            html += '<div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 hover:border-slate-300 transition-all">';
+            html += '  <div class="flex items-center gap-3 min-w-0">';
+            html += '    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 shadow-inner" style="background-color: ' + color + '18; color: ' + color + '">';
+            html += '      ' + icon;
+            html += '    </div>';
+            html += '    <div class="min-w-0">';
+            html += '      <div class="font-bold text-xs text-slate-900 truncate flex items-center gap-1.5">';
+            html += '        <span>' + (item.category || '未分類') + '</span>';
+            html += '        <span class="text-[10px] font-mono font-medium text-slate-400">' + item.date + '</span>';
+            html += '      </div>';
+            html += '      <div class="text-[11px] text-slate-500 truncate mt-0.5">' + (item.note || '無備註') + '</div>';
+            html += '    </div>';
+            html += '  </div>';
+
+            html += '  <div class="flex items-center gap-2.5 shrink-0">';
+            html += '    <div class="text-right">';
+            html += '      <div class="text-sm font-black font-mono ' + (isIncome ? 'text-emerald-600' : 'text-slate-900') + '">';
+            html += '        ' + (isIncome ? '+' : '-') + '$' + Number(item.amount).toLocaleString();
+            html += '      </div>';
+            html += '    </div>';
+            html += '    <div class="flex items-center gap-1 text-xs">';
+            html += '      <button class="edit-exp-btn text-slate-400 hover:text-blue-600 p-1" data-id="' + item.id + '" title="編輯">✏️</button>';
+            html += '      <button class="del-exp-btn text-slate-400 hover:text-rose-600 p-1" data-id="' + item.id + '" title="刪除">🗑️</button>';
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+          });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Bind events
+        var picker = document.getElementById('month-picker');
+        if (picker) {
+          picker.onchange = function(e) {
+            selectedMonth = e.target.value;
+            renderMain();
+          };
+        }
+
+        var filterSel = document.getElementById('filter-type-select');
+        if (filterSel) {
+          filterSel.onchange = function(e) {
+            filterType = e.target.value;
+            renderMain();
+          };
+        }
+
+        var sInput = document.getElementById('search-input');
+        if (sInput) {
+          sInput.oninput = function(e) {
+            searchKeyword = e.target.value;
+            renderMain();
+          };
+        }
+
+        var clearBtn = document.getElementById('clear-search-btn');
+        if (clearBtn) {
+          clearBtn.onclick = function() {
+            searchKeyword = '';
+            renderMain();
+          };
+        }
+
+        var emptyAdd = document.getElementById('empty-add-btn');
+        if (emptyAdd) {
+          emptyAdd.onclick = function() { openExpenseModal(); };
+        }
+
+        var editBtns = container.querySelectorAll('.edit-exp-btn');
+        editBtns.forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            var item = expenses.find(function(x) { return x.id === id; });
+            if (item) openExpenseModal(item);
+          };
+        });
+
+        var delBtns = container.querySelectorAll('.del-exp-btn');
+        delBtns.forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            if (confirm('確定要刪除這筆帳目嗎？')) {
+              expenses = expenses.filter(function(x) { return x.id !== id; });
+              saveExpenses();
+              renderMain();
+            }
+          };
+        });
+      }
+
+      // ================= TAB 2: 記事警示 =================
+      function renderNotesTab(container) {
+        var html = '';
+
+        html += '<div class="flex items-center justify-between px-1">';
+        html += '  <div>';
+        html += '    <h2 class="text-base font-black text-slate-900">記事與提前警示</h2>';
+        html += '    <p class="text-[11px] text-slate-500">掌握關鍵繳款、紀念日與重要待辦</p>';
+        html += '  </div>';
+        html += '  <button id="add-note-tab-btn" class="px-3.5 py-1.5 bg-[#0e608a] hover:bg-[#0a4868] text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer flex items-center gap-1">';
+        html += '    <span>+ 新增記事</span>';
+        html += '  </button>';
+        html += '</div>';
+
+        if (notes.length === 0) {
+          html += '<div class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 text-xs space-y-2">';
+          html += '  <div class="text-3xl">📝</div>';
+          html += '  <div>目前沒有任何記事備忘</div>';
+          html += '</div>';
+        } else {
+          html += '<div class="space-y-3">';
+          notes.forEach(function(note) {
+            var priorityColor = note.priority === 'urgent' ? 'bg-rose-500 text-white' : (note.priority === 'high' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700');
+            var priorityLabel = note.priority === 'urgent' ? '緊急' : (note.priority === 'high' ? '重要' : '一般');
+
+            html += '<div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5 ' + (note.isCompleted ? 'opacity-60' : '') + '">';
+            html += '  <div class="flex items-start justify-between gap-2">';
+            html += '    <div class="flex items-center gap-2 flex-wrap">';
+            html += '      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + priorityColor + '">' + priorityLabel + '</span>';
+            html += '      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">' + (note.tag || '備忘') + '</span>';
+            html += '      <h4 class="text-sm font-black text-slate-900 ' + (note.isCompleted ? 'line-through text-slate-400' : '') + '">' + note.title + '</h4>';
+            html += '    </div>';
+            html += '    <div class="flex items-center gap-1 shrink-0">';
+            html += '      <button class="toggle-note-btn p-1 text-slate-400 hover:text-emerald-600" data-id="' + note.id + '" title="完成切換">' + (note.isCompleted ? '☑️' : '⬜') + '</button>';
+            html += '      <button class="edit-note-btn p-1 text-slate-400 hover:text-blue-600" data-id="' + note.id + '" title="編輯">✏️</button>';
+            html += '      <button class="del-note-btn p-1 text-slate-400 hover:text-rose-600" data-id="' + note.id + '" title="刪除">🗑️</button>';
+            html += '    </div>';
+            html += '  </div>';
+
+            html += '  <p class="text-xs text-slate-600 leading-relaxed">' + (note.content || '') + '</p>';
+
+            if (note.reminderDate) {
+              html += '  <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">';
+              html += '    <span class="flex items-center gap-1 text-amber-700 font-medium">🔔 提醒日期：' + note.reminderDate + ' ' + (note.reminderTime || '') + '</span>';
+              html += '    <span>提前 ' + (note.earlyAlertDays || 1) + ' 天警示</span>';
+              html += '  </div>';
+            }
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        var addBtn = document.getElementById('add-note-tab-btn');
+        if (addBtn) addBtn.onclick = function() { openNoteModal(); };
+
+        container.querySelectorAll('.toggle-note-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            var target = notes.find(function(n) { return n.id === id; });
+            if (target) {
+              target.isCompleted = !target.isCompleted;
+              saveNotes();
+              renderMain();
+            }
+          };
+        });
+
+        container.querySelectorAll('.edit-note-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            var target = notes.find(function(n) { return n.id === id; });
+            if (target) openNoteModal(target);
+          };
+        });
+
+        container.querySelectorAll('.del-note-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            if (confirm('確定要刪除這則記事嗎？')) {
+              notes = notes.filter(function(n) { return n.id !== id; });
+              saveNotes();
+              renderMain();
+            }
+          };
+        });
+      }
+
+      // ================= TAB 3: 備份中心 =================
+      function renderBackupTab(container) {
+        var html = '';
+
+        html += '<div class="space-y-4">';
+        html += '  <div class="bg-white p-5 rounded-[2rem] border border-slate-200/80 shadow-sm space-y-4">';
+        html += '    <div class="flex items-center gap-3">';
+        html += '      <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl">🛡️</div>';
+        html += '      <div>';
+        html += '        <h3 class="font-bold text-slate-900 text-sm">本機與離線備份中心</h3>';
+        html += '        <p class="text-[11px] text-slate-500">每次收支變更均自動於本機儲存，換機安全無憂</p>';
+        html += '      </div>';
+        html += '    </div>';
+
+        html += '    <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">';
+        html += '      <div class="flex items-center gap-2">';
+        html += '        <span class="text-emerald-600 font-bold">✓</span>';
+        html += '        <div>';
+        html += '          <div class="text-xs font-bold text-emerald-950">自動備份保護生效中</div>';
+        html += '          <div class="text-[10px] text-emerald-700">記帳：' + expenses.length + ' 筆 · 記事：' + notes.length + ' 筆</div>';
+        html += '        </div>';
+        html += '      </div>';
+        html += '      <span class="text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">離線就緒</span>';
+        html += '    </div>';
+
+        html += '    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">';
+        html += '      <button id="export-json-btn" class="p-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl flex items-center gap-2.5 text-blue-950 font-bold text-xs transition-colors cursor-pointer text-left">';
+        html += '        <span class="text-lg">📥</span>';
+        html += '        <div>';
+        html += '          <div>匯出 JSON 備份檔</div>';
+        html += '          <div class="text-[10px] font-normal text-blue-700">下載保存至手機或電腦</div>';
+        html += '        </div>';
+        html += '      </button>';
+
+        html += '      <label class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-2.5 text-slate-900 font-bold text-xs transition-colors cursor-pointer text-left">';
+        html += '        <span class="text-lg">📤</span>';
+        html += '        <div>';
+        html += '          <div>匯入還原備份檔</div>';
+        html += '          <div class="text-[10px] font-normal text-slate-500">選取先前的 .json 檔案</div>';
+        html += '        </div>';
+        html += '        <input type="file" id="import-json-input" accept=".json" class="hidden" />';
+        html += '      </label>';
+
+        html += '      <button id="reset-default-btn" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-2.5 text-slate-700 font-bold text-xs transition-colors cursor-pointer text-left sm:col-span-2">';
+        html += '        <span class="text-lg">🔄</span>';
+        html += '        <div>';
+        html += '          <div>重設為初始展示帳目</div>';
+        html += '          <div class="text-[10px] font-normal text-slate-400">還原至預設展示帳目與記事</div>';
+        html += '        </div>';
+        html += '      </button>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        document.getElementById('export-json-btn').onclick = function() {
+          var payload = {
+            version: '2.0',
+            exportedAt: new Date().toISOString(),
+            expenses: expenses,
+            notes: notes
+          };
+          var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'accounting_backup_' + new Date().toISOString().split('T')[0] + '.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert('備份檔匯出成功！');
+        };
+
+        document.getElementById('import-json-input').onchange = function(e) {
+          var file = e.target.files && e.target.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function(evt) {
+            try {
+              var parsed = JSON.parse(evt.target.result);
+              if (Array.isArray(parsed.expenses)) expenses = parsed.expenses;
+              if (Array.isArray(parsed.notes)) notes = parsed.notes;
+              saveExpenses();
+              saveNotes();
+              alert('備份還原成功！');
+              renderMain();
+            } catch (err) {
+              alert('檔案格式錯誤，無法還原！');
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        document.getElementById('reset-default-btn').onclick = function() {
+          if (confirm('確定要重設為初始展示資料嗎？所有自訂紀錄將被覆蓋！')) {
+            expenses = defaultExpenses;
+            notes = defaultNotes;
+            saveExpenses();
+            saveNotes();
+            renderMain();
+            alert('已還原為初始帳目！');
+          }
+        };
+      }
+
+      // ================= MODAL: ADD/EDIT EXPENSE =================
+      function openExpenseModal(editItem) {
+        var isEdit = !!editItem;
+        var currentType = isEdit ? editItem.type : 'expense';
+        var currentCat = isEdit ? editItem.category : (currentType === 'expense' ? '餐飲飲食' : '薪資獎金');
+        var currentAmt = isEdit ? editItem.amount : '';
+        var currentDate = isEdit ? editItem.date : new Date().toISOString().split('T')[0];
+        var currentNote = isEdit ? (editItem.note || '') : '';
+
+        var modalBox = document.getElementById('modal-box');
+        var modalContainer = document.getElementById('modal-container');
+
+        var expenseCategories = ['居家日常', '餐飲飲食', '生活日用', '交通出行', '休閒娛樂', '醫療保健', '教育進修', '其他雜項', '其他支出'];
+        var incomeCategories = ['薪資獎金', '投資收益', '副業分潤', '紅包獎金', '其他收入'];
+
+        function buildModalHtml() {
+          var cats = currentType === 'expense' ? expenseCategories : incomeCategories;
+          var mHtml = '';
+
+          mHtml += '<div class="flex items-center justify-between border-b border-slate-100 pb-3">';
+          mHtml += '  <h3 class="text-base font-black text-slate-900">' + (isEdit ? '編輯帳目' : '新增收支') + '</h3>';
+          mHtml += '  <button id="close-modal-x" class="text-slate-400 hover:text-slate-600 text-lg p-1">✕</button>';
+          mHtml += '</div>';
+
+          // Type switch
+          mHtml += '<div class="grid grid-cols-2 gap-2 mt-4 bg-slate-100 p-1 rounded-2xl">';
+          mHtml += '  <button type="button" id="type-btn-expense" class="py-2 text-xs font-black rounded-xl transition-all ' + (currentType === 'expense' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600') + '">支出</button>';
+          mHtml += '  <button type="button" id="type-btn-income" class="py-2 text-xs font-black rounded-xl transition-all ' + (currentType === 'income' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-600') + '">收入</button>';
+          mHtml += '</div>';
+
+          // Amount
+          mHtml += '<div class="mt-4 space-y-1">';
+          mHtml += '  <label class="text-xs font-bold text-slate-700">金額 (NT$)</label>';
+          mHtml += '  <input type="number" id="modal-amt-input" value="' + currentAmt + '" placeholder="0" class="w-full text-2xl font-black font-mono p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-hidden focus:border-[#0e608a]" />';
+          mHtml += '</div>';
+
+          // Categories
+          mHtml += '<div class="mt-4 space-y-1.5">';
+          mHtml += '  <label class="text-xs font-bold text-slate-700">分類項目</label>';
+          mHtml += '  <div class="grid grid-cols-3 gap-2">';
+          cats.forEach(function(cat) {
+            var isSelected = cat === currentCat;
+            var cColor = CATEGORY_COLORS[cat] || '#64748b';
+            var icon = CATEGORY_ICONS[cat] || '🏷️';
+            mHtml += '<button type="button" class="cat-pill p-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 justify-center transition-all ' + (isSelected ? 'border-2 shadow-sm font-black' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50') + '" style="' + (isSelected ? 'border-color: ' + cColor + '; color: ' + cColor + '; background-color: ' + cColor + '10' : '') + '" data-cat="' + cat + '">';
+            mHtml += '  <span>' + icon + '</span><span>' + cat + '</span>';
+            mHtml += '</button>';
+          });
+          mHtml += '  </div>';
+          mHtml += '</div>';
+
+          // Date & Note
+          mHtml += '<div class="mt-4 space-y-3">';
+          mHtml += '  <div class="space-y-1">';
+          mHtml += '    <label class="text-xs font-bold text-slate-700">記帳日期</label>';
+          mHtml += '    <input type="date" id="modal-date-input" value="' + currentDate + '" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />';
+          mHtml += '  </div>';
+
+          mHtml += '  <div class="space-y-1">';
+          mHtml += '    <label class="text-xs font-bold text-slate-700">備註說明 (選填)</label>';
+          mHtml += '    <input type="text" id="modal-note-input" value="' + currentNote + '" placeholder="例：午餐牛肉麵、捷運儲值..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs" />';
+          mHtml += '  </div>';
+          mHtml += '</div>';
+
+          // Submit & Cancel
+          mHtml += '<div class="flex items-center gap-2 mt-6">';
+          mHtml += '  <button type="button" id="modal-cancel-btn" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">取消</button>';
+          mHtml += '  <button type="button" id="modal-submit-btn" class="flex-1 py-3 bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs rounded-xl shadow-md">儲存儲錄</button>';
+          mHtml += '</div>';
+
+          return mHtml;
+        }
+
+        function refreshModal() {
+          modalBox.innerHTML = buildModalHtml();
+
+          document.getElementById('close-modal-x').onclick = closeModal;
+          document.getElementById('modal-cancel-btn').onclick = closeModal;
+
+          document.getElementById('type-btn-expense').onclick = function() {
+            currentType = 'expense';
+            currentCat = '餐飲飲食';
+            refreshModal();
+          };
+
+          document.getElementById('type-btn-income').onclick = function() {
+            currentType = 'income';
+            currentCat = '薪資獎金';
+            refreshModal();
+          };
+
+          modalBox.querySelectorAll('.cat-pill').forEach(function(btn) {
+            btn.onclick = function() {
+              currentCat = this.getAttribute('data-cat');
+              refreshModal();
+            };
+          });
+
+          document.getElementById('modal-submit-btn').onclick = function() {
+            var amt = parseFloat(document.getElementById('modal-amt-input').value);
+            var date = document.getElementById('modal-date-input').value;
+            var note = document.getElementById('modal-note-input').value;
+
+            if (isNaN(amt) || amt <= 0) {
+              alert('請輸入大於 0 的正確金額！');
+              return;
+            }
+
+            if (isEdit) {
+              editItem.type = currentType;
+              editItem.category = currentCat;
+              editItem.amount = amt;
+              editItem.date = date;
+              editItem.note = note;
+            } else {
+              expenses.unshift({
+                id: 'exp-' + Date.now(),
+                type: currentType,
+                category: currentCat,
+                amount: amt,
+                date: date,
+                note: note
+              });
+            }
+
+            saveExpenses();
+            closeModal();
+            renderMain();
+          };
+        }
+
+        refreshModal();
+        modalContainer.classList.remove('hidden');
+      }
+
+      // ================= MODAL: ADD/EDIT NOTE =================
+      function openNoteModal(editNote) {
+        var isEdit = !!editNote;
+        var modalBox = document.getElementById('modal-box');
+        var modalContainer = document.getElementById('modal-container');
+
+        var mHtml = '';
+        mHtml += '<div class="flex items-center justify-between border-b border-slate-100 pb-3">';
+        mHtml += '  <h3 class="text-base font-black text-slate-900">' + (isEdit ? '編輯記事' : '新增記事備忘') + '</h3>';
+        mHtml += '  <button id="close-modal-x" class="text-slate-400 hover:text-slate-600 text-lg p-1">✕</button>';
+        mHtml += '</div>';
+
+        mHtml += '<div class="mt-4 space-y-3">';
+        mHtml += '  <div class="space-y-1">';
+        mHtml += '    <label class="text-xs font-bold text-slate-700">記事標題</label>';
+        mHtml += '    <input type="text" id="note-title-input" value="' + (isEdit ? editNote.title : '') + '" placeholder="例：繳納天然氣帳單、連假採買..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold" />';
+        mHtml += '  </div>';
+
+        mHtml += '  <div class="space-y-1">';
+        mHtml += '    <label class="text-xs font-bold text-slate-700">詳細說明 (選填)</label>';
+        mHtml += '    <textarea id="note-content-input" rows="3" placeholder="補充重要細節與備註..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">' + (isEdit ? (editNote.content || '') : '') + '</textarea>';
+        mHtml += '  </div>';
+
+        mHtml += '  <div class="grid grid-cols-2 gap-2">';
+        mHtml += '    <div class="space-y-1">';
+        mHtml += '      <label class="text-xs font-bold text-slate-700">提醒日期</label>';
+        mHtml += '      <input type="date" id="note-date-input" value="' + (isEdit ? (editNote.reminderDate || '') : new Date().toISOString().split('T')[0]) + '" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono" />';
+        mHtml += '    </div>';
+        mHtml += '    <div class="space-y-1">';
+        mHtml += '      <label class="text-xs font-bold text-slate-700">優先級別</label>';
+        mHtml += '      <select id="note-priority-select" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">';
+        mHtml += '        <option value="normal"' + (isEdit && editNote.priority === 'normal' ? ' selected' : '') + '>一般備忘</option>';
+        mHtml += '        <option value="high"' + (isEdit && editNote.priority === 'high' ? ' selected' : '') + '>重要待辦</option>';
+        mHtml += '        <option value="urgent"' + (isEdit && editNote.priority === 'urgent' ? ' selected' : '') + '>緊急警示</option>';
+        mHtml += '      </select>';
+        mHtml += '    </div>';
+        mHtml += '  </div>';
+        mHtml += '</div>';
+
+        mHtml += '<div class="flex items-center gap-2 mt-6">';
+        mHtml += '  <button type="button" id="modal-cancel-btn" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">取消</button>';
+        mHtml += '  <button type="button" id="note-submit-btn" class="flex-1 py-3 bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs rounded-xl shadow-md">儲存記事</button>';
+        mHtml += '</div>';
+
+        modalBox.innerHTML = mHtml;
+
+        document.getElementById('close-modal-x').onclick = closeModal;
+        document.getElementById('modal-cancel-btn').onclick = closeModal;
+
+        document.getElementById('note-submit-btn').onclick = function() {
+          var title = document.getElementById('note-title-input').value.trim();
+          var content = document.getElementById('note-content-input').value.trim();
+          var rDate = document.getElementById('note-date-input').value;
+          var priority = document.getElementById('note-priority-select').value;
+
+          if (!title) {
+            alert('請輸入記事標題！');
+            return;
+          }
+
+          if (isEdit) {
+            editNote.title = title;
+            editNote.content = content;
+            editNote.reminderDate = rDate;
+            editNote.priority = priority;
+            editNote.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
+          } else {
+            notes.unshift({
+              id: 'note-' + Date.now(),
+              title: title,
+              content: content,
+              reminderDate: rDate,
+              priority: priority,
+              isCompleted: false,
+              updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+            });
+          }
+
+          saveNotes();
+          closeModal();
+          renderMain();
+        };
+
+        modalContainer.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        document.getElementById('modal-container').classList.add('hidden');
+      }
+
+      document.getElementById('modal-container').onclick = function(e) {
+        if (e.target === this) closeModal();
+      };
+
+      // Initial Launch
+      renderMain();
+    })();
+  </script>
+
+
+
+
+<!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
+<!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
+<div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="background:#ffffff; width:100%; max-width:380px; border-radius:24px; padding:24px 20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
+    <!-- 頂部標題列 -->
+    <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
+      <div style="width:40px; height:40px; border-radius:12px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; shrink:0;">
+        🛡️
+      </div>
+      <div>
+        <div style="font-size:15px; font-weight:800; color:#0f172a; line-height:1.2;">首次啟動授權認證</div>
+        <div style="font-size:10px; font-family:monospace; color:#64748b; margin-top:2px;">OFFICIAL ACCESS VERIFICATION</div>
+      </div>
+    </div>
+
+    <!-- 作者聯繫資訊 -->
+    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:14px; padding:12px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#92400e; margin-bottom:8px;">
+        <span>軟體作者：Cbjm</span>
+        <span style="font-size:10px; background:#fde68a; color:#78350f; padding:2px 8px; border-radius:9999px;">正版授權</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button id="cbjm-btn-line" type="button" style="background:#059669; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+          加 LINE 索取密碼
+        </button>
+        <button id="cbjm-btn-email" type="button" style="background:#334155; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+          發郵件索取
+        </button>
+      </div>
+    </div>
+
+    <!-- 本機特徵碼顯示 (一機一碼) -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:6px;">
+        <span>本機設備特徵碼 (一機一碼)</span>
+        <button id="cbjm-btn-copy" type="button" style="background:none; border:none; color:#d97706; font-size:11px; font-weight:bold; cursor:pointer; text-decoration:underline;">
+          [點擊複製]
+        </button>
+      </div>
+      <div id="cbjm-display-device-id" style="font-family:monospace; font-weight:800; font-size:16px; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:8px; text-align:center; color:#0f172a; letter-spacing:1px;">
+        DEV-XXXX-XX
+      </div>
+    </div>
+
+    <!-- 通關密碼輸入與驗證 -->
+    <div style="margin-bottom:14px;">
+      <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入 6 位純數字通關密碼：</label>
+      <div style="display:flex; gap:8px;">
+        <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入 6 位數字 (如: 739201)" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box;" maxlength="10" />
+        <button id="cbjm-btn-verify" type="button" style="background:#d97706; color:#ffffff; border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:bold; cursor:pointer; shrink:0; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
+          送出驗證
+        </button>
+      </div>
+      <!-- 額外醒目滿版送出按鍵 -->
+      <button id="cbjm-btn-verify-big" type="button" style="width:100%; margin-top:8px; background:linear-gradient(to right, #d97706, #b45309); color:#ffffff; border:none; border-radius:10px; padding:11px 16px; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
+        🚀 送出通關密碼並解鎖進入
+      </button>
+      <div id="cbjm-verify-msg" style="display:none; font-size:11px; font-weight:bold; text-align:center; margin-top:8px;"></div>
+    </div>
+
+    <div style="font-size:10px; color:#94a3b8; text-align:center; line-height:1.4;">
+      ✓ 首次驗證成功後本機永久放行，後續使用不再出現提示。
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var AUTH_STORAGE_KEY = 'cbjm_app_passcode_unlocked_v1';
+  var DEVICE_STORAGE_KEY = 'cbjm_app_device_id_v1';
+  var SALT = 'CBJM_SECURE_2026';
+
+  // 1. 檢查是否已經解鎖過
+  try {
+    if (localStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
+      return; // 已授權，完全不顯示門禁
+    }
+  } catch(e) {}
+
+  // 2. 獲取或產生專屬設備號 (一機一碼)
+  var deviceId = '';
+  try {
+    deviceId = localStorage.getItem(DEVICE_STORAGE_KEY);
+  } catch(e) {}
+
+  if (!deviceId) {
+    var chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    var p1 = '', p2 = '';
+    for (var i = 0; i < 4; i++) p1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (var j = 0; j < 2; j++) p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    deviceId = 'DEV-' + p1 + '-' + p2;
+    try {
+      localStorage.setItem(DEVICE_STORAGE_KEY, deviceId);
+    } catch(e) {}
+  }
+
+  // 3. 顯示門禁遮罩
+  var overlay = document.getElementById('cbjm-universal-gate-overlay');
+  var devDisplay = document.getElementById('cbjm-display-device-id');
+  if (overlay && devDisplay) {
+    devDisplay.textContent = deviceId;
+    overlay.style.display = 'flex';
+  }
+
+  // 4. 複製按鈕
+  var copyBtn = document.getElementById('cbjm-btn-copy');
+  if (copyBtn) {
+    copyBtn.onclick = function() {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(deviceId);
+      }
+      alert('已複製本機特徵碼：' + deviceId);
+    };
+  }
+
+  // 5. LINE 索取
+  var lineBtn = document.getElementById('cbjm-btn-line');
+  if (lineBtn) {
+    lineBtn.onclick = function() {
+      var msg = '作者 Cbjm 您好，我的軟體特徵碼為：' + deviceId;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(msg);
+      }
+      alert('已複製特徵碼！正在引導前往 LINE (bojen010)');
+      window.open('https://line.me/ti/p/~bojen010', '_blank');
+    };
+  }
+
+  // 6. 郵件索取
+  var emailBtn = document.getElementById('cbjm-btn-email');
+  if (emailBtn) {
+    emailBtn.onclick = function() {
+      var subject = encodeURIComponent('[專用軟體] 授權通關密碼申請 (' + deviceId + ')');
+      var body = encodeURIComponent('作者 Cbjm 您好：\n\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！');
+      window.location.href = 'mailto:bojen010@gmail.com?subject=' + subject + '&body=' + body;
+    };
+  }
+
+  // 7. 內建安全雜湊換算演算法
+  function simpleHash(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  }
+
+  function computeValidPasscode(devId) {
+    var clean = (devId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    var h1 = simpleHash(clean + '_' + SALT);
+    var h2 = simpleHash(SALT + '_' + clean + '_REVERSE');
+    // 6 位純阿拉伯數字
+    var num = (h1 * 31 + h2 * 17) % 900000 + 100000;
+    return num.toString();
+  }
+
+  // 8. 驗證輸入邏輯
+  var verifyBtn = document.getElementById('cbjm-btn-verify');
+  var verifyBtnBig = document.getElementById('cbjm-btn-verify-big');
+  var inputEl = document.getElementById('cbjm-input-passcode');
+  var msgEl = document.getElementById('cbjm-verify-msg');
+
+  function doVerify() {
+    if (!inputEl || !msgEl) return;
+    var val = (inputEl.value || '').trim().toUpperCase();
+    if (!val) {
+      msgEl.style.display = 'block';
+      msgEl.style.color = '#d97706';
+      msgEl.textContent = '請先輸入 6 位數字通關密碼！';
+      inputEl.focus();
+      return;
+    }
+    var correct = computeValidPasscode(deviceId);
+    
+    // 支援 6 位純數字密碼、通用萬用密碼 (739201, 888888, 123456) 以及舊版 8K9P-4X2M
+    if (val === correct || val === '739201' || val === '888888' || val === '123456' || val === '8K9P-4X2M') {
+      msgEl.style.display = 'block';
+      msgEl.style.color = '#059669';
+      msgEl.textContent = '✓ 認證成功！正在為您開啟軟體...';
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, 'true');
+      } catch(e) {}
+      setTimeout(function() {
+        overlay.style.display = 'none';
+      }, 500);
+    } else {
+      msgEl.style.display = 'block';
+      msgEl.style.color = '#e11d48';
+      msgEl.textContent = '✕ 密碼錯誤，請重新確認或聯繫作者！';
+    }
+  }
+
+  if (verifyBtn) verifyBtn.onclick = doVerify;
+  if (verifyBtnBig) verifyBtnBig.onclick = doVerify;
+  if (inputEl) {
+    inputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doVerify();
+      }
+    });
+  }
+})();
+</script>
+<!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
+
+
+
+
+
+</body>
+</html>
