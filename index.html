@@ -178,6 +178,22 @@
 
       var defaultExpenses = [
   {
+    "id": "exp-1789721353452",
+    "type": "expense",
+    "category": "居家日常",
+    "amount": 300,
+    "date": "2026-09-18",
+    "note": ""
+  },
+  {
+    "id": "exp-1789721295428",
+    "type": "expense",
+    "category": "居家日常",
+    "amount": 100,
+    "date": "2026-09-18",
+    "note": "買飲料"
+  },
+  {
     "id": "exp-1789654785404",
     "type": "income",
     "category": "投資收益",
@@ -654,36 +670,49 @@
         } else {
           filteredExpenses.forEach(function(item) {
             var isIncome = item.type === 'income';
-            html += '    <div class="p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 hover:border-blue-400 bg-white shadow-xs transition-all space-y-2">';
-            html += '      <div class="flex items-center justify-between gap-2">';
-            html += '        <div class="flex items-center gap-2 min-w-0">';
-            html += '          <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-2xs ' + (isIncome ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600') + '">';
+            html += '    <div id="expense-card-' + item.id + '" class="p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 hover:border-blue-400 bg-white shadow-xs transition-all space-y-2.5">';
+            
+            // 第 1 列：分類項目 (左) 與 帳務金額 (右) - 兩端對齊，空間充裕，確保分類名稱 100% 清楚可見
+            html += '      <div class="flex items-center justify-between gap-3">';
+            html += '        <div class="flex items-center gap-2.5">';
+            html += '          <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 ' + (isIncome ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600') + '">';
             if (isIncome) {
-              html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+              html += '            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
             } else {
-              html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+              html += '            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
             }
             html += '          </div>';
-            html += '          <span class="font-extrabold text-xs sm:text-sm text-slate-900 shrink-0 whitespace-nowrap">' + (item.category || '未分類') + '</span>';
-            html += '          <span class="text-[11px] text-slate-400 font-mono shrink-0 whitespace-nowrap">' + item.date + '</span>';
+            html += '          <span id="expense-category-' + item.id + '" class="inline-block font-black text-sm sm:text-base text-slate-900 whitespace-nowrap select-text">' + (item.category && item.category.trim() ? item.category : '未分類') + '</span>';
             html += '        </div>';
 
-            html += '        <div class="flex items-center gap-1.5 shrink-0">';
-            html += '          <span class="font-mono font-black text-sm sm:text-base whitespace-nowrap mr-0.5 ' + (isIncome ? 'text-emerald-600' : 'text-rose-600') + '">';
-            html += '            ' + (isIncome ? '+' : '-') + '$' + Number(item.amount).toLocaleString();
-            html += '          </span>';
-            html += '          <button class="edit-exp-btn w-7 h-7 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 flex items-center justify-center transition-colors cursor-pointer" data-id="' + item.id + '" title="修改這筆舊資料">';
-            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
-            html += '          </button>';
-            html += '          <button class="del-exp-btn w-7 h-7 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer" data-id="' + item.id + '" title="刪除">';
-            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
-            html += '          </button>';
+            html += '        <div class="font-mono font-black text-base sm:text-lg shrink-0 ' + (isIncome ? 'text-emerald-600' : 'text-rose-600') + '">';
+            html += '          ' + (isIncome ? '+' : '-') + '$' + Number(item.amount).toLocaleString();
             html += '        </div>';
             html += '      </div>';
 
-            html += '      <div class="flex items-start gap-1.5 pl-9 text-xs text-slate-600 bg-slate-50/90 rounded-xl px-2.5 py-1.5 border border-slate-100/90">';
-            html += '        <span class="text-[10px] font-bold text-slate-400 shrink-0 mt-0.5">備註說明：</span>';
-            html += '        <span class="text-slate-700 font-medium break-all">' + (item.note && item.note.trim() ? item.note : '<span class="text-slate-400 italic font-normal">無備忘說明</span>') + '</span>';
+            // 第 2 列：備註說明內容 (依照要求，不顯示「備註說明：」字串標籤，直接顯示備註文字)
+            if (item.note && item.note.trim()) {
+              html += '      <div id="expense-note-' + item.id + '" class="bg-slate-50/90 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium border border-slate-100/90 break-words leading-relaxed select-text">';
+              html += '        ' + item.note;
+              html += '      </div>';
+            }
+
+            // 第 3 列：日期與操作工具列 (修改/刪除按鈕) - 底部獨立排版
+            html += '      <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">';
+            html += '        <div class="flex items-center gap-1 text-slate-400 font-mono text-[11px]">';
+            html += '          <span>記帳日期：</span>';
+            html += '          <span class="font-semibold text-slate-500">' + item.date + '</span>';
+            html += '        </div>';
+            html += '        <div class="flex items-center gap-1.5 shrink-0">';
+            html += '          <button id="edit-btn-' + item.id + '" class="edit-exp-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer" data-id="' + item.id + '" title="修改這筆舊資料">';
+            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+            html += '            <span>修改</span>';
+            html += '          </button>';
+            html += '          <button id="delete-btn-' + item.id + '" class="del-exp-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer" data-id="' + item.id + '" title="刪除">';
+            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+            html += '            <span>刪除</span>';
+            html += '          </button>';
+            html += '        </div>';
             html += '      </div>';
             html += '    </div>';
           });
@@ -1247,8 +1276,6 @@
 
 
 
-
-
 <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
 <div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
@@ -1455,6 +1482,7 @@
 })();
 </script>
 <!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
+
 
 
 
