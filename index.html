@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
 
-  <link rel="manifest" href="manifest.json">
+   <link rel="manifest" href="manifest.json"> 
 
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -8649,8 +8649,8 @@
           <span class="text-2xl leading-none select-none transition-transform active:scale-95">
             📝
           </span>
-          <span id="nav-note-badge" class="absolute -top-1 -right-2 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
-            3
+          <span id="nav-note-badge" class="absolute -top-1 -right-2 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs hidden">
+            0
           </span>
         </div>
         <span class="text-[11px] tracking-tight">記事警示</span>
@@ -8782,16 +8782,16 @@
 ];
       var defaultNotes = [
   {
-    "id": "note-1789654898079",
-    "title": "繳牌照稅",
+    "id": "note-1790254562443",
+    "title": "9/25繳電費",
     "content": "",
-    "tag": "生活",
-    "reminderDate": "2026-09-18",
-    "reminderTime": "09:00",
+    "tag": "帳單",
+    "reminderDate": "2026-09-24",
+    "reminderTime": "21:00",
     "earlyAlertDays": 1,
     "priority": "normal",
     "isCompleted": false,
-    "updatedAt": "2026-09-17 14:21"
+    "updatedAt": "2026-09-24 12:56"
   },
   {
     "id": "note-1789486505726",
@@ -8858,6 +8858,9 @@
       var filterType = 'all'; // 'all' | 'expense' | 'income'
       var analysisMode = 'expense'; // 'expense' | 'income' | 'ratio'
       var searchKeyword = '';
+      var PRESET_NOTE_TAGS = ['生活', '工作', '財務', '備忘', '帳單', '紀念日', '醫療', '學習'];
+      var selectedNoteTag = '全部';
+      var noteFilterStatus = 'all'; // 'all' | 'alerting' | 'pending' | 'completed'
 
       function saveExpenses() {
         localStorage.setItem(STORAGE_EXPENSES_KEY, JSON.stringify(expenses));
@@ -8865,6 +8868,51 @@
 
       function saveNotes() {
         localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+      }
+
+      // Calculate days difference for a reminder date
+      function getNoteDaysDiff(reminderDateStr) {
+        if (!reminderDateStr) return 999;
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var parts = reminderDateStr.split('-');
+        var targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2] || '1', 10));
+        targetDate.setHours(0, 0, 0, 0);
+        var diffTime = targetDate.getTime() - today.getTime();
+        return Math.round(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      function getNoteAlertInfo(note) {
+        if (!note.reminderDate) {
+          return { isAlerting: false, text: '', badgeClass: 'bg-slate-100 text-slate-600' };
+        }
+        var diffDays = getNoteDaysDiff(note.reminderDate);
+        var earlyDays = note.earlyAlertDays || 1;
+        if (diffDays < 0) {
+          return {
+            isAlerting: true,
+            text: '已逾期 ' + Math.abs(diffDays) + ' 天',
+            badgeClass: 'bg-rose-100 text-rose-700 border border-rose-300 font-bold'
+          };
+        } else if (diffDays === 0) {
+          return {
+            isAlerting: true,
+            text: '【今日到期】' + (note.reminderTime ? (' ' + note.reminderTime) : ''),
+            badgeClass: 'bg-rose-500 text-white border border-rose-600 animate-pulse'
+          };
+        } else if (diffDays <= earlyDays) {
+          return {
+            isAlerting: true,
+            text: '⚠️ 提前預警：剩 ' + diffDays + ' 天',
+            badgeClass: 'bg-amber-100 text-amber-900 border border-amber-300 font-black'
+          };
+        } else {
+          return {
+            isAlerting: false,
+            text: '預定 ' + diffDays + ' 天後',
+            badgeClass: 'bg-slate-100 text-slate-600 border border-slate-200'
+          };
+        }
       }
 
       // Calculate Lunar String dynamically from date (100% offline & instantaneous)
@@ -8884,26 +8932,32 @@
       // Update Header Bell Badge & Nav Badge
       function updateBadges() {
         var alertingCount = 0;
-        var todayStr = new Date().toISOString().split('T')[0];
         notes.forEach(function(n) {
-          if (!n.isCompleted && n.reminderDate && n.reminderDate <= todayStr) {
-            alertingCount++;
+          if (!n.isCompleted) {
+            var alert = getNoteAlertInfo(n);
+            if (alert.isAlerting) alertingCount++;
           }
         });
 
         var bellBadge = document.getElementById('header-bell-badge');
         var navBadge = document.getElementById('nav-note-badge');
-        var displayCount = alertingCount > 0 ? alertingCount : 3;
 
-        if (alertingCount > 0) {
-          bellBadge.textContent = alertingCount;
-          bellBadge.classList.remove('hidden');
-        } else {
-          bellBadge.classList.add('hidden');
+        if (bellBadge) {
+          if (alertingCount > 0) {
+            bellBadge.textContent = alertingCount;
+            bellBadge.classList.remove('hidden');
+          } else {
+            bellBadge.classList.add('hidden');
+          }
         }
 
         if (navBadge) {
-          navBadge.textContent = displayCount;
+          if (alertingCount > 0) {
+            navBadge.textContent = alertingCount;
+            navBadge.classList.remove('hidden');
+          } else {
+            navBadge.classList.add('hidden');
+          }
         }
       }
 
@@ -9411,44 +9465,166 @@
       function renderNotesTab(container) {
         var html = '';
 
-        html += '<div class="space-y-4">';
-        html += '  <div class="flex items-center justify-between px-1">';
+        // Active Alerting Notes
+        var activeAlertingNotes = notes.filter(function(n) {
+          return !n.isCompleted && getNoteAlertInfo(n).isAlerting;
+        });
+
+        html += '<div class="space-y-3">';
+
+        // 1. Early Warning Banner (提前警示區塊)
+        if (activeAlertingNotes.length > 0) {
+          html += '  <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 shadow-xs space-y-2">';
+          html += '    <div class="flex items-center justify-between">';
+          html += '      <div class="flex items-center gap-1.5 text-rose-800 font-black text-xs">';
+          html += '        <span class="animate-bounce">🔔</span>';
+          html += '        <span>⚠️ 提前警示注意 (' + activeAlertingNotes.length + ' 筆到期中)</span>';
+          html += '      </div>';
+          html += '      <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 font-bold">優先處理</span>';
+          html += '    </div>';
+          html += '    <div class="space-y-1.5">';
+          activeAlertingNotes.forEach(function(n) {
+            var alert = getNoteAlertInfo(n);
+            html += '      <div class="bg-white p-2.5 rounded-xl border border-rose-200 flex items-center justify-between text-xs gap-2">';
+            html += '        <div class="flex items-center gap-2 truncate min-w-0 flex-1">';
+            html += '          <button type="button" class="alert-toggle-note-btn text-slate-400 hover:text-emerald-600 cursor-pointer shrink-0" data-id="' + n.id + '" title="標記完成（立即解除警示）">⬜</button>';
+            html += '          <div class="truncate">';
+            html += '            <span class="font-bold text-slate-800 truncate block">' + n.title + '</span>';
+            html += '            <span class="text-[10px] text-slate-400 font-mono">提醒：' + (n.reminderDate || '') + ' ' + (n.reminderTime || '') + '</span>';
+            html += '          </div>';
+            html += '        </div>';
+            html += '        <div class="flex items-center gap-1.5 shrink-0">';
+            html += '          <span class="font-bold px-2 py-0.5 rounded text-[10px] ' + alert.badgeClass + '">' + alert.text + '</span>';
+            html += '          <button type="button" class="alert-complete-btn px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold cursor-pointer" data-id="' + n.id + '" title="完成並解除警報">✓ 完成</button>';
+            html += '          <button type="button" class="alert-del-note-btn p-1 rounded-lg hover:bg-rose-100 text-rose-500 hover:text-rose-700 cursor-pointer" data-id="' + n.id + '" title="刪除此筆記事（立即清除警報）">';
+            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+            html += '          </button>';
+            html += '        </div>';
+            html += '      </div>';
+          });
+          html += '    </div>';
+          html += '  </div>';
+        }
+
+        // 2. Top Bar for Notes
+        html += '  <div class="bg-white p-4 rounded-[2rem] border border-slate-200/80 shadow-sm flex items-center justify-between">';
         html += '    <div>';
-        html += '      <h2 class="text-base font-black text-slate-900">記事備忘與警示</h2>';
-        html += '      <p class="text-[11px] text-slate-500">掌握關鍵繳款、紀念日與重要待辦</p>';
+        html += '      <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">';
+        html += '        <span>記事備忘與日程提醒</span>';
+        html += '        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-mono font-bold">' + notes.length + ' 則</span>';
+        html += '      </h3>';
+        html += '      <p class="text-[11px] text-slate-400">智能備忘 • 提前警示 • 隨時修改</p>';
         html += '    </div>';
-        html += '    <button type="button" id="add-note-tab-btn" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer flex items-center gap-1 transition-all active:scale-95">';
+        html += '    <button type="button" id="add-note-tab-btn" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center gap-1 shadow-md shadow-blue-200 cursor-pointer transition-all active:scale-95">';
         html += '      <span>+ 新增記事</span>';
         html += '    </button>';
         html += '  </div>';
 
-        if (notes.length === 0) {
-          html += '  <div class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 text-xs space-y-2">';
-          html += '    <div class="text-3xl">📝</div>';
-          html += '    <div>目前沒有任何記事備忘</div>';
-          html += '  </div>';
+        // 3. 標籤分類篩選列 (可橫向滾動點選)
+        var tagSet = {};
+        PRESET_NOTE_TAGS.forEach(function(t) { tagSet[t] = true; });
+        notes.forEach(function(n) { if (n.tag && n.tag.trim()) tagSet[n.tag.trim()] = true; });
+        var allTags = ['全部'].concat(Object.keys(tagSet));
+
+        var tagCounts = { '全部': notes.length };
+        notes.forEach(function(n) {
+          var t = n.tag && n.tag.trim() ? n.tag.trim() : '備忘';
+          tagCounts[t] = (tagCounts[t] || 0) + 1;
+        });
+
+        html += '  <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">';
+        html += '    <div class="flex items-center justify-between text-xs">';
+        html += '      <span class="font-bold text-slate-700 flex items-center gap-1.5">';
+        html += '        <span>🏷️ 標籤分類篩選：</span>';
+        html += '      </span>';
+        if (selectedNoteTag !== '全部') {
+          html += '      <button type="button" id="reset-tag-btn" class="text-[11px] text-blue-600 font-bold hover:underline cursor-pointer">重設回全部</button>';
+        }
+        html += '    </div>';
+
+        // 橫向標籤按鈕
+        html += '    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">';
+        allTags.forEach(function(t) {
+          var count = tagCounts[t] || 0;
+          var isSel = selectedNoteTag === t;
+          html += '      <button type="button" class="tag-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 cursor-pointer ' + (isSel ? 'bg-[#0e608a] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900') + '" data-tag="' + t + '">';
+          html += '        <span>' + (t === '全部' ? '全部' : '#' + t) + '</span>';
+          html += '        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono ' + (isSel ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-500') + '">' + count + '</span>';
+          html += '      </button>';
+        });
+        html += '    </div>';
+
+        // 狀態篩選按鈕
+        html += '    <div class="flex items-center gap-1 pt-1 border-t border-slate-100 text-xs">';
+        html += '      <span class="text-[11px] text-slate-400 font-bold mr-1 shrink-0">狀態：</span>';
+        html += '      <button type="button" class="status-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ' + (noteFilterStatus === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200') + '" data-status="all">全部 (' + notes.length + ')</button>';
+        html += '      <button type="button" class="status-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ' + (noteFilterStatus === 'alerting' ? 'bg-rose-600 text-white shadow-xs' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60') + '" data-status="alerting">';
+        html += '        <span>⚠️ 警示中</span>';
+        if (activeAlertingNotes.length > 0) {
+          html += '        <span class="text-[9px] px-1 rounded-full ' + (noteFilterStatus === 'alerting' ? 'bg-white/30 text-white' : 'bg-rose-200 text-rose-900 font-mono font-black') + '">' + activeAlertingNotes.length + '</span>';
+        }
+        html += '      </button>';
+        html += '      <button type="button" class="status-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ' + (noteFilterStatus === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200') + '" data-status="pending">待辦中</button>';
+        html += '      <button type="button" class="status-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ' + (noteFilterStatus === 'completed' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200') + '" data-status="completed">已完成</button>';
+        html += '    </div>';
+        html += '  </div>';
+
+        // 4. Filtered Notes List
+        var displayedNotes = notes.filter(function(n) {
+          if (selectedNoteTag !== '全部') {
+            var t = n.tag && n.tag.trim() ? n.tag.trim() : '備忘';
+            if (t !== selectedNoteTag) return false;
+          }
+          if (noteFilterStatus === 'alerting') {
+            if (n.isCompleted || !getNoteAlertInfo(n).isAlerting) return false;
+          } else if (noteFilterStatus === 'pending') {
+            if (n.isCompleted) return false;
+          } else if (noteFilterStatus === 'completed') {
+            if (!n.isCompleted) return false;
+          }
+          return true;
+        });
+
+        html += '  <div class="space-y-2.5">';
+        if (displayedNotes.length === 0) {
+          html += '    <div class="bg-white p-8 rounded-[2rem] border border-slate-200 text-center text-xs text-slate-400 space-y-2">';
+          html += '      <p>' + (notes.length === 0 ? '目前尚無記事備忘' : '目前在「' + selectedNoteTag + '」標籤或所選狀態下尚無記事') + '</p>';
+          if (notes.length === 0) {
+            html += '      <button type="button" id="add-first-note-btn" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1">+ 新增第一則記事</button>';
+          } else {
+            html += '      <button type="button" id="reset-all-filters-btn" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer inline-flex items-center gap-1">重設所有篩選條件</button>';
+          }
+          html += '    </div>';
         } else {
-          html += '  <div class="space-y-3">';
-          notes.forEach(function(note) {
+          displayedNotes.forEach(function(note) {
+            var alert = getNoteAlertInfo(note);
             var priorityColor = note.priority === 'urgent' ? 'bg-rose-500 text-white' : (note.priority === 'high' ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700');
             var priorityLabel = note.priority === 'urgent' ? '緊急' : (note.priority === 'high' ? '重要' : '一般');
 
-            html += '    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5 ' + (note.isCompleted ? 'opacity-60' : '') + '">';
+            html += '    <div class="bg-white p-4 rounded-2xl border shadow-2xs space-y-2.5 transition-all ' + (alert.isAlerting && !note.isCompleted ? 'border-rose-300 ring-1 ring-rose-200 bg-rose-50/20' : 'border-slate-200 hover:border-blue-300') + ' ' + (note.isCompleted ? 'opacity-60 bg-slate-50' : '') + '">';
             html += '      <div class="flex items-start justify-between gap-2">';
-            html += '        <div class="flex items-center gap-2 flex-wrap">';
-            html += '          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + priorityColor + '">' + priorityLabel + '</span>';
-            html += '          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">' + (note.tag || '備忘') + '</span>';
-            html += '          <h4 class="text-sm font-black text-slate-900 ' + (note.isCompleted ? 'line-through text-slate-400' : '') + '">' + note.title + '</h4>';
-            html += '        </div>';
-            html += '        <div class="flex items-center gap-1 shrink-0">';
-            html += '          <button class="toggle-note-btn p-1 text-slate-400 hover:text-emerald-600 rounded cursor-pointer" data-id="' + note.id + '" title="完成切換">';
+            html += '        <div class="flex items-start gap-2.5 min-w-0">';
+            html += '          <button class="toggle-note-btn mt-0.5 text-base leading-none cursor-pointer" data-id="' + note.id + '" title="完成切換">';
             html += '            ' + (note.isCompleted ? '☑️' : '⬜');
             html += '          </button>';
-            html += '          <button class="edit-note-btn p-1 text-slate-400 hover:text-blue-600 rounded cursor-pointer" data-id="' + note.id + '" title="編輯">';
-            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+            html += '          <div class="min-w-0">';
+            html += '            <h4 class="text-xs sm:text-sm font-bold ' + (note.isCompleted ? 'line-through text-slate-400' : 'text-slate-900') + '">' + note.title + '</h4>';
+            html += '            <div class="flex items-center gap-1.5 mt-1 flex-wrap">';
+            html += '              <button type="button" class="card-tag-btn text-[9px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 font-semibold cursor-pointer transition-colors" data-tag="' + (note.tag || '備忘') + '" title="點選以篩選此標籤">#' + (note.tag || '備忘') + '</button>';
+            html += '              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-sm ' + priorityColor + '">' + priorityLabel + '</span>';
+            if (note.reminderDate) {
+              html += '              <span class="text-[10px] text-slate-500 font-mono flex items-center gap-1">⏰ ' + note.reminderDate + ' ' + (note.reminderTime || '') + '</span>';
+            }
+            html += '            </div>';
+            html += '          </div>';
+            html += '        </div>';
+
+            html += '        <div class="flex items-center gap-1 shrink-0">';
+            html += '          <button class="edit-note-btn p-1.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-lg cursor-pointer" data-id="' + note.id + '" title="修改這則記事">';
+            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
             html += '          </button>';
-            html += '          <button class="del-note-btn p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer" data-id="' + note.id + '" title="刪除">';
-            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+            html += '          <button class="del-note-btn p-1.5 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer" data-id="' + note.id + '" title="刪除">';
+            html += '            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
             html += '          </button>';
             html += '        </div>';
             html += '      </div>';
@@ -9458,15 +9634,15 @@
             }
 
             if (note.reminderDate) {
-              html += '      <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">';
-              html += '        <span class="flex items-center gap-1 text-amber-700 font-medium">🔔 提醒日期：' + note.reminderDate + ' ' + (note.reminderTime || '') + '</span>';
-              html += '        <span>提前 ' + (note.earlyAlertDays || 1) + ' 天警示</span>';
+              html += '      <div class="flex items-center justify-between text-[10px] pt-1 text-slate-500 border-t border-slate-100">';
+              html += '        <span class="flex items-center gap-1 text-slate-600 font-medium">🔔 提醒：' + note.reminderDate + '</span>';
+              html += '        <span class="font-bold px-1.5 py-0.5 rounded ' + alert.badgeClass + '">' + alert.text + '</span>';
               html += '      </div>';
             }
             html += '    </div>';
           });
-          html += '  </div>';
         }
+        html += '  </div>';
         html += '</div>';
 
         container.innerHTML = html;
@@ -9474,6 +9650,78 @@
         var addBtn = document.getElementById('add-note-tab-btn');
         if (addBtn) addBtn.onclick = function() { openNoteModal(); };
 
+        var addFirstBtn = document.getElementById('add-first-note-btn');
+        if (addFirstBtn) addFirstBtn.onclick = function() { openNoteModal(); };
+
+        var resetTagBtn = document.getElementById('reset-tag-btn');
+        if (resetTagBtn) resetTagBtn.onclick = function() { selectedNoteTag = '全部'; renderMain(); };
+
+        var resetAllBtn = document.getElementById('reset-all-filters-btn');
+        if (resetAllBtn) resetAllBtn.onclick = function() { selectedNoteTag = '全部'; noteFilterStatus = 'all'; renderMain(); };
+
+        // Tag filter pills
+        container.querySelectorAll('.tag-filter-pill').forEach(function(btn) {
+          btn.onclick = function() {
+            selectedNoteTag = this.getAttribute('data-tag');
+            renderMain();
+          };
+        });
+
+        // Status filter buttons
+        container.querySelectorAll('.status-filter-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            noteFilterStatus = this.getAttribute('data-status');
+            renderMain();
+          };
+        });
+
+        // Note card tag clicks
+        container.querySelectorAll('.card-tag-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            selectedNoteTag = this.getAttribute('data-tag');
+            renderMain();
+          };
+        });
+
+        // Warning banner complete buttons
+        container.querySelectorAll('.alert-complete-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            var target = notes.find(function(n) { return n.id === id; });
+            if (target) {
+              target.isCompleted = true;
+              saveNotes();
+              renderMain();
+            }
+          };
+        });
+
+        // Warning banner toggle button
+        container.querySelectorAll('.alert-toggle-note-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            var target = notes.find(function(n) { return n.id === id; });
+            if (target) {
+              target.isCompleted = !target.isCompleted;
+              saveNotes();
+              renderMain();
+            }
+          };
+        });
+
+        // Warning banner delete buttons
+        container.querySelectorAll('.alert-del-note-btn').forEach(function(btn) {
+          btn.onclick = function() {
+            var id = this.getAttribute('data-id');
+            if (confirm('確定要刪除此筆警示記事嗎？刪除後警報將立即解除。')) {
+              notes = notes.filter(function(n) { return n.id !== id; });
+              saveNotes();
+              renderMain();
+            }
+          };
+        });
+
+        // Regular toggle note
         container.querySelectorAll('.toggle-note-btn').forEach(function(btn) {
           btn.onclick = function() {
             var id = this.getAttribute('data-id');
@@ -9486,6 +9734,7 @@
           };
         });
 
+        // Edit note
         container.querySelectorAll('.edit-note-btn').forEach(function(btn) {
           btn.onclick = function() {
             var id = this.getAttribute('data-id');
@@ -9494,6 +9743,7 @@
           };
         });
 
+        // Delete note
         container.querySelectorAll('.del-note-btn').forEach(function(btn) {
           btn.onclick = function() {
             var id = this.getAttribute('data-id');
@@ -9767,6 +10017,8 @@
         var modalBox = document.getElementById('modal-box');
         var modalContainer = document.getElementById('modal-container');
 
+        var currentTag = isEdit ? (editNote.tag || '生活') : '生活';
+
         var mHtml = '';
         mHtml += '<div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">';
         mHtml += '  <div class="flex items-center gap-2">';
@@ -9778,35 +10030,55 @@
         mHtml += '  <button type="button" id="close-modal-x" class="text-slate-400 hover:text-slate-600 p-1 font-bold cursor-pointer">✕</button>';
         mHtml += '</div>';
 
-        mHtml += '<div class="p-5 space-y-3.5 overflow-y-auto flex-1">';
+        mHtml += '<div class="p-5 space-y-3.5 overflow-y-auto flex-1 text-xs">';
         mHtml += '  <div class="space-y-1">';
-        mHtml += '    <label class="text-xs font-bold text-slate-700">記事標題</label>';
-        mHtml += '    <input type="text" id="note-title-input" value="' + (isEdit ? editNote.title : '') + '" placeholder="例：繳納水電瓦斯費、家人生日..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+        mHtml += '    <label class="text-[11px] font-bold text-slate-700">記事標題</label>';
+        mHtml += '    <input type="text" id="note-title-input" value="' + (isEdit ? editNote.title : '') + '" placeholder="例：繳納水電瓦斯費、家人生日..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+        mHtml += '  </div>';
+
+        // 標籤分類點選與自訂
+        mHtml += '  <div class="space-y-1.5">';
+        mHtml += '    <label class="text-[11px] font-bold text-slate-700">標籤分類 (點選或自訂)</label>';
+        mHtml += '    <div class="flex flex-wrap gap-1.5" id="preset-tags-container">';
+        PRESET_NOTE_TAGS.forEach(function(t) {
+          var isSel = currentTag === t;
+          mHtml += '      <button type="button" class="preset-tag-chip px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ' + (isSel ? 'bg-blue-600 text-white shadow-xs scale-105' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80') + '" data-tag="' + t + '">#' + t + '</button>';
+        });
+        mHtml += '    </div>';
+        mHtml += '    <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-300 focus-within:border-blue-500 focus-within:bg-white transition-colors">';
+        mHtml += '      <span class="text-slate-400 font-bold text-xs">#</span>';
+        mHtml += '      <input type="text" id="note-tag-input" value="' + currentTag + '" placeholder="輸入自訂標籤或從上方點選" class="flex-1 bg-transparent text-slate-800 text-xs font-bold focus:outline-hidden" />';
+        mHtml += '    </div>';
         mHtml += '  </div>';
 
         mHtml += '  <div class="space-y-1">';
-        mHtml += '    <label class="text-xs font-bold text-slate-700">詳細說明 (選填)</label>';
-        mHtml += '    <textarea id="note-content-input" rows="3" placeholder="輸入備忘細節..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden resize-none">' + (isEdit ? (editNote.content || '') : '') + '</textarea>';
+        mHtml += '    <label class="text-[11px] font-bold text-slate-700">詳細說明 (選填)</label>';
+        mHtml += '    <textarea id="note-content-input" rows="3" placeholder="在此填寫記事備忘內容..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-blue-500 focus:outline-hidden resize-none leading-relaxed">' + (isEdit ? (editNote.content || '') : '') + '</textarea>';
         mHtml += '  </div>';
 
         mHtml += '  <div class="grid grid-cols-2 gap-2">';
         mHtml += '    <div class="space-y-1">';
-        mHtml += '      <label class="text-xs font-bold text-slate-700">標籤分類</label>';
-        mHtml += '      <input type="text" id="note-tag-input" value="' + (isEdit ? (editNote.tag || '生活') : '生活') + '" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold" />';
-        mHtml += '    </div>';
-        mHtml += '    <div class="space-y-1">';
-        mHtml += '      <label class="text-xs font-bold text-slate-700">重要程度</label>';
-        mHtml += '      <select id="note-priority-input" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">';
+        mHtml += '      <label class="text-[11px] font-bold text-slate-700">重要程度</label>';
+        mHtml += '      <select id="note-priority-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">';
         mHtml += '        <option value="normal"' + (isEdit && editNote.priority === 'normal' ? ' selected' : '') + '>一般</option>';
         mHtml += '        <option value="high"' + (isEdit && editNote.priority === 'high' ? ' selected' : '') + '>重要</option>';
         mHtml += '        <option value="urgent"' + (isEdit && editNote.priority === 'urgent' ? ' selected' : '') + '>緊急</option>';
         mHtml += '      </select>';
         mHtml += '    </div>';
+        mHtml += '    <div class="space-y-1">';
+        mHtml += '      <label class="text-[11px] font-bold text-slate-700">提前警示天數</label>';
+        mHtml += '      <select id="note-early-days-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">';
+        mHtml += '        <option value="1"' + (isEdit && editNote.earlyAlertDays === 1 ? ' selected' : '') + '>提前 1 天警示</option>';
+        mHtml += '        <option value="2"' + (isEdit && editNote.earlyAlertDays === 2 ? ' selected' : '') + '>提前 2 天警示</option>';
+        mHtml += '        <option value="3"' + (isEdit && (!editNote.earlyAlertDays || editNote.earlyAlertDays === 3) ? ' selected' : (!isEdit ? ' selected' : '')) + '>提前 3 天警示</option>';
+        mHtml += '        <option value="7"' + (isEdit && editNote.earlyAlertDays === 7 ? ' selected' : '') + '>提前 7 天警示</option>';
+        mHtml += '      </select>';
+        mHtml += '    </div>';
         mHtml += '  </div>';
 
         mHtml += '  <div class="space-y-1 pt-1 border-t border-slate-100">';
-        mHtml += '    <label class="text-xs font-bold text-slate-700">提醒警示日期 (選填)</label>';
-        mHtml += '    <input type="date" id="note-date-input" value="' + (isEdit ? (editNote.reminderDate || '') : '') + '" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />';
+        mHtml += '    <label class="text-[11px] font-bold text-slate-700">提醒警示日期 (選填)</label>';
+        mHtml += '    <input type="date" id="note-date-input" value="' + (isEdit ? (editNote.reminderDate || '') : '') + '" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold" />';
         mHtml += '  </div>';
         mHtml += '</div>';
 
@@ -9820,11 +10092,40 @@
         document.getElementById('close-modal-x').onclick = closeModal;
         document.getElementById('modal-cancel-btn').onclick = closeModal;
 
+        // Tag Chip selection
+        var tagChips = modalBox.querySelectorAll('.preset-tag-chip');
+        var tagInput = document.getElementById('note-tag-input');
+        tagChips.forEach(function(chip) {
+          chip.onclick = function() {
+            var selectedVal = this.getAttribute('data-tag');
+            tagInput.value = selectedVal;
+            tagChips.forEach(function(c) {
+              if (c.getAttribute('data-tag') === selectedVal) {
+                c.className = 'preset-tag-chip px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-blue-600 text-white shadow-xs scale-105';
+              } else {
+                c.className = 'preset-tag-chip px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80';
+              }
+            });
+          };
+        });
+
+        tagInput.oninput = function() {
+          var val = this.value.trim();
+          tagChips.forEach(function(c) {
+            if (c.getAttribute('data-tag') === val) {
+              c.className = 'preset-tag-chip px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-blue-600 text-white shadow-xs scale-105';
+            } else {
+              c.className = 'preset-tag-chip px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80';
+            }
+          });
+        };
+
         document.getElementById('note-submit-btn').onclick = function() {
           var title = document.getElementById('note-title-input').value.trim();
           var content = document.getElementById('note-content-input').value.trim();
-          var tag = document.getElementById('note-tag-input').value.trim() || '生活';
+          var tag = tagInput.value.trim() || '生活';
           var priority = document.getElementById('note-priority-input').value;
+          var earlyDays = parseInt(document.getElementById('note-early-days-input').value, 10) || 3;
           var rDate = document.getElementById('note-date-input').value;
 
           if (!title) {
@@ -9837,6 +10138,7 @@
             editNote.content = content;
             editNote.tag = tag;
             editNote.priority = priority;
+            editNote.earlyAlertDays = earlyDays;
             editNote.reminderDate = rDate;
             editNote.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
           } else {
@@ -9846,6 +10148,7 @@
               content: content,
               tag: tag,
               priority: priority,
+              earlyAlertDays: earlyDays,
               reminderDate: rDate,
               isCompleted: false,
               updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
@@ -9891,7 +10194,9 @@
 
 
 
-<!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
+
+
+ <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
 <div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <div style="background:#ffffff; width:100%; max-width:380px; border-radius:24px; padding:24px 20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
