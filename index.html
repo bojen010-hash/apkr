@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
 
-   <link rel="manifest" href="manifest.json"> 
+  <link rel="manifest" href="manifest.json">
 
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -10191,12 +10191,8 @@
       setInterval(checkAndUpdateDate, 30000);
     })();
   </script>
-
-
-
-
-
- <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
+  
+<!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
 <div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <div style="background:#ffffff; width:100%; max-width:380px; border-radius:24px; padding:24px 20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
@@ -10244,7 +10240,7 @@
     <div style="margin-bottom:14px;">
       <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入 6 位純數字通關密碼：</label>
       <div style="display:flex; gap:8px;">
-        <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入 6 位數字 (如: 739201)" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box;" maxlength="10" />
+        <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入 6 位純數字通關密碼" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box;" maxlength="10" />
         <button id="cbjm-btn-verify" type="button" style="background:#d97706; color:#ffffff; border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:bold; cursor:pointer; shrink:0; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
           送出驗證
         </button>
@@ -10324,13 +10320,40 @@
     };
   }
 
-  // 6. 郵件索取
+  // 6. 郵件索取 (電腦與手機雙軌相容)
   var emailBtn = document.getElementById('cbjm-btn-email');
   if (emailBtn) {
     emailBtn.onclick = function() {
-      var subject = encodeURIComponent('[專用軟體] 授權通關密碼申請 (' + deviceId + ')');
-      var body = encodeURIComponent('作者 Cbjm 您好：\n\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！');
-      window.location.href = 'mailto:bojen010@gmail.com?subject=' + subject + '&body=' + body;
+      var subject = encodeURIComponent('[記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')');
+      var body = encodeURIComponent('作者 Cbjm 您好：
+
+我的設備特徵碼為：' + deviceId + '
+請提供專屬授權通關密碼，謝謝！');
+      var fullText = '收件人: bojen010@gmail.com
+主旨: [記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')
+
+作者 Cbjm 您好：
+我的設備特徵碼為：' + deviceId + '
+請提供專屬授權通關密碼，謝謝！';
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullText);
+      }
+
+      var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent('bojen010@gmail.com') + '&su=' + subject + '&body=' + body;
+      var mailtoUrl = 'mailto:bojen010@gmail.com?subject=' + subject + '&body=' + body;
+
+      if (isMobile) {
+        window.location.href = mailtoUrl;
+      } else {
+        var win = window.open(gmailUrl, '_blank');
+        if (!win) {
+          window.location.href = mailtoUrl;
+        }
+      }
+      alert('已為您複製特徵碼與信件內文！
+若電腦未安裝 Outlook 等郵件軟體，已自動開啟 Gmail 網頁版為您填好信件；您亦可直接於任何郵箱中貼上內容寄送給作者。');
     };
   }
 
@@ -10371,8 +10394,8 @@
     }
     var correct = computeValidPasscode(deviceId);
     
-    // 支援 6 位純數字密碼、通用萬用密碼 (739201, 888888, 123456) 以及舊版 8K9P-4X2M
-    if (val === correct || val === '739201' || val === '888888' || val === '123456' || val === '8K9P-4X2M') {
+    // 驗證 6 位專屬純數字通關密碼 (亦相容舊版通用金鑰 8K9P-4X2M)
+    if (val === correct || val === '8K9P-4X2M') {
       msgEl.style.display = 'block';
       msgEl.style.color = '#059669';
       msgEl.textContent = '✓ 認證成功！正在為您開啟軟體...';
@@ -10402,10 +10425,6 @@
 })();
 </script>
 <!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
-
-
-
-
 
 </body>
 </html>
