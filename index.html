@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
 
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json"> 
 
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -10194,8 +10194,8 @@
   
 <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
-<div id="cbjm-universal-gate-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <div style="background:#ffffff; width:100%; max-width:380px; border-radius:24px; padding:24px 20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
+<div id="cbjm-universal-gate-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="background:#ffffff; width:100%; max-width:380px; max-height:92vh; overflow-y:auto; border-radius:24px; padding:20px 18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
     <!-- 頂部標題列 -->
     <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
       <div style="width:40px; height:40px; border-radius:12px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; shrink:0;">
@@ -10260,13 +10260,35 @@
 
 <script>
 (function() {
-  var AUTH_STORAGE_KEY = 'cbjm_app_passcode_unlocked_v1';
+  var AUTH_STORAGE_KEY = 'cbjm_app_passcode_unlocked_v2';
   var DEVICE_STORAGE_KEY = 'cbjm_app_device_id_v1';
   var SALT = 'CBJM_SECURE_2026';
+
+  // 0. 支援網址後綴帶有 ?relock=1 或 ?reset=1 或 ?lock=1 隨時清空授權重新測試門禁
+  try {
+    if (window.location && window.location.search) {
+      var q = window.location.search.toLowerCase();
+      if (q.indexOf('relock') !== -1 || q.indexOf('reset') !== -1 || q.indexOf('lock') !== -1) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem('cbjm_app_passcode_unlocked_v1');
+      }
+    }
+  } catch(e) {}
+
+  // 供作者隨時在主控台或測試呼叫重新鎖定
+  window.cbjmRelockGate = function() {
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem('cbjm_app_passcode_unlocked_v1');
+      location.reload();
+    } catch(e) {}
+  };
 
   // 1. 檢查是否已經解鎖過
   try {
     if (localStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
+      var ov = document.getElementById('cbjm-universal-gate-overlay');
+      if (ov) ov.style.display = 'none';
       return; // 已授權，完全不顯示門禁
     }
   } catch(e) {}
@@ -10325,16 +10347,8 @@
   if (emailBtn) {
     emailBtn.onclick = function() {
       var subject = encodeURIComponent('[記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')');
-      var body = encodeURIComponent('作者 Cbjm 您好：
-
-我的設備特徵碼為：' + deviceId + '
-請提供專屬授權通關密碼，謝謝！');
-      var fullText = '收件人: bojen010@gmail.com
-主旨: [記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')
-
-作者 Cbjm 您好：
-我的設備特徵碼為：' + deviceId + '
-請提供專屬授權通關密碼，謝謝！';
+      var body = encodeURIComponent('作者 Cbjm 您好：\n\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！');
+      var fullText = '收件人: bojen010@gmail.com\n主旨: [記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')\n\n作者 Cbjm 您好：\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！';
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(fullText);
@@ -10352,8 +10366,7 @@
           window.location.href = mailtoUrl;
         }
       }
-      alert('已為您複製特徵碼與信件內文！
-若電腦未安裝 Outlook 等郵件軟體，已自動開啟 Gmail 網頁版為您填好信件；您亦可直接於任何郵箱中貼上內容寄送給作者。');
+      alert('已為您複製特徵碼與信件內文！\n若電腦未安裝 Outlook 等郵件軟體，已自動開啟 Gmail 網頁版為您填好信件；您亦可直接於任何郵箱中貼上內容寄送給作者。');
     };
   }
 
