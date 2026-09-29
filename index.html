@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
 
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json"> 
 
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -17,7 +17,7 @@
   <script>
     // LINE 內建瀏覽器自動跳脫至 Safari / 預設瀏覽器
     (function() {
-      if (/Line//i.test(navigator.userAgent) && location.protocol.indexOf('http') === 0) {
+      if (navigator.userAgent.indexOf('Line/') !== -1 && location.protocol.indexOf('http') === 0) {
         if (location.search.indexOf('openExternalBrowser=1') === -1) {
           var sep = location.search ? '&' : '?';
           location.replace(location.href + sep + 'openExternalBrowser=1');
@@ -8751,117 +8751,25 @@
 
       var defaultExpenses = [
   {
-    "id": "exp-1789721353452",
-    "type": "expense",
-    "category": "居家日常",
-    "amount": 300,
-    "date": "2026-09-18",
-    "note": ""
-  },
-  {
-    "id": "exp-1789721295428",
-    "type": "expense",
-    "category": "居家日常",
-    "amount": 100,
-    "date": "2026-09-18",
-    "note": "買飲料"
-  },
-  {
-    "id": "exp-1789654785404",
-    "type": "income",
-    "category": "投資收益",
-    "amount": 2000,
-    "date": "2026-09-17",
-    "note": "股利"
-  },
-  {
-    "id": "exp-1789654712126",
-    "type": "expense",
-    "category": "居家日常",
-    "amount": 300,
-    "date": "2026-09-17",
-    "note": "水果"
-  },
-  {
-    "id": "exp-1789615813065",
-    "type": "expense",
-    "category": "生活日用",
-    "amount": 500,
-    "date": "2026-09-17",
-    "note": "買菜"
-  },
-  {
     "id": "exp-1",
     "type": "expense",
     "category": "餐飲飲食",
-    "amount": 100,
-    "date": "2026-09-15",
-    "note": "精緻午餐便當與熱美式"
-  },
-  {
-    "id": "exp-2",
-    "type": "expense",
-    "category": "交通出行",
-    "amount": 55,
-    "date": "2026-09-15",
-    "note": "捷運乘車加值"
-  },
-  {
-    "id": "exp-3",
-    "type": "income",
-    "category": "薪資獎金",
-    "amount": 300,
-    "date": "2026-09-14",
-    "note": "軟體授權獎金分潤"
+    "amount": 150,
+    "date": "2026-09-29",
+    "note": "範例帳目：生活日常消費"
   }
 ];
       var defaultNotes = [
   {
-    "id": "note-1790254562443",
-    "title": "9/25繳電費",
-    "content": "",
-    "tag": "帳單",
-    "reminderDate": "2026-09-24",
-    "reminderTime": "21:00",
-    "earlyAlertDays": 1,
-    "priority": "normal",
-    "isCompleted": false,
-    "updatedAt": "2026-09-24 12:56"
-  },
-  {
-    "id": "note-1789486505726",
-    "title": "繳信用卡",
-    "content": "",
-    "tag": "生活",
-    "updatedAt": "2026-09-17 12:53",
-    "reminderDate": "2026-09-16",
-    "reminderTime": "09:00",
-    "earlyAlertDays": 1,
-    "priority": "normal",
-    "isCompleted": false
-  },
-  {
     "id": "note-1",
-    "title": "門禁系統測試清單",
-    "content": "1. 檢查特徵碼一鍵複製是否正常。\n2. 確認 LINE 與 Email 自動帶出主題文字。\n3. 驗證本機永久放行與舊資料修改功能。",
-    "updatedAt": "2026-09-17 12:53",
-    "tag": "工作",
-    "reminderDate": "2026-09-16",
-    "reminderTime": "09:00",
-    "earlyAlertDays": 1,
-    "priority": "normal",
-    "isCompleted": false
-  },
-  {
-    "id": "note-2",
-    "title": "個人備忘事項",
-    "content": "週末安排備份手機資料與檢查離線算號器功能。",
-    "updatedAt": "2026-09-17 12:53",
+    "title": "歡迎使用！重要備忘提醒範例",
+    "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈！",
+    "updatedAt": "2026-09-29 09:00",
     "tag": "生活",
-    "reminderDate": "2026-09-16",
-    "reminderTime": "09:00",
-    "earlyAlertDays": 1,
-    "priority": "normal",
+    "reminderDate": "2026-10-02",
+    "reminderTime": "12:00",
+    "earlyAlertDays": 3,
+    "priority": "high",
     "isCompleted": false
   }
 ];
@@ -9033,7 +8941,7 @@
       var deferredInstallPrompt = null;
       var isStandaloneApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       var isIOSDevice = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
-      var isLineApp = /Line//i.test(navigator.userAgent);
+      var isLineApp = navigator.userAgent.indexOf('Line/') !== -1;
       var isFileProtocol = window.location.protocol === 'file:';
       var isStorageSupported = true;
       var dismissedLineBanner = false;
@@ -10350,15 +10258,38 @@
         };
 
         document.getElementById('reset-default-btn').onclick = function() {
-          if (confirm('確定要重設為初始展示帳目嗎？將還原為乾淨初始範本（帳務與記事各 1 筆），目前的自訂紀錄將被覆蓋！')) {
-            expenses = defaultExpenses;
-            notes = defaultNotes;
-            saveExpenses();
-            saveNotes();
-            renderMain();
-            alert('已回復至初始範本狀態（帳務與記事各留存 1 筆）！');
-          }
+          openResetConfirmModal();
         };
+      }
+
+      function openResetConfirmModal() {
+        var modalBox = document.getElementById('modal-box');
+        modalBox.innerHTML =
+          '<div class="p-6 text-center space-y-4">' +
+            '<div class="w-14 h-14 mx-auto rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl shadow-inner">🔄</div>' +
+            '<div class="space-y-1.5">' +
+              '<h3 class="text-base font-black text-slate-900">確定要重設為初始展示帳目嗎？</h3>' +
+              '<p class="text-xs text-slate-500 leading-relaxed">將清除瀏覽器目前暫存的紀錄，還原為乾淨初始範本（<strong class="text-emerald-600 font-bold">記帳 1 筆、記事 1 筆</strong>）。</p>' +
+            '</div>' +
+            '<div class="flex gap-2.5 pt-2">' +
+              '<button type="button" id="btn-cancel-reset" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer">取消</button>' +
+              '<button type="button" id="btn-confirm-reset" class="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md cursor-pointer">確認重設</button>' +
+            '</div>' +
+          '</div>';
+
+        document.getElementById('btn-cancel-reset').onclick = closeModal;
+        document.getElementById('btn-confirm-reset').onclick = function() {
+          expenses = defaultExpenses;
+          notes = defaultNotes;
+          saveExpenses();
+          saveNotes();
+          closeModal();
+          renderMain();
+          alert('✓ 已成功回復至初始範本狀態（帳務與記事各留存 1 筆）！');
+        };
+
+        var modalContainer = document.getElementById('modal-container');
+        modalContainer.classList.remove('hidden');
       }
 
       // ================= MODAL: ADD/EDIT EXPENSE =================
