@@ -5,12 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
 
-  <link rel="manifest" href="manifest.json"> 
+  <link rel="manifest" href="manifest.json">
 
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳記事 Pro" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+  <script>
+    // LINE 內建瀏覽器自動跳脫至 Safari / 預設瀏覽器
+    (function() {
+      if (/Line//i.test(navigator.userAgent) && location.protocol.indexOf('http') === 0) {
+        if (location.search.indexOf('openExternalBrowser=1') === -1) {
+          var sep = location.search ? '&' : '?';
+          location.replace(location.href + sep + 'openExternalBrowser=1');
+        }
+      }
+    })();
+  </script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -8603,7 +8617,14 @@
         </div>
 
         <!-- Top Right Action Icons -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
+          <button id="header-install-btn" class="w-9 h-9 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/30 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="安裝「記帳記事」到手機主畫面">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-200">
+              <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+              <line x1="12" x2="12.01" y1="18" y2="18"/>
+            </svg>
+          </button>
+
           <button id="header-bell-btn" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="記事警示">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
@@ -8669,6 +8690,20 @@
   <!-- ================= MODAL CONTAINER ================= -->
   <div id="modal-container" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
     <div id="modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in">
+      <!-- Injected Dynamically -->
+    </div>
+  </div>
+
+  <!-- ================= MONTHLY BACKUP REMINDER MODAL CONTAINER ================= -->
+  <div id="monthly-backup-modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="monthly-backup-modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-fade-in">
+      <!-- Injected Dynamically -->
+    </div>
+  </div>
+
+  <!-- ================= PWA FIRST-LAUNCH INSTALL MODAL CONTAINER ================= -->
+  <div id="pwa-install-modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="pwa-install-modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-fade-in">
       <!-- Injected Dynamically -->
     </div>
   </div>
@@ -8870,6 +8905,385 @@
         localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
       }
 
+      // ================= 30-DAY MONTHLY SCHEDULED BACKUP LOGIC =================
+      var STORAGE_LAST_EXPORT_KEY = 'pure_app_last_manual_export_time';
+      var STORAGE_SNOOZE_KEY = 'pure_app_snooze_monthly_backup_until';
+      var STORAGE_INSTALL_KEY = 'pure_app_first_install_time';
+
+      function getMonthlyBackupStatus() {
+        var installTime = localStorage.getItem(STORAGE_INSTALL_KEY) || localStorage.getItem('sim_app_first_install_time');
+        if (!installTime) {
+          installTime = new Date().toISOString();
+          try { localStorage.setItem(STORAGE_INSTALL_KEY, installTime); } catch(e) {}
+        }
+        var lastExport = localStorage.getItem(STORAGE_LAST_EXPORT_KEY) || localStorage.getItem('sim_last_manual_export_time');
+        var refIso = lastExport || installTime;
+        var diffMs = Date.now() - new Date(refIso).getTime();
+        var daysPassed = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+        var isDue = daysPassed >= 30;
+        var daysRemaining = Math.max(0, 30 - daysPassed);
+        var formattedDate = lastExport ? lastExport.split('T')[0] : '尚未手動匯出過';
+        return {
+          daysPassed: daysPassed,
+          isDue: isDue,
+          daysRemaining: daysRemaining,
+          formattedDate: formattedDate,
+          lastExport: lastExport
+        };
+      }
+
+      function executeExportBackup() {
+        var payload = {
+          version: '2.5.0',
+          appName: '記帳記事Pro',
+          exportedAt: new Date().toISOString(),
+          expenses: expenses,
+          notes: notes
+        };
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '記帳記事Pro備份_' + new Date().toISOString().split('T')[0] + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        var nowIso = new Date().toISOString();
+        try {
+          localStorage.setItem(STORAGE_LAST_EXPORT_KEY, nowIso);
+          localStorage.setItem('sim_last_manual_export_time', nowIso);
+          localStorage.removeItem(STORAGE_SNOOZE_KEY);
+          localStorage.removeItem('sim_snooze_monthly_backup_until');
+        } catch(e) {}
+      }
+
+      function openMonthlyBackupReminderModal() {
+        var status = getMonthlyBackupStatus();
+        var container = document.getElementById('monthly-backup-modal-container');
+        var box = document.getElementById('monthly-backup-modal-box');
+        if (!container || !box) return;
+
+        var html = '';
+        html += '<div class="px-5 py-4 bg-gradient-to-r from-[#0e608a] to-blue-700 text-white flex items-center justify-between shrink-0">';
+        html += '  <div class="flex items-center gap-2.5">';
+        html += '    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg">🛡️</div>';
+        html += '    <div>';
+        html += '      <h3 class="text-sm font-black tracking-tight">月度資料安全存檔提醒</h3>';
+        html += '      <p class="text-[10px] text-blue-100">30天定期離線實體備份防護</p>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <button type="button" id="close-monthly-modal-x" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold cursor-pointer transition-colors" title="關閉">✕</button>';
+        html += '</div>';
+
+        html += '<div class="p-5 space-y-4 text-xs text-slate-700">';
+        html += '  <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">';
+        html += '    <span class="text-base leading-none shrink-0 mt-0.5">⚠️</span>';
+        html += '    <div class="text-[11px] leading-relaxed text-amber-950">';
+        if (status.daysPassed >= 30) {
+          html += '      您好！距離上次手動實體備份已過 <strong class="font-black text-rose-600 underline text-xs">' + status.daysPassed + ' 天</strong>。為避免手機清理快取、換新手機或誤刪資料，建議立即下載存檔！';
+        } else {
+          html += '      建議每月定期將帳本備份存入手機資料夾，確保重要財務紀錄永久安全無失！(目前距離下次提醒還有 ' + status.daysRemaining + ' 天)';
+        }
+        html += '    </div>';
+        html += '  </div>';
+
+        html += '  <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1.5">';
+        html += '    <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-medium">目前累計記帳：</span><span class="font-mono font-bold text-slate-900">' + expenses.length + ' 筆</span></div>';
+        html += '    <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-medium">目前備忘記事：</span><span class="font-mono font-bold text-slate-900">' + notes.length + ' 則</span></div>';
+        html += '    <div class="flex justify-between items-center text-[11px] pt-1.5 border-t border-slate-200"><span class="text-slate-500 font-medium">上次匯出時間：</span><span class="font-mono text-slate-700 font-bold">' + status.formattedDate + '</span></div>';
+        html += '  </div>';
+
+        html += '  <div class="space-y-2 pt-1">';
+        html += '    <button type="button" id="btn-monthly-download-now" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
+        html += '      <span>📥 立即一鍵下載本月備份</span>';
+        html += '    </button>';
+        html += '    <button type="button" id="btn-monthly-snooze" class="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
+        html += '      <span>明天再提醒我 (延遲 24 小時)</span>';
+        html += '    </button>';
+        html += '  </div>';
+        html += '</div>';
+
+        box.innerHTML = html;
+        container.classList.remove('hidden');
+
+        document.getElementById('close-monthly-modal-x').onclick = function() {
+          container.classList.add('hidden');
+        };
+        document.getElementById('btn-monthly-download-now').onclick = function() {
+          executeExportBackup();
+          container.classList.add('hidden');
+          alert('✓ 已成功匯出最新備份檔！30天定期備份保護計時已重設');
+          renderMain();
+        };
+        document.getElementById('btn-monthly-snooze').onclick = function() {
+          var tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          try {
+            localStorage.setItem(STORAGE_SNOOZE_KEY, tomorrow.toISOString());
+            localStorage.setItem('sim_snooze_monthly_backup_until', tomorrow.toISOString());
+          } catch(e) {}
+          container.classList.add('hidden');
+          alert('⏰ 已為您推遲備份提醒至明日');
+        };
+      }
+
+      // ================= PWA INSTALLATION & ENVIRONMENT DETECTION =================
+      var deferredInstallPrompt = null;
+      var isStandaloneApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      var isIOSDevice = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+      var isLineApp = /Line//i.test(navigator.userAgent);
+      var isFileProtocol = window.location.protocol === 'file:';
+      var isStorageSupported = true;
+      var dismissedLineBanner = false;
+      var dismissedFileBanner = false;
+
+      // 1. Storage Health Diagnostic
+      try {
+        var testKey = '__test_storage_avail__';
+        localStorage.setItem(testKey, testKey);
+        localStorage.removeItem(testKey);
+        isStorageSupported = true;
+      } catch (e) {
+        console.warn('LocalStorage is blocked or restricted:', e);
+        isStorageSupported = false;
+      }
+
+      // 2. Request persistent storage if supported
+      if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().catch(function(){});
+      }
+
+      // 3. Auto-escape LINE if on HTTP/HTTPS
+      if (isLineApp && !isFileProtocol && location.search.indexOf('openExternalBrowser=1') === -1) {
+        try {
+          var sep = location.search ? '&' : '?';
+          location.replace(location.href + sep + 'openExternalBrowser=1');
+        } catch (e) {}
+      }
+
+      function copyLineShareUrl() {
+        if (window.location.protocol === 'file:') {
+          alert('⚠️ 目前為本機檔案 (file://)，請提供線上網址或部署至 GitHub Pages 後再傳入 LINE！');
+          return;
+        }
+        try {
+          var urlObj = new URL(window.location.href);
+          urlObj.searchParams.set('openExternalBrowser', '1');
+          var shareUrl = urlObj.toString();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl).then(function() {
+              alert('✓ 已複製 LINE 專屬防清空網址！傳入 LINE 點開將自動以 Safari / Chrome 開啟');
+            }).catch(function() {
+              prompt('請複製以下 LINE 專屬防遺失網址：', shareUrl);
+            });
+          } else {
+            prompt('請複製以下 LINE 專屬防遺失網址：', shareUrl);
+          }
+        } catch (e) {
+          prompt('請複製以下 LINE 專屬防遺失網址：', window.location.href + (window.location.search ? '&' : '?') + 'openExternalBrowser=1');
+        }
+      }
+
+      function getTopWarningBannersHtml() {
+        var bHtml = '';
+        if (!isStorageSupported) {
+          bHtml += '<div class="p-3.5 bg-rose-600 text-white rounded-2xl shadow-lg flex items-start gap-2.5 text-xs animate-shake mb-3">';
+          bHtml += '  <span class="text-xl shrink-0">⚠️</span>';
+          bHtml += '  <div class="space-y-1">';
+          bHtml += '    <div class="font-bold text-sm">⚠️ 偵測到本機儲存被封鎖！</div>';
+          bHtml += '    <div class="text-[11px] text-rose-100">您目前處於無痕私密模式或受限沙箱中，導致本機資料無法寫入。關閉頁面後記帳資料可能無法保存！請改用正常 Safari 分頁開啟。</div>';
+          bHtml += '  </div>';
+          bHtml += '</div>';
+        }
+        if (isLineApp && !dismissedLineBanner) {
+          bHtml += '<div class="p-4 bg-gradient-to-r from-amber-500 via-rose-600 to-rose-700 text-white rounded-2xl shadow-xl border border-amber-300/40 space-y-2.5 mb-3">';
+          bHtml += '  <div class="flex items-start justify-between gap-2">';
+          bHtml += '    <div class="flex items-center gap-2">';
+          bHtml += '      <span class="text-xl">⚠️</span>';
+          bHtml += '      <div class="font-black text-xs sm:text-sm">您目前在 LINE 內建預覽視窗中！</div>';
+          bHtml += '    </div>';
+          bHtml += '    <button type="button" id="btn-close-line-banner" class="px-2 py-0.5 rounded-full bg-black/25 text-white/90 hover:text-white text-[11px] cursor-pointer">關閉</button>';
+          bHtml += '  </div>';
+          bHtml += '  <p class="text-[11px] text-amber-100 leading-relaxed">Apple iPhone 在關閉 LINE 後會<strong>自動清除暫存快取</strong>，導致記帳資料被清空，且在 LINE 內無法直接加到主畫面！</p>';
+          bHtml += '  <div class="bg-black/25 p-2.5 rounded-xl text-[11px] space-y-1.5 border border-white/10">';
+          bHtml += '    <div class="font-bold text-amber-200">👉 請依以下 2 步驟解除限制並永久保存：</div>';
+          bHtml += '    <div class="pl-1 space-y-1 text-white/95">';
+          bHtml += '      <div>1. 點擊右上角<strong>「三個點 ⋯」</strong>選單 ➔ 選擇<strong>「在預設瀏覽器（Safari）開啟」</strong></div>';
+          bHtml += '      <div>2. 在 Safari 點擊底部分享圖示 ➔ 選擇<strong>「加入主畫面 ⊞」</strong>即可獲得永不丟失的原生 App！</div>';
+          bHtml += '    </div>';
+          bHtml += '  </div>';
+          bHtml += '  <div class="flex items-center gap-2 pt-1">';
+          bHtml += '    <button type="button" id="btn-banner-copy-line" class="flex-1 py-2 px-3 bg-white text-rose-700 hover:bg-rose-50 rounded-xl font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer">';
+          bHtml += '      <span>📲 複製 LINE 防清空專用網址</span>';
+          bHtml += '    </button>';
+          bHtml += '  </div>';
+          bHtml += '</div>';
+        }
+        if (isFileProtocol && !dismissedFileBanner) {
+          bHtml += '<div class="p-3.5 bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-2xl shadow-lg border border-indigo-300/40 space-y-2 mb-3">';
+          bHtml += '  <div class="flex items-start justify-between gap-2">';
+          bHtml += '    <div class="flex items-center gap-2">';
+          bHtml += '      <span class="text-xl">📂</span>';
+          bHtml += '      <div class="font-black text-xs sm:text-sm">偵測到直接預覽本機 HTML 檔案 (file://)</div>';
+          bHtml += '    </div>';
+          bHtml += '    <button type="button" id="btn-close-file-banner" class="px-2 py-0.5 rounded-full bg-black/25 text-white/90 hover:text-white text-[11px] cursor-pointer">關閉</button>';
+          bHtml += '  </div>';
+          bHtml += '  <p class="text-[11px] text-indigo-100 leading-relaxed">若您是透過 LINE 傳送附件檔案並在 iPhone 直接點開預覽，Apple iOS 沙盒在關閉檔案後會<strong>自動銷毀本機暫存</strong>！</p>';
+          bHtml += '  <div class="bg-black/25 p-2 rounded-xl text-[11px] space-y-1">';
+          bHtml += '    <div class="font-bold text-indigo-200">💡 永久儲存方式：</div>';
+          bHtml += '    <div>• 請將檔案部署至 GitHub Pages 或以網址開啟，並在 iPhone Safari 點選「加入主畫面」。</div>';
+          bHtml += '    <div>• 或切換至「備份中心」點擊「匯出 JSON 備份檔」手動下載存檔。</div>';
+          bHtml += '  </div>';
+          bHtml += '</div>';
+        }
+        return bHtml;
+      }
+
+      function attachBannerEvents() {
+        var bLineClose = document.getElementById('btn-close-line-banner');
+        if (bLineClose) {
+          bLineClose.onclick = function() {
+            dismissedLineBanner = true;
+            renderMain();
+          };
+        }
+        var bLineCopy = document.getElementById('btn-banner-copy-line');
+        if (bLineCopy) {
+          bLineCopy.onclick = copyLineShareUrl;
+        }
+        var bFileClose = document.getElementById('btn-close-file-banner');
+        if (bFileClose) {
+          bFileClose.onclick = function() {
+            dismissedFileBanner = true;
+            renderMain();
+          };
+        }
+      }
+
+      function openInstallPromptModal() {
+        var container = document.getElementById('pwa-install-modal-container');
+        var box = document.getElementById('pwa-install-modal-box');
+        if (!container || !box) return;
+
+        var html = '';
+        html += '<div class="px-5 py-4 bg-gradient-to-r from-[#0e608a] to-blue-700 text-white flex items-center justify-between shrink-0">';
+        html += '  <div class="flex items-center gap-2.5">';
+        html += '    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg">📲</div>';
+        html += '    <div>';
+        html += '      <h3 class="text-sm font-black tracking-tight">安裝「記帳記事」到手機主畫面</h3>';
+        html += '      <p class="text-[10px] text-blue-100">一鍵加入桌面 • 享原生獨立 App 體驗</p>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <button type="button" id="close-install-modal-x" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold cursor-pointer transition-colors" title="關閉">✕</button>';
+        html += '</div>';
+
+        html += '<div class="p-5 space-y-4 text-xs text-slate-700">';
+        html += '  <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">';
+        html += '    <div class="flex items-start gap-2.5 text-[11px]">';
+        html += '      <span class="text-sm shrink-0">✨</span>';
+        html += '      <div><strong class="text-slate-900 font-bold">全螢幕獨立運行</strong><div class="text-slate-500 text-[10px]">自動隱藏網址列與分頁，畫面超乾淨</div></div>';
+        html += '    </div>';
+        html += '    <div class="flex items-start gap-2.5 text-[11px] pt-1.5 border-t border-slate-200/60">';
+        html += '      <span class="text-sm shrink-0">⚡</span>';
+        html += '      <div><strong class="text-slate-900 font-bold">秒開秒記帳</strong><div class="text-slate-500 text-[10px]">點擊手機桌面圖示立即開啟，免重新輸入網址</div></div>';
+        html += '    </div>';
+        html += '    <div class="flex items-start gap-2.5 text-[11px] pt-1.5 border-t border-slate-200/60">';
+        html += '      <span class="text-sm shrink-0">🛡️</span>';
+        html += '      <div><strong class="text-slate-900 font-bold">資料專屬獨立保護</strong><div class="text-slate-500 text-[10px]">記帳與自動快照永久鎖在專屬手機沙盒內</div></div>';
+        html += '    </div>';
+        html += '  </div>';
+
+        if (isIOSDevice) {
+          html += '  <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2 text-blue-950">';
+          html += '    <div class="font-black text-xs flex items-center justify-between text-blue-900">';
+          html += '      <span>🍎 iPhone 簡易安裝步驟：</span>';
+          if (isLineApp) {
+            html += '      <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full font-bold">LINE 內建預覽中</span>';
+          }
+          html += '    </div>';
+          if (isLineApp) {
+            html += '    <div class="space-y-1.5 text-[11px] text-blue-900/90 pl-1">';
+            html += '      <div class="p-2 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-1">';
+            html += '        <strong class="block text-amber-950">⚠️ 注意：LINE 內建視窗無法直接加入主畫面</strong>';
+            html += '        <div>1. 請先點擊 LINE 右上角 <strong>「三個點 ⋯」</strong></div>';
+            html += '        <div>2. 選擇 <strong>「在預設瀏覽器 (Safari) 開啟」</strong></div>';
+            html += '        <div>3. 跳轉至 Safari 後，再依下方步驟加入主畫面！</div>';
+            html += '      </div>';
+            html += '    </div>';
+          } else {
+            html += '    <div class="space-y-1.5 text-[11px] text-blue-900/90 pl-1">';
+            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-blue-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span><span>點擊 Safari 螢幕底部的 <strong>「分享」按鈕</strong>（帶箭頭小方框 ⎋）</span></div>';
+            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-blue-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">2</span><span>向下滑動，點選 <strong>「加入主畫面 ⊞」</strong> 並按新增</span></div>';
+            html += '    </div>';
+          }
+          html += '  </div>';
+        }
+
+        html += '  <div class="space-y-2 pt-1">';
+        html += '    <button type="button" id="btn-trigger-pwa-install" class="w-full py-3 rounded-xl bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs shadow-lg shadow-[#0e608a]/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
+        html += '      <span>' + (isIOSDevice ? '📱 我知道了，立即照步驟加入' : '📲 立即一鍵加到主畫面') + '</span>';
+        html += '    </button>';
+        html += '    <button type="button" id="btn-dismiss-pwa-install" class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
+        html += '      <span>暫時不用，以普通網頁瀏覽</span>';
+        html += '    </button>';
+        html += '  </div>';
+        html += '</div>';
+
+        box.innerHTML = html;
+        container.classList.remove('hidden');
+
+        document.getElementById('close-install-modal-x').onclick = function() {
+          localStorage.setItem('pure_app_installed_or_dismissed', 'dismissed');
+          container.classList.add('hidden');
+        };
+        document.getElementById('btn-dismiss-pwa-install').onclick = function() {
+          localStorage.setItem('pure_app_installed_or_dismissed', 'dismissed');
+          container.classList.add('hidden');
+        };
+        document.getElementById('btn-trigger-pwa-install').onclick = function() {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(function(choice) {
+              if (choice && choice.outcome === 'accepted') {
+                localStorage.setItem('pure_app_installed_or_dismissed', 'installed');
+                alert('✓ 正在將「記帳記事」新增至您的手機主畫面！');
+              }
+            });
+            deferredInstallPrompt = null;
+            container.classList.add('hidden');
+          } else if (isIOSDevice) {
+            if (isLineApp) {
+              alert('請先點擊 LINE 右上角「⋯」➔ 選擇「在預設瀏覽器開啟」！');
+            } else {
+              alert('請依照畫面指示：點擊底部分享按鈕 ⎋ ➔ 選擇「加入主畫面 ⊞」');
+            }
+          } else {
+            alert('請點選瀏覽器右上方選單 ➔ 選擇「加到主畫面」或「安裝」');
+            container.classList.add('hidden');
+          }
+        };
+      }
+
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        if (!isStandaloneApp) {
+          var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
+          if (!dismissed) {
+            setTimeout(openInstallPromptModal, 800);
+          }
+        }
+      });
+
+      if (isIOSDevice && !isStandaloneApp) {
+        var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
+        if (!dismissed) {
+          setTimeout(openInstallPromptModal, 1000);
+        }
+      }
+
       // Calculate days difference for a reminder date
       function getNoteDaysDiff(reminderDateStr) {
         if (!reminderDateStr) return 999;
@@ -8994,6 +9408,15 @@
       document.getElementById('header-bell-btn').onclick = function() { setTab('notes'); };
       document.getElementById('header-backup-btn').onclick = function() { setTab('backup'); };
 
+      var headerInstallBtn = document.getElementById('header-install-btn');
+      if (headerInstallBtn) {
+        if (isStandaloneApp) {
+          headerInstallBtn.classList.add('hidden');
+        } else {
+          headerInstallBtn.onclick = function() { openInstallPromptModal(); };
+        }
+      }
+
       // Floating Add Button
       document.getElementById('floating-add-btn').onclick = function() {
         if (activeTab === 'notes') {
@@ -9089,7 +9512,7 @@
 
         var lunarStr = getLunarString(selectedDate);
 
-        var html = '';
+        var html = getTopWarningBannersHtml();
 
         // 1. 獨立淨收支結餘懸浮卡 (#0d1727, 防止溢出)
         html += '<div class="p-4 sm:p-5 rounded-[1.75rem] bg-[#0d1727] border border-slate-800/80 shadow-xl text-white transition-all overflow-hidden">';
@@ -9459,11 +9882,13 @@
             }
           };
         });
+
+        attachBannerEvents();
       }
 
       // ================= TAB 2: 記事警示 =================
       function renderNotesTab(container) {
-        var html = '';
+        var html = getTopWarningBannersHtml();
 
         // Active Alerting Notes
         var activeAlertingNotes = notes.filter(function(n) {
@@ -9754,11 +10179,13 @@
             }
           };
         });
+
+        attachBannerEvents();
       }
 
       // ================= TAB 3: 備份中心 =================
       function renderBackupTab(container) {
-        var html = '';
+        var html = getTopWarningBannersHtml();
 
         html += '<div class="space-y-4">';
 
@@ -9774,15 +10201,36 @@
         html += '      </div>';
         html += '    </div>';
 
+        // 1. Real-time auto snapshot
         html += '    <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">';
         html += '      <div class="flex items-center gap-2">';
         html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600 shrink-0"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
         html += '        <div>';
-        html += '          <div class="text-xs font-bold text-emerald-950">自動備份保護生效中</div>';
+        html += '          <div class="text-xs font-bold text-emerald-950">即時自動快照保護中</div>';
         html += '          <div class="text-[10px] text-emerald-700">記帳：' + expenses.length + ' 筆 · 記事：' + notes.length + ' 筆</div>';
         html += '        </div>';
         html += '      </div>';
         html += '      <span class="text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">離線就緒</span>';
+        html += '    </div>';
+
+        // 2. 30-day monthly scheduled export card
+        var bStatus = getMonthlyBackupStatus();
+        html += '    <div class="p-3.5 rounded-2xl border flex items-center justify-between gap-3 ' + (bStatus.isDue ? 'bg-amber-50/90 border-amber-300 shadow-xs' : 'bg-indigo-50/70 border-indigo-200/80') + '">';
+        html += '      <div class="flex items-center gap-2.5 min-w-0">';
+        html += '        <div class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ' + (bStatus.isDue ? 'bg-amber-200 text-amber-900' : 'bg-indigo-100 text-indigo-700') + '">🛡️</div>';
+        html += '        <div class="min-w-0">';
+        html += '          <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">';
+        html += '            <span>30 天月度定期存檔防護</span>';
+        if (bStatus.isDue) {
+          html += '          <span class="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black border border-rose-200 animate-pulse">⚠️ 已逾期 ' + bStatus.daysPassed + ' 天</span>';
+        } else {
+          html += '          <span class="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">🟢 正常 (剩 ' + bStatus.daysRemaining + ' 天)</span>';
+        }
+        html += '          </div>';
+        html += '          <div class="text-[10px] text-slate-500 mt-0.5 truncate">上次實體匯出：' + bStatus.formattedDate + '（' + bStatus.daysPassed + ' 天前）</div>';
+        html += '        </div>';
+        html += '      </div>';
+        html += '      <button type="button" id="btn-open-monthly-reminder" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 hover:text-blue-600 font-black text-[11px] shadow-xs cursor-pointer transition-all shrink-0 active:scale-95" title="開啟月度存檔提醒彈窗">存檔提醒</button>';
         html += '    </div>';
 
         html += '    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">';
@@ -9806,34 +10254,80 @@
         html += '      <button id="reset-default-btn" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-2.5 text-slate-700 font-bold text-xs transition-colors cursor-pointer text-left sm:col-span-2">';
         html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>';
         html += '        <div>';
-        html += '          <div>重設為初始展示帳目</div>';
-        html += '          <div class="text-[10px] font-normal text-slate-400">還原至預設展示帳目與記事</div>';
+        html += '          <div>重設為展示預設帳目</div>';
+        html += '          <div class="text-[10px] font-normal text-slate-400">還原至初始範本（各留存 1 筆）</div>';
         html += '        </div>';
         html += '      </button>';
         html += '    </div>';
+        html += '  </div>';
+
+        // Card 3: Apple iPhone & LINE 存檔防遺失指南與防清空網址
+        html += '  <div class="bg-white p-5 rounded-[2rem] border border-slate-200/80 shadow-sm space-y-3.5">';
+        html += '    <div class="flex items-center gap-2.5">';
+        html += '      <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl">🍎</div>';
+        html += '      <div>';
+        html += '        <h3 class="font-bold text-slate-900 text-sm">Apple iPhone & LINE 存檔防遺失指南</h3>';
+        html += '        <p class="text-[11px] text-slate-500">為什麼透過 LINE 傳送在 iPhone 開啟會存不住？</p>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '    <div class="space-y-2 text-xs text-slate-700 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">';
+        html += '      <div class="space-y-1 text-[11px]">';
+        html += '        <div class="font-bold text-slate-900 flex items-center gap-1.5">';
+        html += '          <span class="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[10px] flex items-center justify-center shrink-0">1</span>';
+        html += '          <span>LINE 內建瀏覽器沙盒隔離與快取清除</span>';
+        html += '        </div>';
+        html += '        <p class="text-slate-500 pl-5 leading-relaxed">';
+        html += '          在 LINE 聊天室點開網址，iOS 會以 LINE 內置的暫存 WebView 開啟。此暫存空間與 Safari 獨立隔離，且 LINE 關閉、更新或釋放記憶體時，iOS 會主動清除儲存資料，且無法加入主畫面！';
+        html += '        </p>';
+        html += '      </div>';
+        html += '      <div class="space-y-1 text-[11px] pt-1.5 border-t border-slate-200/60">';
+        html += '        <div class="font-bold text-slate-900 flex items-center gap-1.5">';
+        html += '          <span class="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[10px] flex items-center justify-center shrink-0">2</span>';
+        html += '          <span>直接傳送 HTML 檔案附件的沙盒銷毀</span>';
+        html += '        </div>';
+        html += '        <p class="text-slate-500 pl-5 leading-relaxed">';
+        html += '          若在 LINE 傳送 index.html 檔案附件，iPhone 會使用 QuickLook 暫存模式（file://）開啟。Apple 嚴格禁止此模式持久化寫入，關閉預覽後所有內容即刻銷毀！';
+        html += '        </p>';
+        html += '      </div>';
+        html += '      <div class="space-y-1.5 text-[11px] pt-1.5 border-t border-slate-200/60">';
+        html += '        <div class="font-bold text-emerald-800 flex items-center gap-1.5">';
+        html += '          <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0">3</span>';
+        html += '          <span>終極永久解決方案：加入 iPhone 主畫面 (PWA)</span>';
+        html += '        </div>';
+        html += '        <div class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-950 space-y-1 text-[11px]">';
+        html += '          <div>• 點擊右上角「⋯」➔ 選擇<strong>「在預設瀏覽器 (Safari) 開啟」</strong></div>';
+        html += '          <div>• 在 Safari 底端點擊<strong>「分享 ⎋」➔「加入主畫面 ⊞」</strong></div>';
+        html += '          <div>• 加到桌面後的 App 擁有 Apple 獨立本機資料庫，永不被清理！</div>';
+        html += '        </div>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '    <button type="button" id="btn-copy-line-safe-url" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95">';
+        html += '      <span>📲 複製 LINE 專屬防清空分享網址 (自動帶 Safari 跳出代碼)</span>';
+        html += '    </button>';
         html += '  </div>';
         html += '</div>';
 
         container.innerHTML = html;
 
         document.getElementById('export-json-btn').onclick = function() {
-          var payload = {
-            version: '2.0',
-            exportedAt: new Date().toISOString(),
-            expenses: expenses,
-            notes: notes
-          };
-          var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = 'accounting_backup_' + new Date().toISOString().split('T')[0] + '.json';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          alert('備份檔匯出成功！');
+          executeExportBackup();
+          alert('✓ 備份檔匯出成功！30天定期備份保護計時已重設');
+          renderMain();
         };
+
+        var btnRemind = document.getElementById('btn-open-monthly-reminder');
+        if (btnRemind) {
+          btnRemind.onclick = function() {
+            openMonthlyBackupReminderModal();
+          };
+        };
+
+        var btnCopyLine = document.getElementById('btn-copy-line-safe-url');
+        if (btnCopyLine) {
+          btnCopyLine.onclick = copyLineShareUrl;
+        }
+
+        attachBannerEvents();
 
         document.getElementById('import-json-input').onchange = function(e) {
           var file = e.target.files && e.target.files[0];
@@ -9856,13 +10350,13 @@
         };
 
         document.getElementById('reset-default-btn').onclick = function() {
-          if (confirm('確定要重設為初始展示資料嗎？所有自訂紀錄將被覆蓋！')) {
+          if (confirm('確定要重設為初始展示帳目嗎？將還原為乾淨初始範本（帳務與記事各 1 筆），目前的自訂紀錄將被覆蓋！')) {
             expenses = defaultExpenses;
             notes = defaultNotes;
             saveExpenses();
             saveNotes();
             renderMain();
-            alert('已還原為初始帳目！');
+            alert('已回復至初始範本狀態（帳務與記事各留存 1 筆）！');
           }
         };
       }
@@ -10170,6 +10664,20 @@
 
       // Start initial render
       renderMain();
+
+      // Check 30-day monthly scheduled backup on launch
+      setTimeout(function() {
+        try {
+          var snooze = localStorage.getItem(STORAGE_SNOOZE_KEY) || localStorage.getItem('sim_snooze_monthly_backup_until');
+          if (snooze && new Date(snooze).getTime() > Date.now()) {
+            return; // Snoozed until tomorrow
+          }
+          var bStatus = getMonthlyBackupStatus();
+          if (bStatus.isDue) {
+            openMonthlyBackupReminderModal();
+          }
+        } catch(e) {}
+      }, 1200);
 
       // ★ 即時每日自動同步：每次開啟 App、回到分頁 (visibilitychange / focus)、跨日午夜時自動同步至最新當天
       function checkAndUpdateDate() {
