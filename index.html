@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
-
-  <link rel="manifest" href="manifest.json"> 
-
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -9129,9 +9126,36 @@
           html += '  </div>';
         }
 
+        if (!isIOSDevice) {
+          html += '  <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 text-emerald-950">';
+          html += '    <div class="font-black text-xs flex items-center justify-between text-emerald-900">';
+          html += '      <span>🤖 Android 手機 / 平板安裝步驟：</span>';
+          if (isLineApp) {
+            html += '      <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full font-bold">LINE 內建預覽中</span>';
+          }
+          html += '    </div>';
+          if (isLineApp) {
+            html += '    <div class="space-y-1.5 text-[11px] text-emerald-900/90 pl-1">';
+            html += '      <div class="p-2 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-1">';
+            html += '        <strong class="block text-amber-950">⚠️ 注意：LINE 內建視窗無法直接安裝</strong>';
+            html += '        <div>1. 請先點擊 LINE 右上角 <strong>「三個點 ⋯」</strong></div>';
+            html += '        <div>2. 選擇 <strong>「在預設瀏覽器開啟」</strong></div>';
+            html += '        <div>3. 跳轉至 Chrome 後，再依下方步驟加入主畫面！</div>';
+            html += '      </div>';
+            html += '    </div>';
+          } else {
+            html += '    <div class="space-y-1.5 text-[11px] text-emerald-900/90 pl-1">';
+            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span><span>點擊瀏覽器右上角的 <strong>「三個點選單 [⋮]」</strong></span></div>';
+            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">2</span><span>選擇 <strong>「加到主畫面」</strong> 或 <strong>「安裝應用程式」</strong></span></div>';
+            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">3</span><span>點選「新增」，手機/平板桌面即建立獨立 App！</span></div>';
+            html += '    </div>';
+          }
+          html += '  </div>';
+        }
+
         html += '  <div class="space-y-2 pt-1">';
         html += '    <button type="button" id="btn-trigger-pwa-install" class="w-full py-3 rounded-xl bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs shadow-lg shadow-[#0e608a]/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
-        html += '      <span>' + (isIOSDevice ? '📱 我知道了，立即照步驟加入' : '📲 立即一鍵加到主畫面') + '</span>';
+        html += '      <span>' + (deferredInstallPrompt ? '📲 立即一鍵加到主畫面' : (isIOSDevice ? '📱 我知道了，立即照步驟加入' : '🤖 我知道了，照右上角 [⋮] 選單安裝')) + '</span>';
         html += '    </button>';
         html += '    <button type="button" id="btn-dismiss-pwa-install" class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
         html += '      <span>暫時不用，以普通網頁瀏覽</span>';
@@ -9321,7 +9345,20 @@
         if (isStandaloneApp) {
           headerInstallBtn.classList.add('hidden');
         } else {
-          headerInstallBtn.onclick = function() { openInstallPromptModal(); };
+          headerInstallBtn.onclick = function() {
+            if (deferredInstallPrompt) {
+              deferredInstallPrompt.prompt();
+              deferredInstallPrompt.userChoice.then(function(choice) {
+                if (choice && choice.outcome === 'accepted') {
+                  localStorage.setItem('pure_app_installed_or_dismissed', 'installed');
+                  alert('✓ 正在將「記帳記事」新增至您的手機主畫面！');
+                }
+              });
+              deferredInstallPrompt = null;
+            } else {
+              openInstallPromptModal();
+            }
+          };
         }
       }
 
@@ -10097,6 +10134,48 @@
 
         html += '<div class="space-y-4">';
 
+        // 1. PWA 安裝與桌面常駐卡片 (支援一鍵安裝、iOS指引、LINE防清空)
+        html += '<div class="p-4 sm:p-5 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white rounded-[2rem] border border-cyan-500/40 shadow-xl space-y-3.5">';
+        html += '  <div class="flex items-center justify-between gap-3">';
+        html += '    <div class="flex items-center gap-2.5">';
+        html += '      <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xl shrink-0">📲</div>';
+        html += '      <div>';
+        html += '        <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-1.5 flex-wrap">';
+        html += '          <span>加入手機主畫面 (PWA 獨立運行)</span>';
+        if (isStandaloneApp) {
+          html += '        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold">✓ 獨立運行中</span>';
+        } else {
+          html += '        <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold">永久防清空</span>';
+        }
+        html += '        </h4>';
+        html += '        <p class="text-[11px] text-cyan-200/80">享原生 App 全螢幕體驗，本機資料庫永久鎖定保護</p>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '  </div>';
+
+        if (isStandaloneApp) {
+          html += '  <div class="p-3 bg-emerald-950/60 border border-emerald-500/30 rounded-xl text-xs text-emerald-200 flex items-center gap-2">';
+          html += '    <span>✓ 您目前已在獨立主畫面模式運行！資料享有 Apple / Google 最高等級獨立本機沙盒保護，不會被瀏覽器快取清理。</span>';
+          html += '  </div>';
+        } else {
+          html += '  <div class="space-y-2.5">';
+          html += '    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">';
+          html += '      <button type="button" id="btn-backup-pwa-install" class="w-full py-2.5 px-3 bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 text-slate-950 font-black rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 text-xs sm:text-sm">';
+          html +=          (isIOSDevice ? '🍎 查看 iPhone 加主畫面教學' : '📲 立即一鍵加到主畫面');
+          html += '      </button>';
+          html += '      <button type="button" id="btn-backup-copy-line" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/40 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors text-xs">';
+          html += '        <span>複製 LINE 防清空專用網址</span>';
+          html += '      </button>';
+          html += '    </div>';
+          html += '    <div class="bg-slate-950/60 p-2.5 rounded-xl text-[11px] text-slate-300 space-y-1 border border-slate-800">';
+          html += '      <div class="text-cyan-400 font-bold">💡 為什麼要加到主畫面？</div>';
+          html += '      <div>• 避免在 LINE 內建視窗中開啟導致 7 天後快取自動被 Apple 清空。</div>';
+          html += '      <div>• 加到桌面後即具備獨立 App 身分，斷網離線隨時皆可記帳與查帳。</div>';
+          html += '    </div>';
+          html += '  </div>';
+        }
+        html += '</div>';
+
         // 專屬：本機與離線備份中心
         html += '  <div class="bg-white p-5 rounded-[2rem] border border-slate-200/80 shadow-sm space-y-4">';
         html += '    <div class="flex items-center gap-3">';
@@ -10168,54 +10247,30 @@
         html += '      </button>';
         html += '    </div>';
         html += '  </div>';
-
-        // Card 3: Apple iPhone & LINE 存檔防遺失指南與防清空網址
-        html += '  <div class="bg-white p-5 rounded-[2rem] border border-slate-200/80 shadow-sm space-y-3.5">';
-        html += '    <div class="flex items-center gap-2.5">';
-        html += '      <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl">🍎</div>';
-        html += '      <div>';
-        html += '        <h3 class="font-bold text-slate-900 text-sm">Apple iPhone & LINE 存檔防遺失指南</h3>';
-        html += '        <p class="text-[11px] text-slate-500">為什麼透過 LINE 傳送在 iPhone 開啟會存不住？</p>';
-        html += '      </div>';
-        html += '    </div>';
-        html += '    <div class="space-y-2 text-xs text-slate-700 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">';
-        html += '      <div class="space-y-1 text-[11px]">';
-        html += '        <div class="font-bold text-slate-900 flex items-center gap-1.5">';
-        html += '          <span class="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[10px] flex items-center justify-center shrink-0">1</span>';
-        html += '          <span>LINE 內建瀏覽器沙盒隔離與快取清除</span>';
-        html += '        </div>';
-        html += '        <p class="text-slate-500 pl-5 leading-relaxed">';
-        html += '          在 LINE 聊天室點開網址，iOS 會以 LINE 內置的暫存 WebView 開啟。此暫存空間與 Safari 獨立隔離，且 LINE 關閉、更新或釋放記憶體時，iOS 會主動清除儲存資料，且無法加入主畫面！';
-        html += '        </p>';
-        html += '      </div>';
-        html += '      <div class="space-y-1 text-[11px] pt-1.5 border-t border-slate-200/60">';
-        html += '        <div class="font-bold text-slate-900 flex items-center gap-1.5">';
-        html += '          <span class="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[10px] flex items-center justify-center shrink-0">2</span>';
-        html += '          <span>直接傳送 HTML 檔案附件的沙盒銷毀</span>';
-        html += '        </div>';
-        html += '        <p class="text-slate-500 pl-5 leading-relaxed">';
-        html += '          若在 LINE 傳送 index.html 檔案附件，iPhone 會使用 QuickLook 暫存模式（file://）開啟。Apple 嚴格禁止此模式持久化寫入，關閉預覽後所有內容即刻銷毀！';
-        html += '        </p>';
-        html += '      </div>';
-        html += '      <div class="space-y-1.5 text-[11px] pt-1.5 border-t border-slate-200/60">';
-        html += '        <div class="font-bold text-emerald-800 flex items-center gap-1.5">';
-        html += '          <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0">3</span>';
-        html += '          <span>終極永久解決方案：加入 iPhone 主畫面 (PWA)</span>';
-        html += '        </div>';
-        html += '        <div class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-950 space-y-1 text-[11px]">';
-        html += '          <div>• 點擊右上角「⋯」➔ 選擇<strong>「在預設瀏覽器 (Safari) 開啟」</strong></div>';
-        html += '          <div>• 在 Safari 底端點擊<strong>「分享 ⎋」➔「加入主畫面 ⊞」</strong></div>';
-        html += '          <div>• 加到桌面後的 App 擁有 Apple 獨立本機資料庫，永不被清理！</div>';
-        html += '        </div>';
-        html += '      </div>';
-        html += '    </div>';
-        html += '    <button type="button" id="btn-copy-line-safe-url" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95">';
-        html += '      <span>📲 複製 LINE 專屬防清空分享網址 (自動帶 Safari 跳出代碼)</span>';
-        html += '    </button>';
-        html += '  </div>';
         html += '</div>';
 
         container.innerHTML = html;
+
+        var btnPwaInstall = document.getElementById('btn-backup-pwa-install');
+        if (btnPwaInstall) {
+          btnPwaInstall.onclick = function() {
+            if (deferredInstallPrompt) {
+              deferredInstallPrompt.prompt();
+              deferredInstallPrompt.userChoice.then(function(choice) {
+                if (choice && choice.outcome === 'accepted') {
+                  alert('✓ 感謝安裝！已為您加到手機主畫面');
+                }
+              });
+            } else {
+              openInstallPromptModal();
+            }
+          };
+        }
+
+        var btnPwaCopyLine = document.getElementById('btn-backup-copy-line');
+        if (btnPwaCopyLine) {
+          btnPwaCopyLine.onclick = copyLineShareUrl;
+        }
 
         document.getElementById('export-json-btn').onclick = function() {
           executeExportBackup();
@@ -10229,11 +10284,6 @@
             openMonthlyBackupReminderModal();
           };
         };
-
-        var btnCopyLine = document.getElementById('btn-copy-line-safe-url');
-        if (btnCopyLine) {
-          btnCopyLine.onclick = copyLineShareUrl;
-        }
 
         attachBannerEvents();
 
