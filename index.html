@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
   <meta name="theme-color" content="#0e608a" />
@@ -9145,10 +9145,20 @@
             html += '      </div>';
             html += '    </div>';
           } else {
-            html += '    <div class="space-y-1.5 text-[11px] text-emerald-900/90 pl-1">';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span><span>點擊瀏覽器右上角的 <strong>「三個點選單 [⋮]」</strong></span></div>';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">2</span><span>選擇 <strong>「加到主畫面」</strong> 或 <strong>「安裝應用程式」</strong></span></div>';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">3</span><span>點選「新增」，手機/平板桌面即建立獨立 App！</span></div>';
+          } else {
+            html += '    <div class="space-y-2 text-[11px] text-emerald-950 pl-0.5">';
+            html += '      <div class="flex items-start gap-2 bg-emerald-100/60 p-2 rounded-xl border border-emerald-200/80">';
+            html += '        <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>';
+            html += '        <div><span>點選 Chrome 的 <strong>「三個點選單 [⋮]」</strong></span><div class="text-[10px] text-emerald-800 font-bold mt-0.5">📍 位於手機<strong>【螢幕最下方右側】</strong>（網址列旁）或最上方右側</div></div>';
+            html += '      </div>';
+            html += '      <div class="flex items-start gap-2 bg-emerald-100/60 p-2 rounded-xl border border-emerald-200/80">';
+            html += '        <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>';
+            html += '        <div><span>在選單中點選 <strong>「加到主畫面」</strong> 或 <strong>「安裝應用程式」</strong></span></div>';
+            html += '      </div>';
+            html += '      <div class="flex items-start gap-2 bg-emerald-100/60 p-2 rounded-xl border border-emerald-200/80">';
+            html += '        <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>';
+            html += '        <div><span>點擊「新增 / 安裝」，手機桌面即建立獨立 App 圖示！</span></div>';
+            html += '      </div>';
             html += '    </div>';
           }
           html += '  </div>';
@@ -9156,7 +9166,7 @@
 
         html += '  <div class="space-y-2 pt-1">';
         html += '    <button type="button" id="btn-trigger-pwa-install" class="w-full py-3 rounded-xl bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs shadow-lg shadow-[#0e608a]/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
-        html += '      <span>' + (deferredInstallPrompt ? '📲 立即一鍵加到主畫面' : (isIOSDevice ? '📱 我知道了，立即照步驟加入' : '🤖 我知道了，照右上角 [⋮] 選單安裝')) + '</span>';
+        html += '      <span>' + (deferredInstallPrompt ? '📲 立即一鍵加到主畫面 (系統自動安裝)' : (isIOSDevice ? '📱 我知道了，依步驟加入 Safari 主畫面' : '🤖 我知道了，前往點選 Chrome [⋮] 選單')) + '</span>';
         html += '    </button>';
         html += '    <button type="button" id="btn-dismiss-pwa-install" class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
         html += '      <span>暫時不用，以普通網頁瀏覽</span>';
@@ -9193,7 +9203,7 @@
               alert('請依照畫面指示：點擊底部分享按鈕 ⎋ ➔ 選擇「加入主畫面 ⊞」');
             }
           } else {
-            alert('請點選瀏覽器右上方選單 ➔ 選擇「加到主畫面」或「安裝」');
+            alert('👉 請點選 Chrome「⋮」選單（位於螢幕下方右側或上方右側）➔ 選擇「加到主畫面」');
             container.classList.add('hidden');
           }
         };
