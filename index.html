@@ -2,9 +2,9 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <link rel="manifest" href="manifest.json"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -9145,7 +9145,6 @@
             html += '      </div>';
             html += '    </div>';
           } else {
-          } else {
             html += '    <div class="space-y-2 text-[11px] text-emerald-950 pl-0.5">';
             html += '      <div class="flex items-start gap-2 bg-emerald-100/60 p-2 rounded-xl border border-emerald-200/80">';
             html += '        <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>';
@@ -9203,7 +9202,11 @@
               alert('請依照畫面指示：點擊底部分享按鈕 ⎋ ➔ 選擇「加入主畫面 ⊞」');
             }
           } else {
-            alert('👉 請點選 Chrome「⋮」選單（位於螢幕下方右側或上方右側）➔ 選擇「加到主畫面」');
+            if (isLineApp) {
+              alert('⚠️ LINE 內建視窗無法直接安裝，請點右上角「⋯」➔ 選擇「在預設瀏覽器開啟」！');
+            } else {
+              alert('👉 請點選 Chrome「⋮」選單（位於螢幕下方右側或上方右側）➔ 選擇「加到主畫面」');
+            }
             container.classList.add('hidden');
           }
         };
@@ -9355,6 +9358,7 @@
       if (headerInstallBtn) {
         if (isStandaloneApp) {
           headerInstallBtn.classList.add('hidden');
+        } else {
           headerInstallBtn.onclick = function() {
             openInstallPromptModal();
           };
