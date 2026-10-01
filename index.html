@@ -4,12 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳記事 Pro" />
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
   <script>
@@ -8700,8 +8699,8 @@
   </div>
 
   <!-- ================= PWA FIRST-LAUNCH INSTALL MODAL CONTAINER ================= -->
-  <div id="pwa-install-modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div id="pwa-install-modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-fade-in">
+  <div id="pwa-install-modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div id="pwa-install-modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-fade-in">
       <!-- Injected Dynamically -->
     </div>
   </div>
@@ -9085,7 +9084,7 @@
         html += '  <button type="button" id="close-install-modal-x" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold cursor-pointer transition-colors" title="關閉">✕</button>';
         html += '</div>';
 
-        html += '<div class="p-5 space-y-4 text-xs text-slate-700">';
+        html += '<div class="p-4 space-y-3.5 text-xs text-slate-700 overflow-y-auto flex-1">';
         html += '  <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">';
         html += '    <div class="flex items-start gap-2.5 text-[11px]">';
         html += '      <span class="text-sm shrink-0">✨</span>';
@@ -9163,14 +9162,14 @@
           html += '  </div>';
         }
 
-        html += '  <div class="space-y-2 pt-1">';
-        html += '    <button type="button" id="btn-trigger-pwa-install" class="w-full py-3 rounded-xl bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs shadow-lg shadow-[#0e608a]/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
-        html += '      <span>' + (deferredInstallPrompt ? '📲 立即一鍵加到主畫面 (系統自動安裝)' : (isIOSDevice ? '📱 我知道了，依步驟加入 Safari 主畫面' : '🤖 我知道了，前往點選 Chrome [⋮] 選單')) + '</span>';
-        html += '    </button>';
-        html += '    <button type="button" id="btn-dismiss-pwa-install" class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
-        html += '      <span>暫時不用，以普通網頁瀏覽</span>';
-        html += '    </button>';
-        html += '  </div>';
+        html += '</div>';
+        html += '<div class="p-3.5 bg-white border-t border-slate-100 space-y-2 shrink-0">';
+        html += '  <button type="button" id="btn-trigger-pwa-install" class="w-full py-3 rounded-xl bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs shadow-lg shadow-[#0e608a]/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
+        html += '    <span>' + (deferredInstallPrompt ? '📲 立即一鍵加到主畫面 (系統自動安裝)' : (isIOSDevice ? '📱 我知道了，依步驟加入 Safari 主畫面' : '🤖 我知道了，前往點選 Chrome [⋮] 選單')) + '</span>';
+        html += '  </button>';
+        html += '  <button type="button" id="btn-dismiss-pwa-install" class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
+        html += '    <span>暫時不用，以普通網頁瀏覽</span>';
+        html += '  </button>';
         html += '</div>';
 
         box.innerHTML = html;
