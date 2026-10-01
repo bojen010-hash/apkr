@@ -21,6 +21,15 @@
         }
       }
     })();
+
+    // 支援 PWA 註冊（若同目錄下具備 sw.js 則自動啟用，排除 run.app 避免 Cookie 衝突）
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      if (location.hostname.indexOf('run.app') === -1) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('./sw.js').catch(function() {});
+        });
+      }
+    }
   </script>
 
   <!-- Tailwind CSS CDN -->
@@ -8974,9 +8983,14 @@
           return;
         }
         try {
-          var urlObj = new URL(window.location.href);
-          urlObj.searchParams.set('openExternalBrowser', '1');
-          var shareUrl = urlObj.toString();
+          var shareUrl = '';
+          if (window.location.hostname.indexOf('run.app') !== -1) {
+            shareUrl = 'https://bojen010-hash.github.io/apkr/?openExternalBrowser=1';
+          } else {
+            var urlObj = new URL(window.location.href);
+            urlObj.searchParams.set('openExternalBrowser', '1');
+            shareUrl = urlObj.toString();
+          }
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(shareUrl).then(function() {
               alert('✓ 已複製 LINE 專屬防清空網址！傳入 LINE 點開將自動以 Safari / Chrome 開啟');
@@ -9155,7 +9169,10 @@
             html += '      </div>';
             html += '      <div class="flex items-start gap-2 bg-emerald-100/60 p-2 rounded-xl border border-emerald-200/80">';
             html += '        <span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>';
-            html += '        <div><span>點擊「新增 / 安裝」，手機桌面即建立獨立 App 圖示！</span></div>';
+            html += '        <div class="space-y-1">';
+            html += '          <div><span>點擊<strong>「新增 / 安裝」</strong>，手機桌面即建立獨立 App 圖示！</span></div>';
+            html += '          <div class="text-[10px] text-emerald-800 bg-emerald-200/50 p-1.5 rounded-lg border border-emerald-300/40">💡 若彈出<strong>「安裝並建立捷徑」</strong>：請直接點選第二項<strong>【建立捷徑】➔【新增】</strong>，即可 100% 成功放到手機桌面！</div>';
+            html += '        </div>';
             html += '      </div>';
             html += '    </div>';
           }
