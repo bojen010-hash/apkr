@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
   <meta name="theme-color" content="#0e608a" />
@@ -9344,20 +9345,8 @@
       if (headerInstallBtn) {
         if (isStandaloneApp) {
           headerInstallBtn.classList.add('hidden');
-        } else {
           headerInstallBtn.onclick = function() {
-            if (deferredInstallPrompt) {
-              deferredInstallPrompt.prompt();
-              deferredInstallPrompt.userChoice.then(function(choice) {
-                if (choice && choice.outcome === 'accepted') {
-                  localStorage.setItem('pure_app_installed_or_dismissed', 'installed');
-                  alert('✓ 正在將「記帳記事」新增至您的手機主畫面！');
-                }
-              });
-              deferredInstallPrompt = null;
-            } else {
-              openInstallPromptModal();
-            }
+            openInstallPromptModal();
           };
         }
       }
@@ -10134,48 +10123,6 @@
 
         html += '<div class="space-y-4">';
 
-        // 1. PWA 安裝與桌面常駐卡片 (支援一鍵安裝、iOS指引、LINE防清空)
-        html += '<div class="p-4 sm:p-5 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white rounded-[2rem] border border-cyan-500/40 shadow-xl space-y-3.5">';
-        html += '  <div class="flex items-center justify-between gap-3">';
-        html += '    <div class="flex items-center gap-2.5">';
-        html += '      <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold text-xl shrink-0">📲</div>';
-        html += '      <div>';
-        html += '        <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-1.5 flex-wrap">';
-        html += '          <span>加入手機主畫面 (PWA 獨立運行)</span>';
-        if (isStandaloneApp) {
-          html += '        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold">✓ 獨立運行中</span>';
-        } else {
-          html += '        <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold">永久防清空</span>';
-        }
-        html += '        </h4>';
-        html += '        <p class="text-[11px] text-cyan-200/80">享原生 App 全螢幕體驗，本機資料庫永久鎖定保護</p>';
-        html += '      </div>';
-        html += '    </div>';
-        html += '  </div>';
-
-        if (isStandaloneApp) {
-          html += '  <div class="p-3 bg-emerald-950/60 border border-emerald-500/30 rounded-xl text-xs text-emerald-200 flex items-center gap-2">';
-          html += '    <span>✓ 您目前已在獨立主畫面模式運行！資料享有 Apple / Google 最高等級獨立本機沙盒保護，不會被瀏覽器快取清理。</span>';
-          html += '  </div>';
-        } else {
-          html += '  <div class="space-y-2.5">';
-          html += '    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">';
-          html += '      <button type="button" id="btn-backup-pwa-install" class="w-full py-2.5 px-3 bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 text-slate-950 font-black rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 text-xs sm:text-sm">';
-          html +=          (isIOSDevice ? '🍎 查看 iPhone 加主畫面教學' : '📲 立即一鍵加到主畫面');
-          html += '      </button>';
-          html += '      <button type="button" id="btn-backup-copy-line" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/40 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors text-xs">';
-          html += '        <span>複製 LINE 防清空專用網址</span>';
-          html += '      </button>';
-          html += '    </div>';
-          html += '    <div class="bg-slate-950/60 p-2.5 rounded-xl text-[11px] text-slate-300 space-y-1 border border-slate-800">';
-          html += '      <div class="text-cyan-400 font-bold">💡 為什麼要加到主畫面？</div>';
-          html += '      <div>• 避免在 LINE 內建視窗中開啟導致 7 天後快取自動被 Apple 清空。</div>';
-          html += '      <div>• 加到桌面後即具備獨立 App 身分，斷網離線隨時皆可記帳與查帳。</div>';
-          html += '    </div>';
-          html += '  </div>';
-        }
-        html += '</div>';
-
         // 專屬：本機與離線備份中心
         html += '  <div class="bg-white p-5 rounded-[2rem] border border-slate-200/80 shadow-sm space-y-4">';
         html += '    <div class="flex items-center gap-3">';
@@ -10250,27 +10197,6 @@
         html += '</div>';
 
         container.innerHTML = html;
-
-        var btnPwaInstall = document.getElementById('btn-backup-pwa-install');
-        if (btnPwaInstall) {
-          btnPwaInstall.onclick = function() {
-            if (deferredInstallPrompt) {
-              deferredInstallPrompt.prompt();
-              deferredInstallPrompt.userChoice.then(function(choice) {
-                if (choice && choice.outcome === 'accepted') {
-                  alert('✓ 感謝安裝！已為您加到手機主畫面');
-                }
-              });
-            } else {
-              openInstallPromptModal();
-            }
-          };
-        }
-
-        var btnPwaCopyLine = document.getElementById('btn-backup-copy-line');
-        if (btnPwaCopyLine) {
-          btnPwaCopyLine.onclick = copyLineShareUrl;
-        }
 
         document.getElementById('export-json-btn').onclick = function() {
           executeExportBackup();
