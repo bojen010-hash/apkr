@@ -8624,11 +8624,17 @@
 
         <!-- Top Right Action Icons -->
         <div class="flex items-center gap-1.5">
-          <button id="header-install-btn" class="w-9 h-9 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/30 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="安裝「記帳記事」到手機主畫面">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-200">
+          <!-- Golden Phone PWA Install Button (Always visible) -->
+          <button id="header-install-btn" class="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-amber-950 font-black shadow-md border border-amber-200/90 flex items-center gap-1 transition-all active:scale-95 cursor-pointer relative" title="PWA 安裝：將「記帳記事」加到手機主畫面 / 桌面">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-950">
               <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
               <line x1="12" x2="12.01" y1="18" y2="18"/>
             </svg>
+            <span class="text-[11px] font-black tracking-tight hidden sm:inline">安裝</span>
+            <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
           </button>
 
           <button id="header-bell-btn" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="記事警示">
@@ -9280,19 +9286,19 @@
       window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
         deferredInstallPrompt = e;
-        if (!isStandaloneApp) {
-          var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
-          if (!dismissed) {
-            setTimeout(openInstallPromptModal, 800);
-          }
-        }
+        window.__pwaDeferredPrompt = e;
       });
 
-      if (isIOSDevice && !isStandaloneApp) {
-        var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
-        if (!dismissed) {
-          setTimeout(openInstallPromptModal, 1000);
-        }
+      // Auto prompt on first launch across all environments if not dismissed
+      var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
+      if (!dismissed) {
+        setTimeout(function() {
+          if (typeof window.__triggerPwaInstall === 'function') {
+            window.__triggerPwaInstall();
+          } else {
+            openInstallPromptModal();
+          }
+        }, 1200);
       }
 
       // Calculate days difference for a reminder date
@@ -9430,17 +9436,14 @@
 
       var headerInstallBtn = document.getElementById('header-install-btn');
       if (headerInstallBtn) {
-        if (isStandaloneApp) {
-          headerInstallBtn.classList.add('hidden');
-        } else {
-          headerInstallBtn.onclick = function() {
-            if (typeof window.__triggerPwaInstall === 'function') {
-              window.__triggerPwaInstall();
-            } else {
-              openInstallPromptModal();
-            }
-          };
-        }
+        // ALWAYS keep golden install button visible so users can install or view guides anytime
+        headerInstallBtn.onclick = function() {
+          if (typeof window.__triggerPwaInstall === 'function') {
+            window.__triggerPwaInstall();
+          } else {
+            openInstallPromptModal();
+          }
+        };
       }
 
       // Floating Add Button
@@ -10773,12 +10776,6 @@
   var isLineApp = navigator.userAgent.indexOf('Line/') !== -1;
   var isFileProtocol = window.location.protocol === 'file:';
 
-  // 若已是獨立 App (從主畫面點開)，則自動休眠不打擾
-  if (isStandalone) {
-    console.log('[PWA Installer] 檢測為已安裝之獨立 App 模式，跳過提示');
-    return;
-  }
-
   var deferredPrompt = null;
   var hasShownModal = false;
 
@@ -10788,15 +10785,19 @@
     deferredPrompt = e;
     window.__pwaDeferredPrompt = e;
 
-    // 若使用者尚未明確關閉過，延遲自動跳出詢問
-    if (!localStorage.getItem(CONFIG.storageKey) && !hasShownModal) {
+    // 若使用者尚未明確關閉過，且尚未展示過，延遲自動跳出詢問
+    if (!localStorage.getItem(CONFIG.storageKey) && !hasShownModal && !isStandalone) {
       setTimeout(showInstallModal, CONFIG.promptDelayMs);
     }
   });
 
-  // 3. iOS Safari 延遲自動展示指引
-  if (isIOS && !localStorage.getItem(CONFIG.storageKey)) {
-    setTimeout(showInstallModal, CONFIG.promptDelayMs + 300);
+  // 3. 全平台延遲自動展示指引 (若尚未被使用者關閉且非獨立 App 狀態)
+  if (!localStorage.getItem(CONFIG.storageKey) && !isStandalone) {
+    setTimeout(function() {
+      if (!hasShownModal) {
+        showInstallModal();
+      }
+    }, CONFIG.promptDelayMs + 200);
   }
 
   // 4. 對外暴露手動觸發方法，供頁面上的自訂按鈕隨時呼叫
