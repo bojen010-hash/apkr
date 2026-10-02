@@ -9434,7 +9434,11 @@
           headerInstallBtn.classList.add('hidden');
         } else {
           headerInstallBtn.onclick = function() {
-            openInstallPromptModal();
+            if (typeof window.__triggerPwaInstall === 'function') {
+              window.__triggerPwaInstall();
+            } else {
+              openInstallPromptModal();
+            }
           };
         }
       }
@@ -10745,6 +10749,210 @@
       setInterval(checkAndUpdateDate, 30000);
     })();
   </script>
+  
+<!-- ==================== 【通用 PWA 自動提示安裝外掛 START】 ==================== -->
+<!-- 說明：直接貼在 </body> 標籤上方或存成 pwa-installer.js 引入。免任何外部套件！ -->
+<script>
+(function(window, document) {
+  'use strict';
+
+  var CONFIG = {
+    appName: "記帳記事 Pro",
+    appSubtitle: "如同原生 App 般順暢，支援離線快速使用",
+    themeColor: "#0e608a",
+    appIcon: "📲",
+    promptDelayMs: 800,
+    storageKey: 'pwa_prompt_dismissed_flag'
+  };
+
+  // 1. 環境診斷
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                     window.navigator.standalone === true || 
+                     document.referrer.includes('android-app://');
+  var isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+  var isLineApp = navigator.userAgent.indexOf('Line/') !== -1;
+  var isFileProtocol = window.location.protocol === 'file:';
+
+  // 若已是獨立 App (從主畫面點開)，則自動休眠不打擾
+  if (isStandalone) {
+    console.log('[PWA Installer] 檢測為已安裝之獨立 App 模式，跳過提示');
+    return;
+  }
+
+  var deferredPrompt = null;
+  var hasShownModal = false;
+
+  // 2. 攔截 Android / Chrome 原生安裝事件
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    window.__pwaDeferredPrompt = e;
+
+    // 若使用者尚未明確關閉過，延遲自動跳出詢問
+    if (!localStorage.getItem(CONFIG.storageKey) && !hasShownModal) {
+      setTimeout(showInstallModal, CONFIG.promptDelayMs);
+    }
+  });
+
+  // 3. iOS Safari 延遲自動展示指引
+  if (isIOS && !localStorage.getItem(CONFIG.storageKey)) {
+    setTimeout(showInstallModal, CONFIG.promptDelayMs + 300);
+  }
+
+  // 4. 對外暴露手動觸發方法，供頁面上的自訂按鈕隨時呼叫
+  window.__triggerPwaInstall = function() {
+    showInstallModal(true);
+  };
+
+  // 5. 核心彈窗渲染函數
+  function showInstallModal(forceShow) {
+    if (!forceShow && localStorage.getItem(CONFIG.storageKey)) return;
+    if (document.getElementById('cbjm-pwa-installer-modal')) return;
+
+    hasShownModal = true;
+
+    // 建立外層容器 (現代化浮動卡片，自適應深淺與邊界)
+    var modal = document.createElement('div');
+    modal.id = 'cbjm-pwa-installer-modal';
+    modal.style.cssText = [
+      'position: fixed',
+      'bottom: 18px',
+      'left: 50%',
+      'transform: translateX(-50%)',
+      'width: calc(100% - 32px)',
+      'max-width: 420px',
+      'background: #ffffff',
+      'border-radius: 22px',
+      'box-shadow: 0 20px 45px -10px rgba(14, 96, 138, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.9)',
+      'z-index: 999998',
+      'padding: 18px 20px',
+      'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      'box-sizing: border-box',
+      'color: #0f172a',
+      'animation: cbjmPwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+    ].join(';');
+
+    // 注入彈跳動畫
+    if (!document.getElementById('cbjm-pwa-style')) {
+      var style = document.createElement('style');
+      style.id = 'cbjm-pwa-style';
+      style.innerHTML = '@keyframes cbjmPwaSlideUp { from { opacity: 0; transform: translate(-50%, 30px); } to { opacity: 1; transform: translate(-50%, 0); } }';
+      document.head.appendChild(style);
+    }
+
+    var contentHtml = '';
+
+    // A. 頂部標題與圖示
+    contentHtml += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">';
+    contentHtml += '  <div style="display: flex; align-items: center; gap: 12px;">';
+    contentHtml += '    <div style="width: 44px; height: 44px; border-radius: 14px; background: ' + CONFIG.themeColor + '; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 12px rgba(14,96,138,0.25); shrink: 0;">';
+    contentHtml +=        CONFIG.appIcon;
+    contentHtml += '    </div>';
+    contentHtml += '    <div>';
+    contentHtml += '      <div style="font-weight: 800; font-size: 15px; color: #0f172a; line-height: 1.2;">將「' + CONFIG.appName + '」加到主畫面</div>';
+    contentHtml += '      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">' + CONFIG.appSubtitle + '</div>';
+    contentHtml += '    </div>';
+    contentHtml += '  </div>';
+    contentHtml += '  <button id="cbjm-pwa-close-btn" type="button" style="background: none; border: none; font-size: 18px; color: #94a3b8; cursor: pointer; padding: 4px; line-height: 1;">✕</button>';
+    contentHtml += '</div>';
+
+    // B. LINE 環境特別提醒
+    if (isLineApp) {
+      contentHtml += '<div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; color: #065f46; display: flex; align-items: center; gap: 8px;">';
+      contentHtml += '  <span style="font-size: 16px;">💡</span>';
+      contentHtml += '  <div>您目前在 LINE 瀏覽器中，請點右上角「⋯」選擇<b>在預設瀏覽器中開啟</b>以享受完整桌面安裝！</div>';
+      contentHtml += '</div>';
+    }
+
+    // C. 平台專屬指引區塊 (iOS vs Android)
+    if (isIOS) {
+      contentHtml += '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #334155; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: bold; color: #0f172a; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">';
+      contentHtml += '    <span>🍎 iPhone / iPad 安裝 2 步驟：</span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center;">1</span>';
+      contentHtml += '    <span>點擊螢幕下方 Safari 的<b>「分享」</b>圖示 <span style="font-size: 14px;">⎙ / 📤</span></span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: center; gap: 6px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center;">2</span>';
+      contentHtml += '    <span>在列表中滑動並選擇<b>「加入主畫面」</b>即可完成！</span>';
+      contentHtml += '  </div>';
+      contentHtml += '</div>';
+    } else {
+      contentHtml += '<div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 14px; padding: 10px 12px; margin-bottom: 14px; font-size: 11px; color: #0369a1; display: flex; align-items: center; gap: 8px;">';
+      contentHtml += '  <span style="font-size: 16px;">⚡</span>';
+      contentHtml += '  <div>點擊下方按鈕即可一鍵建立桌面專屬圖示，開啟更快速且支援離線記帳！</div>';
+      contentHtml += '</div>';
+    }
+
+    // D. 底部操作按鈕群
+    contentHtml += '<div style="display: flex; gap: 8px;">';
+    contentHtml += '  <button id="cbjm-pwa-dismiss" type="button" style="flex: 1; padding: 11px 0; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 12px; color: #64748b; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">';
+    contentHtml += '    暫時不用';
+    contentHtml += '  </button>';
+    contentHtml += '  <button id="cbjm-pwa-action" type="button" style="flex: 2; padding: 11px 0; border: none; background: ' + CONFIG.themeColor + '; border-radius: 12px; color: #ffffff; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(14, 96, 138, 0.35); transition: transform 0.1s active:scale-95;">';
+    contentHtml +=      isIOS ? '📱 我知道了，立即照步驟加入' : '📲 立即一鍵加到主畫面';
+    contentHtml += '  </button>';
+    contentHtml += '</div>';
+
+    modal.innerHTML = contentHtml;
+    document.body.appendChild(modal);
+
+    // 綁定事件
+    var closeBtn = document.getElementById('cbjm-pwa-close-btn');
+    var dismissBtn = document.getElementById('cbjm-pwa-dismiss');
+    var actionBtn = document.getElementById('cbjm-pwa-action');
+
+    function dismissModal() {
+      localStorage.setItem(CONFIG.storageKey, 'true');
+      if (modal && modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
+    }
+
+    if (closeBtn) closeBtn.onclick = dismissModal;
+    if (dismissBtn) dismissBtn.onclick = dismissModal;
+
+    if (actionBtn) {
+      actionBtn.onclick = function() {
+        if (deferredPrompt) {
+          // Android 叫起原生確認框
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(choiceResult) {
+            if (choiceResult && choiceResult.outcome === 'accepted') {
+              console.log('[PWA Installer] 使用者已同意安裝');
+              localStorage.setItem(CONFIG.storageKey, 'true');
+            }
+          });
+          deferredPrompt = null;
+          dismissModal();
+        } else if (isIOS) {
+          alert('請點擊下方 Safari 的「分享」按鈕 (帶向上箭頭的方框) ➔ 選擇「加入主畫面」即可完成！');
+          dismissModal();
+        } else {
+          // 一般電腦或其他瀏覽器
+          alert('若未自動跳出提示，可點擊瀏覽器右上角選單 [⋮] ➔ 選擇「安裝應用程式」或「加到主畫面」！');
+          dismissModal();
+        }
+      };
+    }
+  }
+
+  // 對外公開全域初始化函數
+  window.initPwaInstaller = function(customOptions) {
+    if (customOptions) {
+      if (customOptions.appName) CONFIG.appName = customOptions.appName;
+      if (customOptions.themeColor) CONFIG.themeColor = customOptions.themeColor;
+      if (customOptions.appIcon) CONFIG.appIcon = customOptions.appIcon;
+    }
+    showInstallModal(true);
+  };
+
+})(window, document);
+</script>
+<!-- ==================== 【通用 PWA 自動提示安裝外掛 END】 ==================== -->
+
   
 </body>
 </html>
