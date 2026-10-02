@@ -9247,12 +9247,20 @@
         box.innerHTML = html;
         container.classList.remove('hidden');
 
+        function saveDismissAll() {
+          try {
+            localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+            localStorage.setItem('pwa_prompt_dismissed_flag', 'true');
+            localStorage.setItem('sim_pwa_installed_or_dismissed', 'dismissed');
+            sessionStorage.setItem('pwa_prompt_dismissed_session', 'true');
+          } catch(e) {}
+        }
         document.getElementById('close-install-modal-x').onclick = function() {
-          localStorage.setItem('pure_app_installed_or_dismissed', 'dismissed');
+          saveDismissAll();
           container.classList.add('hidden');
         };
         document.getElementById('btn-dismiss-pwa-install').onclick = function() {
-          localStorage.setItem('pure_app_installed_or_dismissed', 'dismissed');
+          saveDismissAll();
           container.classList.add('hidden');
         };
         document.getElementById('btn-trigger-pwa-install').onclick = function() {
@@ -9260,7 +9268,7 @@
             deferredInstallPrompt.prompt();
             deferredInstallPrompt.userChoice.then(function(choice) {
               if (choice && choice.outcome === 'accepted') {
-                localStorage.setItem('pure_app_installed_or_dismissed', 'installed');
+                saveDismissAll();
                 alert('✓ 正在將「記帳記事」新增至您的手機主畫面！');
               }
             });
@@ -9270,15 +9278,18 @@
             if (isLineApp) {
               alert('請先點擊 LINE 右上角「⋯」➔ 選擇「在預設瀏覽器開啟」！');
             } else {
-              alert('請依照畫面指示：點擊底部分享按鈕 ⎋ ➔ 選擇「加入主畫面 ⊞」');
+              alert('請點擊下方 Safari 的「分享」按鈕 (帶向上箭頭的方框 ⎋) ➔ 選擇「加入主畫面 ⊞」即可完成！');
+              saveDismissAll();
+              container.classList.add('hidden');
             }
           } else {
             if (isLineApp) {
               alert('⚠️ LINE 內建視窗無法直接安裝，請點右上角「⋯」➔ 選擇「在預設瀏覽器開啟」！');
             } else {
-              alert('👉 請點選 Chrome「⋮」選單（位於螢幕下方右側或上方右側）➔ 選擇「加到主畫面」');
+              alert('👉 請點選瀏覽器右上角或右下角【三個點 ⋮ 選單】➔ 點選【加到主畫面】或【安裝應用程式】，即可 100% 成功將圖示放上手機主畫面！');
+              saveDismissAll();
+              container.classList.add('hidden');
             }
-            container.classList.add('hidden');
           }
         };
       }
@@ -9288,18 +9299,6 @@
         deferredInstallPrompt = e;
         window.__pwaDeferredPrompt = e;
       });
-
-      // Auto prompt on first launch across all environments if not dismissed
-      var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
-      if (!dismissed) {
-        setTimeout(function() {
-          if (typeof window.__triggerPwaInstall === 'function') {
-            window.__triggerPwaInstall();
-          } else {
-            openInstallPromptModal();
-          }
-        }, 1200);
-      }
 
       // Calculate days difference for a reminder date
       function getNoteDaysDiff(reminderDateStr) {
@@ -10776,6 +10775,17 @@
   var isLineApp = navigator.userAgent.indexOf('Line/') !== -1;
   var isFileProtocol = window.location.protocol === 'file:';
 
+  function isAlreadyDismissed() {
+    try {
+      if (isStandalone) return true;
+      if (sessionStorage.getItem('pwa_prompt_dismissed_session')) return true;
+      if (localStorage.getItem(CONFIG.storageKey)) return true;
+      if (localStorage.getItem('pure_app_installed_or_dismissed')) return true;
+      if (localStorage.getItem('sim_pwa_installed_or_dismissed')) return true;
+    } catch (e) {}
+    return false;
+  }
+
   var deferredPrompt = null;
   var hasShownModal = false;
 
@@ -10784,20 +10794,15 @@
     e.preventDefault();
     deferredPrompt = e;
     window.__pwaDeferredPrompt = e;
-
-    // 若使用者尚未明確關閉過，且尚未展示過，延遲自動跳出詢問
-    if (!localStorage.getItem(CONFIG.storageKey) && !hasShownModal && !isStandalone) {
-      setTimeout(showInstallModal, CONFIG.promptDelayMs);
-    }
   });
 
-  // 3. 全平台延遲自動展示指引 (若尚未被使用者關閉且非獨立 App 狀態)
-  if (!localStorage.getItem(CONFIG.storageKey) && !isStandalone) {
+  // 3. 全平台延遲自動展示指引 (僅在完全未曾關閉過、且非獨立 App 狀態下，首次延遲微幅提示)
+  if (!isAlreadyDismissed()) {
     setTimeout(function() {
-      if (!hasShownModal) {
-        showInstallModal();
+      if (!hasShownModal && !isAlreadyDismissed()) {
+        showInstallModal(false);
       }
-    }, CONFIG.promptDelayMs + 200);
+    }, CONFIG.promptDelayMs + 300);
   }
 
   // 4. 對外暴露手動觸發方法，供頁面上的自訂按鈕隨時呼叫
@@ -10807,10 +10812,13 @@
 
   // 5. 核心彈窗渲染函數
   function showInstallModal(forceShow) {
-    if (!forceShow && localStorage.getItem(CONFIG.storageKey)) return;
+    if (!forceShow && isAlreadyDismissed()) return;
     if (document.getElementById('cbjm-pwa-installer-modal')) return;
 
     hasShownModal = true;
+    try {
+      sessionStorage.setItem('pwa_prompt_dismissed_session', 'true');
+    } catch (e) {}
 
     // 建立外層容器 (現代化浮動卡片，自適應深淺與邊界)
     var modal = document.createElement('div');
@@ -10846,7 +10854,7 @@
     // A. 頂部標題與圖示
     contentHtml += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">';
     contentHtml += '  <div style="display: flex; align-items: center; gap: 12px;">';
-    contentHtml += '    <div style="width: 44px; height: 44px; border-radius: 14px; background: ' + CONFIG.themeColor + '; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 12px rgba(14,96,138,0.25); shrink: 0;">';
+    contentHtml += '    <div style="width: 44px; height: 44px; border-radius: 14px; background: ' + CONFIG.themeColor + '; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 12px rgba(14,96,138,0.25); flex-shrink: 0;">';
     contentHtml +=        CONFIG.appIcon;
     contentHtml += '    </div>';
     contentHtml += '    <div>';
@@ -10859,14 +10867,24 @@
 
     // B. LINE 環境特別提醒
     if (isLineApp) {
-      contentHtml += '<div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; color: #065f46; display: flex; align-items: center; gap: 8px;">';
-      contentHtml += '  <span style="font-size: 16px;">💡</span>';
-      contentHtml += '  <div>您目前在 LINE 瀏覽器中，請點右上角「⋯」選擇<b>在預設瀏覽器中開啟</b>以享受完整桌面安裝！</div>';
+      contentHtml += '<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; color: #991b1b; display: flex; align-items: flex-start; gap: 8px;">';
+      contentHtml += '  <span style="font-size: 16px;">⚠️</span>';
+      contentHtml += '  <div><b>LINE 內建視窗無法直接建立圖示！</b><br>請點擊 LINE 右上角「三個點 ⋯」選擇<b>「在預設瀏覽器開啟」</b>！</div>';
       contentHtml += '</div>';
     }
 
-    // C. 平台專屬指引區塊 (iOS vs Android)
-    if (isIOS) {
+    // C. 平台專屬指引區塊 (已安裝 vs 支援一鍵安裝 vs iOS vs Android 手動教學)
+    if (isStandalone) {
+      contentHtml += '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 11px; color: #166534; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: 800; font-size: 12px; color: #14532d; margin-bottom: 4px;">🎉 已在獨立 App 模式運行！</div>';
+      contentHtml += '  <div>您的手機主畫面上已成功建立專屬圖示，享受全螢幕獨立運行與自動本機備份！</div>';
+      contentHtml += '</div>';
+    } else if (deferredPrompt) {
+      contentHtml += '<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 11px; color: #1e40af; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: 800; font-size: 12px; color: #1e3a8a; margin-bottom: 4px;">⚡ 支援系統原生一鍵安裝：</div>';
+      contentHtml += '  <div>點擊下方【📲 立即一鍵加到主畫面】，系統將立即彈出確認視窗，將專屬圖示安裝至手機主畫面！</div>';
+      contentHtml += '</div>';
+    } else if (isIOS) {
       contentHtml += '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #334155; line-height: 1.5;">';
       contentHtml += '  <div style="font-weight: bold; color: #0f172a; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">';
       contentHtml += '    <span>🍎 iPhone / iPad 安裝 2 步驟：</span>';
@@ -10877,13 +10895,22 @@
       contentHtml += '  </div>';
       contentHtml += '  <div style="display: flex; align-items: center; gap: 6px;">';
       contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center;">2</span>';
-      contentHtml += '    <span>在列表中滑動並選擇<b>「加入主畫面」</b>即可完成！</span>';
+      contentHtml += '    <span>在列表中滑動並選擇<b>「加入主畫面 ⊞」</b>即可完成！</span>';
       contentHtml += '  </div>';
       contentHtml += '</div>';
     } else {
-      contentHtml += '<div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 14px; padding: 10px 12px; margin-bottom: 14px; font-size: 11px; color: #0369a1; display: flex; align-items: center; gap: 8px;">';
-      contentHtml += '  <span style="font-size: 16px;">⚡</span>';
-      contentHtml += '  <div>點擊下方按鈕即可一鍵建立桌面專屬圖示，開啟更快速且支援離線記帳！</div>';
+      contentHtml += '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 11px; color: #166534; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: 800; font-size: 12px; color: #14532d; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">';
+      contentHtml += '    <span>🤖 Android 簡易安裝步驟（100% 放上桌面）：</span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">1</span>';
+      contentHtml += '    <span>點擊瀏覽器右上角或右下角<b>【三個點 ⋮ 選單】</b></span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: flex-start; gap: 6px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">2</span>';
+      contentHtml += '    <span>在選單中點選<b>【加到主畫面】</b>或<b>【安裝應用程式】</b>➔ 按<b>【新增】</b>即可成功放上桌面！</span>';
+      contentHtml += '  </div>';
       contentHtml += '</div>';
     }
 
@@ -10893,7 +10920,15 @@
     contentHtml += '    暫時不用';
     contentHtml += '  </button>';
     contentHtml += '  <button id="cbjm-pwa-action" type="button" style="flex: 2; padding: 11px 0; border: none; background: ' + CONFIG.themeColor + '; border-radius: 12px; color: #ffffff; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(14, 96, 138, 0.35); transition: transform 0.1s active:scale-95;">';
-    contentHtml +=      isIOS ? '📱 我知道了，立即照步驟加入' : '📲 立即一鍵加到主畫面';
+    if (isStandalone) {
+      contentHtml += '✓ 關閉視窗';
+    } else if (deferredPrompt) {
+      contentHtml += '📲 立即一鍵加到主畫面';
+    } else if (isIOS) {
+      contentHtml += '📱 我知道了，依步驟加入';
+    } else {
+      contentHtml += '🤖 我知道了，前往 Chrome 選單安裝';
+    }
     contentHtml += '  </button>';
     contentHtml += '</div>';
 
@@ -10906,7 +10941,12 @@
     var actionBtn = document.getElementById('cbjm-pwa-action');
 
     function dismissModal() {
-      localStorage.setItem(CONFIG.storageKey, 'true');
+      try {
+        localStorage.setItem(CONFIG.storageKey, 'true');
+        localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+        localStorage.setItem('sim_pwa_installed_or_dismissed', 'dismissed');
+        sessionStorage.setItem('pwa_prompt_dismissed_session', 'true');
+      } catch (e) {}
       if (modal && modal.parentNode) {
         modal.parentNode.removeChild(modal);
       }
@@ -10923,17 +10963,21 @@
           deferredPrompt.userChoice.then(function(choiceResult) {
             if (choiceResult && choiceResult.outcome === 'accepted') {
               console.log('[PWA Installer] 使用者已同意安裝');
-              localStorage.setItem(CONFIG.storageKey, 'true');
+              try {
+                localStorage.setItem(CONFIG.storageKey, 'true');
+                localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+              } catch(e) {}
             }
           });
           deferredPrompt = null;
           dismissModal();
         } else if (isIOS) {
-          alert('請點擊下方 Safari 的「分享」按鈕 (帶向上箭頭的方框) ➔ 選擇「加入主畫面」即可完成！');
+          alert('請點擊下方 Safari 的「分享」按鈕 (帶向上箭頭的方框 ⎋) ➔ 選擇「加入主畫面 ⊞」即可完成！');
+          dismissModal();
+        } else if (isStandalone) {
           dismissModal();
         } else {
-          // 一般電腦或其他瀏覽器
-          alert('若未自動跳出提示，可點擊瀏覽器右上角選單 [⋮] ➔ 選擇「安裝應用程式」或「加到主畫面」！');
+          alert('👉 請點選瀏覽器右上角或右下角【三個點 ⋮ 選單】➔ 點選【加到主畫面】或【安裝應用程式】，即可 100% 成功將圖示放上手機主畫面！');
           dismissModal();
         }
       };
