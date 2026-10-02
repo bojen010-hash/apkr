@@ -8770,13 +8770,13 @@
     "id": "note-1",
     "title": "歡迎使用！重要備忘提醒範例",
     "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈！",
-    "updatedAt": "2026-09-29 09:00",
+    "updatedAt": "2026-10-01 14:06",
     "tag": "生活",
     "reminderDate": "2026-10-02",
     "reminderTime": "12:00",
     "earlyAlertDays": 3,
     "priority": "high",
-    "isCompleted": false
+    "isCompleted": true
   }
 ];
 
@@ -8975,6 +8975,55 @@
           var sep = location.search ? '&' : '?';
           location.replace(location.href + sep + 'openExternalBrowser=1');
         } catch (e) {}
+      }
+
+      // Web Audio API 即時聲音警示合成器 (100% 離線可用，免外部音檔依賴)
+      function playNoteAlertChime(mode) {
+        mode = mode || 'chime';
+        try {
+          var AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          var ctx = new AudioCtx();
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+          var now = ctx.currentTime;
+          if (mode === 'urgent') {
+            [0, 0.16, 0.32].forEach(function(delay) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, now + delay);
+              gain.gain.setValueAtTime(0.3, now + delay);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now + delay);
+              osc.stop(now + delay + 0.13);
+            });
+          } else {
+            var seq = [
+              { freq: 659.25, time: 0, dur: 0.28 },
+              { freq: 830.61, time: 0.14, dur: 0.35 },
+              { freq: 987.77, time: 0.28, dur: 0.55 }
+            ];
+            seq.forEach(function(item) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(item.freq, now + item.time);
+              gain.gain.setValueAtTime(0, now + item.time);
+              gain.gain.linearRampToValueAtTime(0.28, now + item.time + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.0001, now + item.time + item.dur);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now + item.time);
+              osc.stop(now + item.time + item.dur);
+            });
+          }
+        } catch (e) {
+          console.warn('Audio alert error:', e);
+        }
       }
 
       function copyLineShareUrl() {
@@ -9340,6 +9389,15 @@
       // Navigation handler
       function setTab(tab) {
         activeTab = tab;
+        if (tab === 'notes') {
+          var alertingWithSound = notes.filter(function(n) {
+            return !n.isCompleted && getNoteAlertInfo(n).isAlerting && n.soundAlertEnabled !== false;
+          });
+          if (alertingWithSound.length > 0) {
+            var hasUrgent = alertingWithSound.some(function(n) { return n.priority === 'urgent'; });
+            playNoteAlertChime(hasUrgent ? 'urgent' : 'chime');
+          }
+        }
         var btnAcc = document.getElementById('tab-btn-accounting');
         var btnNotes = document.getElementById('tab-btn-notes');
         var btnBackup = document.getElementById('tab-btn-backup');
@@ -9869,7 +9927,12 @@
           html += '        <span class="animate-bounce">🔔</span>';
           html += '        <span>⚠️ 提前警示注意 (' + activeAlertingNotes.length + ' 筆到期中)</span>';
           html += '      </div>';
-          html += '      <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 font-bold">優先處理</span>';
+          html += '      <div class="flex items-center gap-1.5">';
+          html += '        <button type="button" id="btn-play-all-alerts" class="px-2 py-0.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs cursor-pointer transition-all active:scale-95" title="播放到期聲音警示">';
+          html += '          <span>🔊 響鈴提醒</span>';
+          html += '        </button>';
+          html += '        <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 font-bold">優先處理</span>';
+          html += '      </div>';
           html += '    </div>';
           html += '    <div class="space-y-1.5">';
           activeAlertingNotes.forEach(function(n) {
@@ -9884,6 +9947,7 @@
             html += '        </div>';
             html += '        <div class="flex items-center gap-1.5 shrink-0">';
             html += '          <span class="font-bold px-2 py-0.5 rounded text-[10px] ' + alert.badgeClass + '">' + alert.text + '</span>';
+            html += '          <button type="button" class="alert-play-sound-btn px-1.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold flex items-center cursor-pointer" data-id="' + n.id + '" data-priority="' + (n.priority || 'normal') + '" title="播放此筆到期警示音效">🔊</button>';
             html += '          <button type="button" class="alert-complete-btn px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold cursor-pointer" data-id="' + n.id + '" title="完成並解除警報">✓ 完成</button>';
             html += '          <button type="button" class="alert-del-note-btn p-1 rounded-lg hover:bg-rose-100 text-rose-500 hover:text-rose-700 cursor-pointer" data-id="' + n.id + '" title="刪除此筆記事（立即清除警報）">';
             html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
@@ -10024,8 +10088,13 @@
 
             if (note.reminderDate) {
               html += '      <div class="flex items-center justify-between text-[10px] pt-1 text-slate-500 border-t border-slate-100">';
-              html += '        <span class="flex items-center gap-1 text-slate-600 font-medium">🔔 提醒：' + note.reminderDate + '</span>';
-              html += '        <span class="font-bold px-1.5 py-0.5 rounded ' + alert.badgeClass + '">' + alert.text + '</span>';
+              html += '        <span class="flex items-center gap-1 text-slate-600 font-medium">🔔 提醒：' + note.reminderDate + ' ' + (note.reminderTime || '') + '</span>';
+              if (alert.isAlerting) {
+                html += '        <div class="flex items-center gap-1">';
+                html += '          <span class="font-bold px-1.5 py-0.5 rounded ' + alert.badgeClass + '">' + alert.text + '</span>';
+                html += '          <button type="button" class="card-play-sound-btn p-1 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-800 transition-colors cursor-pointer" data-id="' + note.id + '" data-priority="' + (note.priority || 'normal') + '" title="播放到期聲音警示">🔊</button>';
+                html += '        </div>';
+              }
               html += '      </div>';
             }
             html += '    </div>';
@@ -10041,6 +10110,22 @@
 
         var addFirstBtn = document.getElementById('add-first-note-btn');
         if (addFirstBtn) addFirstBtn.onclick = function() { openNoteModal(); };
+
+        var btnPlayAllAlerts = document.getElementById('btn-play-all-alerts');
+        if (btnPlayAllAlerts) {
+          btnPlayAllAlerts.onclick = function() {
+            var hasUrgent = activeAlertingNotes.some(function(n) { return n.priority === 'urgent'; });
+            playNoteAlertChime(hasUrgent ? 'urgent' : 'chime');
+          };
+        }
+
+        container.querySelectorAll('.alert-play-sound-btn, .card-play-sound-btn').forEach(function(btn) {
+          btn.onclick = function(e) {
+            e.stopPropagation();
+            var pri = this.getAttribute('data-priority') || 'normal';
+            playNoteAlertChime(pri === 'urgent' ? 'urgent' : 'chime');
+          };
+        });
 
         var resetTagBtn = document.getElementById('reset-tag-btn');
         if (resetTagBtn) resetTagBtn.onclick = function() { selectedNoteTag = '全部'; renderMain(); };
@@ -10511,6 +10596,18 @@
         mHtml += '    <label class="text-[11px] font-bold text-slate-700">提醒警示日期 (選填)</label>';
         mHtml += '    <input type="date" id="note-date-input" value="' + (isEdit ? (editNote.reminderDate || '') : '') + '" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold" />';
         mHtml += '  </div>';
+
+        // 聲音警示設定
+        var isSoundEnabled = isEdit ? (editNote.soundAlertEnabled !== false) : true;
+        mHtml += '  <div class="pt-1 flex items-center justify-between bg-white p-2 rounded-xl border border-amber-200/90 shadow-2xs">';
+        mHtml += '    <label class="flex items-center gap-2 text-[11px] font-bold text-amber-950 cursor-pointer select-none">';
+        mHtml += '      <input type="checkbox" id="note-sound-alert-input" ' + (isSoundEnabled ? 'checked' : '') + ' class="rounded text-amber-600 cursor-pointer w-4 h-4" />';
+        mHtml += '      <span class="flex items-center gap-1"><span>🔔 到期前聲音警示</span><span class="text-[10px] text-amber-700/80 font-normal">(到期時播放響鈴)</span></span>';
+        mHtml += '    </label>';
+        mHtml += '    <button type="button" id="btn-preview-note-sound" class="px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer" title="試聽警示音效">';
+        mHtml += '      <span>🔊 試聽音效</span>';
+        mHtml += '    </button>';
+        mHtml += '  </div>';
         mHtml += '</div>';
 
         mHtml += '<div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2 shrink-0">';
@@ -10522,6 +10619,15 @@
 
         document.getElementById('close-modal-x').onclick = closeModal;
         document.getElementById('modal-cancel-btn').onclick = closeModal;
+
+        // Preview sound effect
+        var previewBtn = document.getElementById('btn-preview-note-sound');
+        if (previewBtn) {
+          previewBtn.onclick = function() {
+            var pVal = document.getElementById('note-priority-input').value;
+            playNoteAlertChime(pVal === 'urgent' ? 'urgent' : 'chime');
+          };
+        }
 
         // Tag Chip selection
         var tagChips = modalBox.querySelectorAll('.preset-tag-chip');
@@ -10558,6 +10664,7 @@
           var priority = document.getElementById('note-priority-input').value;
           var earlyDays = parseInt(document.getElementById('note-early-days-input').value, 10) || 3;
           var rDate = document.getElementById('note-date-input').value;
+          var soundEnabled = document.getElementById('note-sound-alert-input').checked;
 
           if (!title) {
             alert('請輸入記事標題！');
@@ -10571,6 +10678,7 @@
             editNote.priority = priority;
             editNote.earlyAlertDays = earlyDays;
             editNote.reminderDate = rDate;
+            editNote.soundAlertEnabled = soundEnabled;
             editNote.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
           } else {
             notes.unshift({
@@ -10581,6 +10689,7 @@
               priority: priority,
               earlyAlertDays: earlyDays,
               reminderDate: rDate,
+              soundAlertEnabled: soundEnabled,
               isCompleted: false,
               updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
             });
@@ -10639,66 +10748,61 @@
   
 <!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
 <!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
-<div id="cbjm-universal-gate-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <div style="background:#ffffff; width:100%; max-width:380px; max-height:92vh; overflow-y:auto; border-radius:24px; padding:20px 18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
-    <!-- 頂部標題列 -->
-    <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
-      <div style="width:40px; height:40px; border-radius:12px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; shrink:0;">
-        🛡️
+<div id="cbjm-universal-gate-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:12px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="background:#ffffff; width:100%; max-width:380px; max-height:94vh; overflow-y:auto; border-radius:22px; padding:16px 16px 14px 16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
+    <!-- 頂部精簡標題列 -->
+    <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">🛡️</span>
+        <div style="font-size:14px; font-weight:800; color:#0f172a; line-height:1.2;">首次啟動授權認證</div>
       </div>
-      <div>
-        <div style="font-size:15px; font-weight:800; color:#0f172a; line-height:1.2;">首次啟動授權認證</div>
-        <div style="font-size:10px; font-family:monospace; color:#64748b; margin-top:2px;">OFFICIAL ACCESS VERIFICATION</div>
-      </div>
+      <span style="font-size:10px; background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:9999px; font-weight:bold;">Cbjm 正版授權</span>
     </div>
 
-    <!-- 作者聯繫資訊 -->
-    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:14px; padding:12px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#92400e; margin-bottom:8px;">
-        <span>軟體作者：Cbjm</span>
-        <span style="font-size:10px; background:#fde68a; color:#78350f; padding:2px 8px; border-radius:9999px;">正版授權</span>
+    <!-- 本機特徵碼顯示 (緊湊單行，大幅提升按鈕垂直位置) -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:6px 10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+        <span style="font-size:11px; font-weight:bold; color:#64748b; white-space:nowrap;">特徵碼:</span>
+        <span id="cbjm-display-device-id" style="font-family:monospace; font-weight:800; font-size:14px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:2px 6px; color:#0f172a; letter-spacing:1px; user-select:all;">
+          DEV-XXXX-XX
+        </span>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-        <button id="cbjm-btn-line" type="button" style="background:#059669; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+      <button id="cbjm-btn-copy" type="button" style="background:#fef3c7; border:1px solid #fde68a; border-radius:6px; color:#b45309; font-size:11px; font-weight:bold; padding:3px 8px; cursor:pointer; white-space:nowrap;">
+        [點擊複製]
+      </button>
+    </div>
+
+    <!-- 尚未取得密碼？聯繫作者 (移至 [請輸入 6 位純數字通關密碼：] 上方) -->
+    <div style="background:#f1f5f9; border:1px solid #e2e8f0; border-radius:12px; padding:8px 10px; margin-bottom:8px;">
+      <div style="font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px; text-align:center;">
+        尚未取得密碼？請複製特徵碼聯繫作者領取：
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+        <button id="cbjm-btn-line" type="button" style="background:#059669; color:#ffffff; border:none; border-radius:8px; padding:8px 4px; font-size:11px; font-weight:bold; cursor:pointer;">
           加 LINE 索取密碼
         </button>
-        <button id="cbjm-btn-email" type="button" style="background:#334155; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
-          發郵件索取
+        <button id="cbjm-btn-email" type="button" style="background:#334155; color:#ffffff; border:none; border-radius:8px; padding:8px 4px; font-size:11px; font-weight:bold; cursor:pointer;">
+          發郵件索取密碼
         </button>
       </div>
     </div>
 
-    <!-- 本機特徵碼顯示 (一機一碼) -->
-    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:6px;">
-        <span>本機設備特徵碼 (一機一碼)</span>
-        <button id="cbjm-btn-copy" type="button" style="background:none; border:none; color:#d97706; font-size:11px; font-weight:bold; cursor:pointer; text-decoration:underline;">
-          [點擊複製]
-        </button>
-      </div>
-      <div id="cbjm-display-device-id" style="font-family:monospace; font-weight:800; font-size:16px; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:8px; text-align:center; color:#0f172a; letter-spacing:1px;">
-        DEV-XXXX-XX
-      </div>
-    </div>
-
-    <!-- 通關密碼輸入與驗證 -->
-    <div style="margin-bottom:14px;">
-      <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入 6 位純數字通關密碼：</label>
-      <div style="display:flex; gap:8px;">
-        <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入 6 位純數字通關密碼" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box;" maxlength="10" />
-        <button id="cbjm-btn-verify" type="button" style="background:#d97706; color:#ffffff; border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:bold; cursor:pointer; shrink:0; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
-          送出驗證
-        </button>
-      </div>
-      <!-- 額外醒目滿版送出按鍵 -->
-      <button id="cbjm-btn-verify-big" type="button" style="width:100%; margin-top:8px; background:linear-gradient(to right, #d97706, #b45309); color:#ffffff; border:none; border-radius:10px; padding:11px 16px; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
-        🚀 送出通關密碼並解鎖進入
+    <!-- ★★★ 通關密碼輸入與送出按鈕 ★★★ -->
+    <div style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:14px; padding:10px; margin-bottom:8px;">
+      <label style="display:block; font-size:12px; font-weight:bold; color:#92400e; margin-bottom:6px;">
+        請輸入 6 位純數字通關密碼：
+      </label>
+      <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請在此輸入 6 位純數字密碼" style="width:100%; border:2px solid #f59e0b; border-radius:10px; padding:9px 12px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box; background:#ffffff; color:#0f172a;" maxlength="10" />
+      
+      <!-- ★ 核心送出按鈕：直接置於密碼輸入框正下方，醒目高亮，手機上開啟畫面即刻看到！ ★ -->
+      <button id="cbjm-btn-verify-big" type="button" style="width:100%; margin-top:8px; background:linear-gradient(to right, #d97706, #b45309); color:#ffffff; border:none; border-radius:10px; padding:13px 16px; font-size:15px; font-weight:900; cursor:pointer; box-shadow:0 4px 12px -1px rgba(217,119,6,0.45); display:flex; align-items:center; justify-content:center; gap:6px;">
+        <span>🚀 送出通關密碼並解鎖進入</span>
       </button>
-      <div id="cbjm-verify-msg" style="display:none; font-size:11px; font-weight:bold; text-align:center; margin-top:8px;"></div>
+      <div id="cbjm-verify-msg" style="display:none; font-size:11px; font-weight:bold; text-align:center; margin-top:6px;"></div>
     </div>
 
-    <div style="font-size:10px; color:#94a3b8; text-align:center; line-height:1.4;">
-      ✓ 首次驗證成功後本機永久放行，後續使用不再出現提示。
+    <div style="font-size:10px; color:#94a3b8; text-align:center; line-height:1.3;">
+      ✓ 首次驗證成功後本機永久放行，後續使用不再出現提示
     </div>
   </div>
 </div>
