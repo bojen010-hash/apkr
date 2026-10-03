@@ -12,10 +12,18 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
   <script>
-    // LINE 內建瀏覽器自動跳脫至 Safari / 預設瀏覽器
+    // LINE 內建瀏覽器自動跳脫至 Chrome / Safari（解決 LINE 內建 WebView 無法安裝 PWA 到桌面的根本問題）
     (function() {
-      if (navigator.userAgent.indexOf('Line/') !== -1 && location.protocol.indexOf('http') === 0) {
-        if (location.search.indexOf('openExternalBrowser=1') === -1) {
+      var ua = navigator.userAgent || '';
+      var isLine = ua.indexOf('Line/') !== -1;
+      var isAndroid = ua.indexOf('Android') !== -1;
+      var isIOS = /iPhone|iPad|iPod/.test(ua);
+
+      if (isLine && location.protocol.indexOf('http') === 0) {
+        if (isAndroid) {
+          var intentUrl = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+          window.location.replace(intentUrl);
+        } else if (isIOS && location.search.indexOf('openExternalBrowser=1') === -1) {
           var sep = location.search ? '&' : '?';
           location.replace(location.href + sep + 'openExternalBrowser=1');
         }
@@ -9101,6 +9109,24 @@
       }
 
       function openInstallPromptModal() {
+        if (isLineApp) {
+          if (!isIOSDevice) {
+            alert('🚀 正在為您跳轉至 Google Chrome 進行桌面安裝...');
+            setTimeout(function() {
+              var intentUrl = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+              window.location.href = intentUrl;
+            }, 300);
+            return;
+          } else {
+            alert('🚀 正在為您跳轉至 Safari 進行桌面安裝...');
+            setTimeout(function() {
+              var sep = location.search ? '&' : '?';
+              window.location.href = location.href + sep + 'openExternalBrowser=1';
+            }, 300);
+            return;
+          }
+        }
+
         if (typeof window.__triggerPwaInstall === 'function') {
           window.__triggerPwaInstall();
           return;
@@ -10634,6 +10660,32 @@
 
   // 3. 對外暴露手動觸發方法：直接呼叫 Android / Chrome 原生「新增至主畫面」系統對話框
   window.__triggerPwaInstall = function() {
+    if (isLineApp) {
+      if (!isIOSDevice) {
+        if (typeof showToast === 'function') {
+          showToast('🚀 正在為您跳轉至 Google Chrome 進行桌面安裝...');
+        } else {
+          alert('🚀 正在為您跳轉至 Google Chrome 進行桌面安裝...');
+        }
+        setTimeout(function() {
+          var intentUrl = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+          window.location.href = intentUrl;
+        }, 300);
+        return;
+      } else {
+        if (typeof showToast === 'function') {
+          showToast('🚀 正在為您跳轉至 Safari 進行桌面安裝...');
+        } else {
+          alert('🚀 正在為您跳轉至 Safari 進行桌面安裝...');
+        }
+        setTimeout(function() {
+          var sep = location.search ? '&' : '?';
+          window.location.href = location.href + sep + 'openExternalBrowser=1';
+        }, 300);
+        return;
+      }
+    }
+
     var promptEvent = deferredPrompt || window.__pwaInstallPrompt || window.__pwaDeferredPrompt;
     if (promptEvent) {
       try {
