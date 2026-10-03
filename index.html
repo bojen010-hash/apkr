@@ -10911,6 +10911,76 @@
 </script>
 <!-- ==================== 【通用 PWA 自動提示安裝外掛 END】 ==================== -->
 
+
+
+
+  <!-- ==================== 【獨立限時分享截止鎖 START】 ==================== -->
+<!-- 💡 說明：若要限制網址對外傳播，請在下方 EXPIRE_DATE 填入截止日期 (格式: "YYYY-MM-DD"，如 "2026-10-15")。 -->
+<!-- 💡 若留空 "" 則代表不限制，永久開放所有人自由使用！ -->
+<script>
+(function() {
+  var EXPIRE_DATE = "";
+  var AUTHOR_NAME = "Cbjm";
+  var AUTHOR_LINE = "bojen010";
+
+  // 如果未設定截止日期（留空），嘗試自 localStorage 讀取動態設定；若皆無則代表無限制，直接放行
+  if (!EXPIRE_DATE || EXPIRE_DATE.trim() === "2026-10-04") {
+    try {
+      var dyn = localStorage.getItem('cbjm_share_expire_date');
+      if (dyn && dyn.trim() !== '') {
+        EXPIRE_DATE = dyn.trim();
+      } else {
+        return;
+      }
+    } catch(e) {
+      return;
+    }
+  }
+
+  try {
+    // 1. 老用戶白名單：已開通過或本機已有記帳資料，一律放行！
+    var hasClaimed = localStorage.getItem('cbjm_share_promo_claimed') === '1';
+    var hasData = localStorage.getItem('sim_expenses_data') || localStorage.getItem('cbjm_expenses_data');
+    if (hasClaimed || hasData) return;
+
+    // 2. 取得今天日期 (YYYY-MM-DD)
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    var todayStr = yyyy + '-' + mm + '-' + dd;
+
+    // 3. 在截止日之內：標記為合格老用戶，永久放行
+    if (todayStr <= EXPIRE_DATE) {
+      localStorage.setItem('cbjm_share_promo_claimed', '1');
+      return;
+    }
+
+    // 4. 超過截止日（對外轉傳的新用戶）：全螢幕攔截遮罩
+    function renderMask() {
+      if (document.getElementById('cbjm-share-expired-overlay')) return;
+      var overlay = document.createElement('div');
+      overlay.id = 'cbjm-share-expired-overlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,23,42,0.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:9999999;display:flex;justify-content:center;align-items:center;padding:16px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
+      overlay.innerHTML = '<div style="background:#ffffff;width:100%;max-width:380px;border-radius:24px;padding:24px 20px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);text-align:center;">' +
+        '<div style="font-size:36px;margin-bottom:12px;">⏳</div>' +
+        '<h3 style="font-size:17px;font-weight:800;color:#0f172a;margin:0 0 8px 0;">限時分享活動已截止</h3>' +
+        '<p style="font-size:12px;color:#64748b;line-height:1.6;margin:0 0 16px 0;">本網址之限時體驗已於 ' + EXPIRE_DATE + ' 截止，已停止對外開放新用戶存取。若需正式使用請加 LINE 聯繫作者。</p>' +
+        '<div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-bottom:14px;font-size:12px;font-weight:bold;color:#334155;">作者：' + AUTHOR_NAME + ' ｜ LINE：' + AUTHOR_LINE + '</div>' +
+        '<button onclick="navigator.clipboard?navigator.clipboard.writeText(\'' + AUTHOR_LINE + '\').then(function(){alert(\'已複製作者 LINE ID: ' + AUTHOR_LINE + '\')}):prompt(\'請複製 LINE ID:\',\'' + AUTHOR_LINE + '\')" style="background:#059669;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:bold;cursor:pointer;width:100%;">複製作者 LINE ID</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', renderMask);
+    } else {
+      renderMask();
+    }
+  } catch(e) {}
+})();
+</script>
+<!-- ==================== 【獨立限時分享截止鎖 END】 ==================== -->
   
 </body>
 </html>
