@@ -4,26 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記帳記事 Pro</title>
-
-  <link rel="manifest" href="manifest.json">
-
   <meta name="theme-color" content="#0e608a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳記事 Pro" />
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
   <script>
-    // LINE 內建瀏覽器自動跳脫至 Safari / 預設瀏覽器
+    // LINE 內建瀏覽器自動跳脫至 Chrome / Safari（解決 LINE 內建 WebView 無法安裝 PWA 到桌面的根本問題）
     (function() {
-      if (navigator.userAgent.indexOf('Line/') !== -1 && location.protocol.indexOf('http') === 0) {
-        if (location.search.indexOf('openExternalBrowser=1') === -1) {
+      var ua = navigator.userAgent || '';
+      var isLine = ua.indexOf('Line/') !== -1;
+      var isAndroid = ua.indexOf('Android') !== -1;
+      var isIOS = /iPhone|iPad|iPod/.test(ua);
+
+      if (isLine && location.protocol.indexOf('http') === 0) {
+        if (isAndroid) {
+          var intentUrl = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+          window.location.replace(intentUrl);
+        } else if (isIOS && location.search.indexOf('openExternalBrowser=1') === -1) {
           var sep = location.search ? '&' : '?';
           location.replace(location.href + sep + 'openExternalBrowser=1');
         }
       }
     })();
+
+    // 支援 PWA 註冊（若具備 sw.js 則自動啟用，支援 Chrome 彈出原生安裝對話框）
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').catch(function() {});
+      });
+    }
   </script>
 
   <!-- Tailwind CSS CDN -->
@@ -8604,37 +8616,43 @@
             </svg>
           </div>
 
-          <div>
-            <h1 class="text-lg font-black tracking-tight leading-tight text-white whitespace-nowrap">
+          <div class="min-w-0">
+            <h1 class="text-base sm:text-lg font-black tracking-tight leading-tight text-white whitespace-nowrap">
               記帳記事
             </h1>
-            <div class="flex items-center gap-1.5 mt-0.5">
-              <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-white/20 text-cyan-200 border border-white/20 leading-none shrink-0">Pro</span>
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse ml-0.5"></span>
-              <span class="text-[11px] text-cyan-100 font-medium whitespace-nowrap">自動備份啟用中</span>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-white/20 text-cyan-200 border border-white/20 leading-none shrink-0">Pro</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse ml-0.5 shrink-0"></span>
+              <span class="text-[10px] sm:text-[11px] text-cyan-100 font-medium whitespace-nowrap truncate">自動備份啟用中</span>
             </div>
           </div>
         </div>
 
         <!-- Top Right Action Icons -->
-        <div class="flex items-center gap-1.5">
-          <button id="header-install-btn" class="w-9 h-9 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/30 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="安裝「記帳記事」到手機主畫面">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-200">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1">
+          <!-- Golden Phone PWA Install Button (Always visible with clear text 安裝) -->
+          <button id="header-install-btn" class="px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-amber-950 font-black shadow-md border border-amber-200/90 flex items-center gap-1 transition-all active:scale-95 cursor-pointer relative shrink-0" title="PWA 安裝：將「記帳記事」加到手機主畫面 / 桌面">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-950 shrink-0">
               <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
               <line x1="12" x2="12.01" y1="18" y2="18"/>
             </svg>
+            <span class="text-[11px] sm:text-xs font-black tracking-tight text-amber-950 whitespace-nowrap">安裝</span>
+            <span class="absolute -top-1 -right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-amber-500"></span>
+            </span>
           </button>
 
-          <button id="header-bell-btn" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative" title="記事警示">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button id="header-bell-btn" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer relative shrink-0" title="記事警示">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
             </svg>
             <span id="header-bell-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-bounce">0</span>
           </button>
 
-          <button id="header-backup-btn" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer" title="備份中心">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button id="header-backup-btn" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/20 shadow-xs flex items-center justify-center transition-colors cursor-pointer shrink-0" title="備份中心">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" x2="12" y1="15" y2="3"/>
@@ -8702,8 +8720,8 @@
   </div>
 
   <!-- ================= PWA FIRST-LAUNCH INSTALL MODAL CONTAINER ================= -->
-  <div id="pwa-install-modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div id="pwa-install-modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-fade-in">
+  <div id="pwa-install-modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div id="pwa-install-modal-box" class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-fade-in">
       <!-- Injected Dynamically -->
     </div>
   </div>
@@ -8764,13 +8782,13 @@
     "id": "note-1",
     "title": "歡迎使用！重要備忘提醒範例",
     "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈！",
-    "updatedAt": "2026-09-29 09:00",
+    "updatedAt": "2026-10-01 14:06",
     "tag": "生活",
     "reminderDate": "2026-10-02",
     "reminderTime": "12:00",
     "earlyAlertDays": 3,
     "priority": "high",
-    "isCompleted": false
+    "isCompleted": true
   }
 ];
 
@@ -8971,15 +8989,69 @@
         } catch (e) {}
       }
 
+      // Web Audio API 即時聲音警示合成器 (100% 離線可用，免外部音檔依賴)
+      function playNoteAlertChime(mode) {
+        mode = mode || 'chime';
+        try {
+          var AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          var ctx = new AudioCtx();
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+          var now = ctx.currentTime;
+          if (mode === 'urgent') {
+            [0, 0.16, 0.32].forEach(function(delay) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, now + delay);
+              gain.gain.setValueAtTime(0.3, now + delay);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now + delay);
+              osc.stop(now + delay + 0.13);
+            });
+          } else {
+            var seq = [
+              { freq: 659.25, time: 0, dur: 0.28 },
+              { freq: 830.61, time: 0.14, dur: 0.35 },
+              { freq: 987.77, time: 0.28, dur: 0.55 }
+            ];
+            seq.forEach(function(item) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(item.freq, now + item.time);
+              gain.gain.setValueAtTime(0, now + item.time);
+              gain.gain.linearRampToValueAtTime(0.28, now + item.time + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.0001, now + item.time + item.dur);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now + item.time);
+              osc.stop(now + item.time + item.dur);
+            });
+          }
+        } catch (e) {
+          console.warn('Audio alert error:', e);
+        }
+      }
+
       function copyLineShareUrl() {
         if (window.location.protocol === 'file:') {
           alert('⚠️ 目前為本機檔案 (file://)，請提供線上網址或部署至 GitHub Pages 後再傳入 LINE！');
           return;
         }
         try {
-          var urlObj = new URL(window.location.href);
-          urlObj.searchParams.set('openExternalBrowser', '1');
-          var shareUrl = urlObj.toString();
+          var shareUrl = '';
+          if (window.location.hostname.indexOf('run.app') !== -1) {
+            shareUrl = 'https://bojen010-hash.github.io/apkr/?openExternalBrowser=1';
+          } else {
+            var urlObj = new URL(window.location.href);
+            urlObj.searchParams.set('openExternalBrowser', '1');
+            shareUrl = urlObj.toString();
+          }
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(shareUrl).then(function() {
               alert('✓ 已複製 LINE 專屬防清空網址！傳入 LINE 點開將自動以 Safari / Chrome 開啟');
@@ -9005,30 +9077,7 @@
           bHtml += '  </div>';
           bHtml += '</div>';
         }
-        if (isLineApp && !dismissedLineBanner) {
-          bHtml += '<div class="p-4 bg-gradient-to-r from-amber-500 via-rose-600 to-rose-700 text-white rounded-2xl shadow-xl border border-amber-300/40 space-y-2.5 mb-3">';
-          bHtml += '  <div class="flex items-start justify-between gap-2">';
-          bHtml += '    <div class="flex items-center gap-2">';
-          bHtml += '      <span class="text-xl">⚠️</span>';
-          bHtml += '      <div class="font-black text-xs sm:text-sm">您目前在 LINE 內建預覽視窗中！</div>';
-          bHtml += '    </div>';
-          bHtml += '    <button type="button" id="btn-close-line-banner" class="px-2 py-0.5 rounded-full bg-black/25 text-white/90 hover:text-white text-[11px] cursor-pointer">關閉</button>';
-          bHtml += '  </div>';
-          bHtml += '  <p class="text-[11px] text-amber-100 leading-relaxed">Apple iPhone 在關閉 LINE 後會<strong>自動清除暫存快取</strong>，導致記帳資料被清空，且在 LINE 內無法直接加到主畫面！</p>';
-          bHtml += '  <div class="bg-black/25 p-2.5 rounded-xl text-[11px] space-y-1.5 border border-white/10">';
-          bHtml += '    <div class="font-bold text-amber-200">👉 請依以下 2 步驟解除限制並永久保存：</div>';
-          bHtml += '    <div class="pl-1 space-y-1 text-white/95">';
-          bHtml += '      <div>1. 點擊右上角<strong>「三個點 ⋯」</strong>選單 ➔ 選擇<strong>「在預設瀏覽器（Safari）開啟」</strong></div>';
-          bHtml += '      <div>2. 在 Safari 點擊底部分享圖示 ➔ 選擇<strong>「加入主畫面 ⊞」</strong>即可獲得永不丟失的原生 App！</div>';
-          bHtml += '    </div>';
-          bHtml += '  </div>';
-          bHtml += '  <div class="flex items-center gap-2 pt-1">';
-          bHtml += '    <button type="button" id="btn-banner-copy-line" class="flex-1 py-2 px-3 bg-white text-rose-700 hover:bg-rose-50 rounded-xl font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer">';
-          bHtml += '      <span>📲 複製 LINE 防清空專用網址</span>';
-          bHtml += '    </button>';
-          bHtml += '  </div>';
-          bHtml += '</div>';
-        }
+
         if (isFileProtocol && !dismissedFileBanner) {
           bHtml += '<div class="p-3.5 bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-2xl shadow-lg border border-indigo-300/40 space-y-2 mb-3">';
           bHtml += '  <div class="flex items-start justify-between gap-2">';
@@ -9050,17 +9099,6 @@
       }
 
       function attachBannerEvents() {
-        var bLineClose = document.getElementById('btn-close-line-banner');
-        if (bLineClose) {
-          bLineClose.onclick = function() {
-            dismissedLineBanner = true;
-            renderMain();
-          };
-        }
-        var bLineCopy = document.getElementById('btn-banner-copy-line');
-        if (bLineCopy) {
-          bLineCopy.onclick = copyLineShareUrl;
-        }
         var bFileClose = document.getElementById('btn-close-file-banner');
         if (bFileClose) {
           bFileClose.onclick = function() {
@@ -9071,153 +9109,58 @@
       }
 
       function openInstallPromptModal() {
-        var container = document.getElementById('pwa-install-modal-container');
-        var box = document.getElementById('pwa-install-modal-box');
-        if (!container || !box) return;
-
-        var html = '';
-        html += '<div class="px-5 py-4 bg-gradient-to-r from-[#0e608a] to-blue-700 text-white flex items-center justify-between shrink-0">';
-        html += '  <div class="flex items-center gap-2.5">';
-        html += '    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg">📲</div>';
-        html += '    <div>';
-        html += '      <h3 class="text-sm font-black tracking-tight">安裝「記帳記事」到手機主畫面</h3>';
-        html += '      <p class="text-[10px] text-blue-100">一鍵加入桌面 • 享原生獨立 App 體驗</p>';
-        html += '    </div>';
-        html += '  </div>';
-        html += '  <button type="button" id="close-install-modal-x" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold cursor-pointer transition-colors" title="關閉">✕</button>';
-        html += '</div>';
-
-        html += '<div class="p-5 space-y-4 text-xs text-slate-700">';
-        html += '  <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">';
-        html += '    <div class="flex items-start gap-2.5 text-[11px]">';
-        html += '      <span class="text-sm shrink-0">✨</span>';
-        html += '      <div><strong class="text-slate-900 font-bold">全螢幕獨立運行</strong><div class="text-slate-500 text-[10px]">自動隱藏網址列與分頁，畫面超乾淨</div></div>';
-        html += '    </div>';
-        html += '    <div class="flex items-start gap-2.5 text-[11px] pt-1.5 border-t border-slate-200/60">';
-        html += '      <span class="text-sm shrink-0">⚡</span>';
-        html += '      <div><strong class="text-slate-900 font-bold">秒開秒記帳</strong><div class="text-slate-500 text-[10px]">點擊手機桌面圖示立即開啟，免重新輸入網址</div></div>';
-        html += '    </div>';
-        html += '    <div class="flex items-start gap-2.5 text-[11px] pt-1.5 border-t border-slate-200/60">';
-        html += '      <span class="text-sm shrink-0">🛡️</span>';
-        html += '      <div><strong class="text-slate-900 font-bold">資料專屬獨立保護</strong><div class="text-slate-500 text-[10px]">記帳與自動快照永久鎖在專屬手機沙盒內</div></div>';
-        html += '    </div>';
-        html += '  </div>';
-
-        if (isIOSDevice) {
-          html += '  <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2 text-blue-950">';
-          html += '    <div class="font-black text-xs flex items-center justify-between text-blue-900">';
-          html += '      <span>🍎 iPhone 簡易安裝步驟：</span>';
-          if (isLineApp) {
-            html += '      <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full font-bold">LINE 內建預覽中</span>';
-          }
-          html += '    </div>';
-          if (isLineApp) {
-            html += '    <div class="space-y-1.5 text-[11px] text-blue-900/90 pl-1">';
-            html += '      <div class="p-2 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-1">';
-            html += '        <strong class="block text-amber-950">⚠️ 注意：LINE 內建視窗無法直接加入主畫面</strong>';
-            html += '        <div>1. 請先點擊 LINE 右上角 <strong>「三個點 ⋯」</strong></div>';
-            html += '        <div>2. 選擇 <strong>「在預設瀏覽器 (Safari) 開啟」</strong></div>';
-            html += '        <div>3. 跳轉至 Safari 後，再依下方步驟加入主畫面！</div>';
-            html += '      </div>';
-            html += '    </div>';
+        if (isLineApp) {
+          if (!isIOSDevice) {
+            alert('🚀 正在為您跳轉至 Google Chrome 進行桌面安裝...');
+            setTimeout(function() {
+              var intentUrl = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+              window.location.href = intentUrl;
+            }, 300);
+            return;
           } else {
-            html += '    <div class="space-y-1.5 text-[11px] text-blue-900/90 pl-1">';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-blue-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span><span>點擊 Safari 螢幕底部的 <strong>「分享」按鈕</strong>（帶箭頭小方框 ⎋）</span></div>';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-blue-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">2</span><span>向下滑動，點選 <strong>「加入主畫面 ⊞」</strong> 並按新增</span></div>';
-            html += '    </div>';
+            alert('🚀 正在為您跳轉至 Safari 進行桌面安裝...');
+            setTimeout(function() {
+              var sep = location.search ? '&' : '?';
+              window.location.href = location.href + sep + 'openExternalBrowser=1';
+            }, 300);
+            return;
           }
-          html += '  </div>';
         }
 
-        if (!isIOSDevice) {
-          html += '  <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 text-emerald-950">';
-          html += '    <div class="font-black text-xs flex items-center justify-between text-emerald-900">';
-          html += '      <span>🤖 Android 手機 / 平板安裝步驟：</span>';
-          if (isLineApp) {
-            html += '      <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full font-bold">LINE 內建預覽中</span>';
-          }
-          html += '    </div>';
-          if (isLineApp) {
-            html += '    <div class="space-y-1.5 text-[11px] text-emerald-900/90 pl-1">';
-            html += '      <div class="p-2 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-1">';
-            html += '        <strong class="block text-amber-950">⚠️ 注意：LINE 內建視窗無法直接安裝</strong>';
-            html += '        <div>1. 請先點擊 LINE 右上角 <strong>「三個點 ⋯」</strong></div>';
-            html += '        <div>2. 選擇 <strong>「在預設瀏覽器開啟」</strong></div>';
-            html += '        <div>3. 跳轉至 Chrome 後，再依下方步驟加入主畫面！</div>';
-            html += '      </div>';
-            html += '    </div>';
-          } else {
-            html += '    <div class="space-y-1.5 text-[11px] text-emerald-900/90 pl-1">';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span><span>點擊瀏覽器右上角的 <strong>「三個點選單 [⋮]」</strong></span></div>';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">2</span><span>選擇 <strong>「加到主畫面」</strong> 或 <strong>「安裝應用程式」</strong></span></div>';
-            html += '      <div class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">3</span><span>點選「新增」，手機/平板桌面即建立獨立 App！</span></div>';
-            html += '    </div>';
-          }
-          html += '  </div>';
+        if (typeof window.__triggerPwaInstall === 'function') {
+          window.__triggerPwaInstall();
+          return;
         }
-
-        html += '  <div class="space-y-2 pt-1">';
-        html += '    <button type="button" id="btn-trigger-pwa-install" class="w-full py-3 rounded-xl bg-[#0e608a] hover:bg-[#0a4868] text-white font-black text-xs shadow-lg shadow-[#0e608a]/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">';
-        html += '      <span>' + (deferredInstallPrompt ? '📲 立即一鍵加到主畫面' : (isIOSDevice ? '📱 我知道了，立即照步驟加入' : '🤖 我知道了，照右上角 [⋮] 選單安裝')) + '</span>';
-        html += '    </button>';
-        html += '    <button type="button" id="btn-dismiss-pwa-install" class="w-full py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors">';
-        html += '      <span>暫時不用，以普通網頁瀏覽</span>';
-        html += '    </button>';
-        html += '  </div>';
-        html += '</div>';
-
-        box.innerHTML = html;
-        container.classList.remove('hidden');
-
-        document.getElementById('close-install-modal-x').onclick = function() {
-          localStorage.setItem('pure_app_installed_or_dismissed', 'dismissed');
-          container.classList.add('hidden');
-        };
-        document.getElementById('btn-dismiss-pwa-install').onclick = function() {
-          localStorage.setItem('pure_app_installed_or_dismissed', 'dismissed');
-          container.classList.add('hidden');
-        };
-        document.getElementById('btn-trigger-pwa-install').onclick = function() {
-          if (deferredInstallPrompt) {
-            deferredInstallPrompt.prompt();
-            deferredInstallPrompt.userChoice.then(function(choice) {
+        var promptEvent = deferredInstallPrompt || window.__pwaInstallPrompt || window.__pwaDeferredPrompt;
+        if (promptEvent) {
+          try {
+            promptEvent.prompt();
+            promptEvent.userChoice.then(function(choice) {
               if (choice && choice.outcome === 'accepted') {
-                localStorage.setItem('pure_app_installed_or_dismissed', 'installed');
-                alert('✓ 正在將「記帳記事」新增至您的手機主畫面！');
+                try {
+                  localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+                  localStorage.setItem('sim_pwa_installed_or_dismissed', 'installed');
+                } catch(e) {}
+                alert('🎉 正在將「記帳記事」App 安裝至桌面！請回到手機桌面查看圖標。');
               }
             });
-            deferredInstallPrompt = null;
-            container.classList.add('hidden');
-          } else if (isIOSDevice) {
-            if (isLineApp) {
-              alert('請先點擊 LINE 右上角「⋯」➔ 選擇「在預設瀏覽器開啟」！');
-            } else {
-              alert('請依照畫面指示：點擊底部分享按鈕 ⎋ ➔ 選擇「加入主畫面 ⊞」');
-            }
-          } else {
-            alert('請點選瀏覽器右上方選單 ➔ 選擇「加到主畫面」或「安裝」');
-            container.classList.add('hidden');
+          } catch(err) {
+            console.error('Install prompt error', err);
           }
-        };
+          deferredInstallPrompt = null;
+          window.__pwaInstallPrompt = null;
+        } else if (isIOSDevice) {
+          alert('🍎 iPhone 請點擊 Safari 底部「分享 ⎋」➔「加入主畫面 ⊞」即可！');
+        } else {
+          alert('📲 正在呼叫系統安裝... 若未彈出確認框，請稍候 1 秒再按一次「📲 安裝」！');
+        }
       }
 
       window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
         deferredInstallPrompt = e;
-        if (!isStandaloneApp) {
-          var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
-          if (!dismissed) {
-            setTimeout(openInstallPromptModal, 800);
-          }
-        }
+        window.__pwaDeferredPrompt = e;
       });
-
-      if (isIOSDevice && !isStandaloneApp) {
-        var dismissed = localStorage.getItem('pure_app_installed_or_dismissed');
-        if (!dismissed) {
-          setTimeout(openInstallPromptModal, 1000);
-        }
-      }
 
       // Calculate days difference for a reminder date
       function getNoteDaysDiff(reminderDateStr) {
@@ -9313,6 +9256,15 @@
       // Navigation handler
       function setTab(tab) {
         activeTab = tab;
+        if (tab === 'notes') {
+          var alertingWithSound = notes.filter(function(n) {
+            return !n.isCompleted && getNoteAlertInfo(n).isAlerting && n.soundAlertEnabled !== false;
+          });
+          if (alertingWithSound.length > 0) {
+            var hasUrgent = alertingWithSound.some(function(n) { return n.priority === 'urgent'; });
+            playNoteAlertChime(hasUrgent ? 'urgent' : 'chime');
+          }
+        }
         var btnAcc = document.getElementById('tab-btn-accounting');
         var btnNotes = document.getElementById('tab-btn-notes');
         var btnBackup = document.getElementById('tab-btn-backup');
@@ -9345,24 +9297,14 @@
 
       var headerInstallBtn = document.getElementById('header-install-btn');
       if (headerInstallBtn) {
-        if (isStandaloneApp) {
-          headerInstallBtn.classList.add('hidden');
-        } else {
-          headerInstallBtn.onclick = function() {
-            if (deferredInstallPrompt) {
-              deferredInstallPrompt.prompt();
-              deferredInstallPrompt.userChoice.then(function(choice) {
-                if (choice && choice.outcome === 'accepted') {
-                  localStorage.setItem('pure_app_installed_or_dismissed', 'installed');
-                  alert('✓ 正在將「記帳記事」新增至您的手機主畫面！');
-                }
-              });
-              deferredInstallPrompt = null;
-            } else {
-              openInstallPromptModal();
-            }
-          };
-        }
+        // ALWAYS keep golden install button visible so users can install or view guides anytime
+        headerInstallBtn.onclick = function() {
+          if (typeof window.__triggerPwaInstall === 'function') {
+            window.__triggerPwaInstall();
+          } else {
+            openInstallPromptModal();
+          }
+        };
       }
 
       // Floating Add Button
@@ -9853,7 +9795,12 @@
           html += '        <span class="animate-bounce">🔔</span>';
           html += '        <span>⚠️ 提前警示注意 (' + activeAlertingNotes.length + ' 筆到期中)</span>';
           html += '      </div>';
-          html += '      <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 font-bold">優先處理</span>';
+          html += '      <div class="flex items-center gap-1.5">';
+          html += '        <button type="button" id="btn-play-all-alerts" class="px-2 py-0.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs cursor-pointer transition-all active:scale-95" title="播放到期聲音警示">';
+          html += '          <span>🔊 響鈴提醒</span>';
+          html += '        </button>';
+          html += '        <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 font-bold">優先處理</span>';
+          html += '      </div>';
           html += '    </div>';
           html += '    <div class="space-y-1.5">';
           activeAlertingNotes.forEach(function(n) {
@@ -9868,6 +9815,7 @@
             html += '        </div>';
             html += '        <div class="flex items-center gap-1.5 shrink-0">';
             html += '          <span class="font-bold px-2 py-0.5 rounded text-[10px] ' + alert.badgeClass + '">' + alert.text + '</span>';
+            html += '          <button type="button" class="alert-play-sound-btn px-1.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold flex items-center cursor-pointer" data-id="' + n.id + '" data-priority="' + (n.priority || 'normal') + '" title="播放此筆到期警示音效">🔊</button>';
             html += '          <button type="button" class="alert-complete-btn px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold cursor-pointer" data-id="' + n.id + '" title="完成並解除警報">✓ 完成</button>';
             html += '          <button type="button" class="alert-del-note-btn p-1 rounded-lg hover:bg-rose-100 text-rose-500 hover:text-rose-700 cursor-pointer" data-id="' + n.id + '" title="刪除此筆記事（立即清除警報）">';
             html += '            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
@@ -10008,8 +9956,13 @@
 
             if (note.reminderDate) {
               html += '      <div class="flex items-center justify-between text-[10px] pt-1 text-slate-500 border-t border-slate-100">';
-              html += '        <span class="flex items-center gap-1 text-slate-600 font-medium">🔔 提醒：' + note.reminderDate + '</span>';
-              html += '        <span class="font-bold px-1.5 py-0.5 rounded ' + alert.badgeClass + '">' + alert.text + '</span>';
+              html += '        <span class="flex items-center gap-1 text-slate-600 font-medium">🔔 提醒：' + note.reminderDate + ' ' + (note.reminderTime || '') + '</span>';
+              if (alert.isAlerting) {
+                html += '        <div class="flex items-center gap-1">';
+                html += '          <span class="font-bold px-1.5 py-0.5 rounded ' + alert.badgeClass + '">' + alert.text + '</span>';
+                html += '          <button type="button" class="card-play-sound-btn p-1 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-800 transition-colors cursor-pointer" data-id="' + note.id + '" data-priority="' + (note.priority || 'normal') + '" title="播放到期聲音警示">🔊</button>';
+                html += '        </div>';
+              }
               html += '      </div>';
             }
             html += '    </div>';
@@ -10025,6 +9978,22 @@
 
         var addFirstBtn = document.getElementById('add-first-note-btn');
         if (addFirstBtn) addFirstBtn.onclick = function() { openNoteModal(); };
+
+        var btnPlayAllAlerts = document.getElementById('btn-play-all-alerts');
+        if (btnPlayAllAlerts) {
+          btnPlayAllAlerts.onclick = function() {
+            var hasUrgent = activeAlertingNotes.some(function(n) { return n.priority === 'urgent'; });
+            playNoteAlertChime(hasUrgent ? 'urgent' : 'chime');
+          };
+        }
+
+        container.querySelectorAll('.alert-play-sound-btn, .card-play-sound-btn').forEach(function(btn) {
+          btn.onclick = function(e) {
+            e.stopPropagation();
+            var pri = this.getAttribute('data-priority') || 'normal';
+            playNoteAlertChime(pri === 'urgent' ? 'urgent' : 'chime');
+          };
+        });
 
         var resetTagBtn = document.getElementById('reset-tag-btn');
         if (resetTagBtn) resetTagBtn.onclick = function() { selectedNoteTag = '全部'; renderMain(); };
@@ -10208,6 +10177,7 @@
         html += '      </button>';
         html += '    </div>';
         html += '  </div>';
+
         html += '</div>';
 
         container.innerHTML = html;
@@ -10495,6 +10465,18 @@
         mHtml += '    <label class="text-[11px] font-bold text-slate-700">提醒警示日期 (選填)</label>';
         mHtml += '    <input type="date" id="note-date-input" value="' + (isEdit ? (editNote.reminderDate || '') : '') + '" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold" />';
         mHtml += '  </div>';
+
+        // 聲音警示設定
+        var isSoundEnabled = isEdit ? (editNote.soundAlertEnabled !== false) : true;
+        mHtml += '  <div class="pt-1 flex items-center justify-between bg-white p-2 rounded-xl border border-amber-200/90 shadow-2xs">';
+        mHtml += '    <label class="flex items-center gap-2 text-[11px] font-bold text-amber-950 cursor-pointer select-none">';
+        mHtml += '      <input type="checkbox" id="note-sound-alert-input" ' + (isSoundEnabled ? 'checked' : '') + ' class="rounded text-amber-600 cursor-pointer w-4 h-4" />';
+        mHtml += '      <span class="flex items-center gap-1"><span>🔔 到期前聲音警示</span><span class="text-[10px] text-amber-700/80 font-normal">(到期時播放響鈴)</span></span>';
+        mHtml += '    </label>';
+        mHtml += '    <button type="button" id="btn-preview-note-sound" class="px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer" title="試聽警示音效">';
+        mHtml += '      <span>🔊 試聽音效</span>';
+        mHtml += '    </button>';
+        mHtml += '  </div>';
         mHtml += '</div>';
 
         mHtml += '<div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2 shrink-0">';
@@ -10506,6 +10488,15 @@
 
         document.getElementById('close-modal-x').onclick = closeModal;
         document.getElementById('modal-cancel-btn').onclick = closeModal;
+
+        // Preview sound effect
+        var previewBtn = document.getElementById('btn-preview-note-sound');
+        if (previewBtn) {
+          previewBtn.onclick = function() {
+            var pVal = document.getElementById('note-priority-input').value;
+            playNoteAlertChime(pVal === 'urgent' ? 'urgent' : 'chime');
+          };
+        }
 
         // Tag Chip selection
         var tagChips = modalBox.querySelectorAll('.preset-tag-chip');
@@ -10542,6 +10533,7 @@
           var priority = document.getElementById('note-priority-input').value;
           var earlyDays = parseInt(document.getElementById('note-early-days-input').value, 10) || 3;
           var rDate = document.getElementById('note-date-input').value;
+          var soundEnabled = document.getElementById('note-sound-alert-input').checked;
 
           if (!title) {
             alert('請輸入記事標題！');
@@ -10555,6 +10547,7 @@
             editNote.priority = priority;
             editNote.earlyAlertDays = earlyDays;
             editNote.reminderDate = rDate;
+            editNote.soundAlertEnabled = soundEnabled;
             editNote.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
           } else {
             notes.unshift({
@@ -10565,6 +10558,7 @@
               priority: priority,
               earlyAlertDays: earlyDays,
               reminderDate: rDate,
+              soundAlertEnabled: soundEnabled,
               isCompleted: false,
               updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
             });
@@ -10611,6 +10605,26 @@
         }
       }
 
+      // ★ 全域下載函數支援 (雙軌同步：純單檔 HTML 內亦提供 downloadApkIndexHtml / downloadapkhtml)
+      window.downloadApkIndexHtml = function(opts) {
+        var content = '<!DOCTYPE html>' + String.fromCharCode(10) + document.documentElement.outerHTML;
+        var blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = (opts && opts.fileName) || 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return true;
+      };
+      window.downloadapkindexhtml = window.downloadApkIndexHtml;
+      window.downloadApkHtml = window.downloadApkIndexHtml;
+      window.downloadapkhtml = window.downloadApkIndexHtml;
+      window.downloadApk = window.downloadApkIndexHtml;
+      window.downloadapk = window.downloadApkIndexHtml;
+
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible') {
           checkAndUpdateDate();
@@ -10621,252 +10635,370 @@
     })();
   </script>
   
-<!-- ==================== 【一機一碼門禁驗證外掛 START】 ==================== -->
-<!-- 說明：請直接貼在 </body> 標籤上方。首次啟動需輸入密碼，認證成功後自動永久放行。 -->
-<div id="cbjm-universal-gate-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <div style="background:#ffffff; width:100%; max-width:380px; max-height:92vh; overflow-y:auto; border-radius:24px; padding:20px 18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid #e2e8f0; box-sizing:border-box; color:#1e293b;">
-    <!-- 頂部標題列 -->
-    <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
-      <div style="width:40px; height:40px; border-radius:12px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; shrink:0;">
-        🛡️
-      </div>
-      <div>
-        <div style="font-size:15px; font-weight:800; color:#0f172a; line-height:1.2;">首次啟動授權認證</div>
-        <div style="font-size:10px; font-family:monospace; color:#64748b; margin-top:2px;">OFFICIAL ACCESS VERIFICATION</div>
-      </div>
-    </div>
-
-    <!-- 作者聯繫資訊 -->
-    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:14px; padding:12px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#92400e; margin-bottom:8px;">
-        <span>軟體作者：Cbjm</span>
-        <span style="font-size:10px; background:#fde68a; color:#78350f; padding:2px 8px; border-radius:9999px;">正版授權</span>
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-        <button id="cbjm-btn-line" type="button" style="background:#059669; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
-          加 LINE 索取密碼
-        </button>
-        <button id="cbjm-btn-email" type="button" style="background:#334155; color:#ffffff; border:none; border-radius:8px; padding:8px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
-          發郵件索取
-        </button>
-      </div>
-    </div>
-
-    <!-- 本機特徵碼顯示 (一機一碼) -->
-    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:bold; color:#64748b; margin-bottom:6px;">
-        <span>本機設備特徵碼 (一機一碼)</span>
-        <button id="cbjm-btn-copy" type="button" style="background:none; border:none; color:#d97706; font-size:11px; font-weight:bold; cursor:pointer; text-decoration:underline;">
-          [點擊複製]
-        </button>
-      </div>
-      <div id="cbjm-display-device-id" style="font-family:monospace; font-weight:800; font-size:16px; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:8px; text-align:center; color:#0f172a; letter-spacing:1px;">
-        DEV-XXXX-XX
-      </div>
-    </div>
-
-    <!-- 通關密碼輸入與驗證 -->
-    <div style="margin-bottom:14px;">
-      <label style="display:block; font-size:11px; font-weight:bold; color:#475569; margin-bottom:6px;">請輸入 6 位純數字通關密碼：</label>
-      <div style="display:flex; gap:8px;">
-        <input id="cbjm-input-passcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入 6 位純數字通關密碼" style="flex:1; border:2px solid #fbbf24; border-radius:10px; padding:10px; font-family:monospace; font-weight:bold; font-size:16px; text-align:center; outline:none; box-sizing:border-box;" maxlength="10" />
-        <button id="cbjm-btn-verify" type="button" style="background:#d97706; color:#ffffff; border:none; border-radius:10px; padding:0 16px; font-size:13px; font-weight:bold; cursor:pointer; shrink:0; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
-          送出驗證
-        </button>
-      </div>
-      <!-- 額外醒目滿版送出按鍵 -->
-      <button id="cbjm-btn-verify-big" type="button" style="width:100%; margin-top:8px; background:linear-gradient(to right, #d97706, #b45309); color:#ffffff; border:none; border-radius:10px; padding:11px 16px; font-size:13px; font-weight:900; cursor:pointer; box-shadow:0 4px 6px -1px rgba(217,119,6,0.3);">
-        🚀 送出通關密碼並解鎖進入
-      </button>
-      <div id="cbjm-verify-msg" style="display:none; font-size:11px; font-weight:bold; text-align:center; margin-top:8px;"></div>
-    </div>
-
-    <div style="font-size:10px; color:#94a3b8; text-align:center; line-height:1.4;">
-      ✓ 首次驗證成功後本機永久放行，後續使用不再出現提示。
-    </div>
-  </div>
-</div>
-
+<!-- ==================== 【通用 PWA 自動提示安裝外掛 START】 ==================== -->
+<!-- 說明：直接貼在 </body> 標籤上方或存成 pwa-installer.js 引入。免任何外部套件！ -->
 <script>
-(function() {
-  var AUTH_STORAGE_KEY = 'cbjm_app_passcode_unlocked_v2';
-  var DEVICE_STORAGE_KEY = 'cbjm_app_device_id_v1';
-  var SALT = 'CBJM_SECURE_2026';
+(function(window, document) {
+  'use strict';
 
-  // 0. 支援網址後綴帶有 ?relock=1 或 ?reset=1 或 ?lock=1 隨時清空授權重新測試門禁
-  try {
-    if (window.location && window.location.search) {
-      var q = window.location.search.toLowerCase();
-      if (q.indexOf('relock') !== -1 || q.indexOf('reset') !== -1 || q.indexOf('lock') !== -1) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        localStorage.removeItem('cbjm_app_passcode_unlocked_v1');
-      }
-    }
-  } catch(e) {}
-
-  // 供作者隨時在主控台或測試呼叫重新鎖定
-  window.cbjmRelockGate = function() {
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      localStorage.removeItem('cbjm_app_passcode_unlocked_v1');
-      location.reload();
-    } catch(e) {}
+  var CONFIG = {
+    appName: "記帳記事 Pro",
+    appSubtitle: "如同原生 App 般順暢，支援離線快速使用",
+    themeColor: "#0e608a",
+    appIcon: "📲",
+    promptDelayMs: 800,
+    storageKey: 'pwa_prompt_dismissed_flag'
   };
 
-  // 1. 檢查是否已經解鎖過
-  try {
-    if (localStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
-      var ov = document.getElementById('cbjm-universal-gate-overlay');
-      if (ov) ov.style.display = 'none';
-      return; // 已授權，完全不顯示門禁
-    }
-  } catch(e) {}
+  // 1. 環境診斷
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                     window.navigator.standalone === true || 
+                     document.referrer.includes('android-app://');
+  var isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+  var isLineApp = navigator.userAgent.indexOf('Line/') !== -1;
+  var isFileProtocol = window.location.protocol === 'file:';
 
-  // 2. 獲取或產生專屬設備號 (一機一碼)
-  var deviceId = '';
-  try {
-    deviceId = localStorage.getItem(DEVICE_STORAGE_KEY);
-  } catch(e) {}
-
-  if (!deviceId) {
-    var chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    var p1 = '', p2 = '';
-    for (var i = 0; i < 4; i++) p1 += chars.charAt(Math.floor(Math.random() * chars.length));
-    for (var j = 0; j < 2; j++) p2 += chars.charAt(Math.floor(Math.random() * chars.length));
-    deviceId = 'DEV-' + p1 + '-' + p2;
+  function isAlreadyDismissed() {
     try {
-      localStorage.setItem(DEVICE_STORAGE_KEY, deviceId);
-    } catch(e) {}
+      if (isStandalone) return true;
+      if (sessionStorage.getItem('pwa_prompt_dismissed_session')) return true;
+      if (localStorage.getItem(CONFIG.storageKey)) return true;
+      if (localStorage.getItem('pure_app_installed_or_dismissed')) return true;
+      if (localStorage.getItem('sim_pwa_installed_or_dismissed')) return true;
+    } catch (e) {}
+    return false;
   }
 
-  // 3. 顯示門禁遮罩
-  var overlay = document.getElementById('cbjm-universal-gate-overlay');
-  var devDisplay = document.getElementById('cbjm-display-device-id');
-  if (overlay && devDisplay) {
-    devDisplay.textContent = deviceId;
-    overlay.style.display = 'flex';
-  }
+  var deferredPrompt = null;
+  var hasShownModal = false;
 
-  // 4. 複製按鈕
-  var copyBtn = document.getElementById('cbjm-btn-copy');
-  if (copyBtn) {
-    copyBtn.onclick = function() {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(deviceId);
-      }
-      alert('已複製本機特徵碼：' + deviceId);
-    };
-  }
+  // 2. 攔截 Android / Chrome 原生安裝事件
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    window.__pwaDeferredPrompt = e;
+  });
 
-  // 5. LINE 索取
-  var lineBtn = document.getElementById('cbjm-btn-line');
-  if (lineBtn) {
-    lineBtn.onclick = function() {
-      var msg = '作者 Cbjm 您好，我的軟體特徵碼為：' + deviceId;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(msg);
-      }
-      alert('已複製特徵碼！正在引導前往 LINE (bojen010)');
-      window.open('https://line.me/ti/p/~bojen010', '_blank');
-    };
-  }
-
-  // 6. 郵件索取 (電腦與手機雙軌相容)
-  var emailBtn = document.getElementById('cbjm-btn-email');
-  if (emailBtn) {
-    emailBtn.onclick = function() {
-      var subject = encodeURIComponent('[記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')');
-      var body = encodeURIComponent('作者 Cbjm 您好：\n\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！');
-      var fullText = '收件人: bojen010@gmail.com\n主旨: [記帳記事 Pro] 授權通關密碼申請 (' + deviceId + ')\n\n作者 Cbjm 您好：\n我的設備特徵碼為：' + deviceId + '\n請提供專屬授權通關密碼，謝謝！';
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(fullText);
-      }
-
-      var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent('bojen010@gmail.com') + '&su=' + subject + '&body=' + body;
-      var mailtoUrl = 'mailto:bojen010@gmail.com?subject=' + subject + '&body=' + body;
-
-      if (isMobile) {
-        window.location.href = mailtoUrl;
-      } else {
-        var win = window.open(gmailUrl, '_blank');
-        if (!win) {
-          window.location.href = mailtoUrl;
+  // 3. 對外暴露手動觸發方法：直接呼叫 Android / Chrome 原生「新增至主畫面」系統對話框
+  window.__triggerPwaInstall = function() {
+    if (isLineApp) {
+      if (!isIOSDevice) {
+        if (typeof showToast === 'function') {
+          showToast('🚀 正在為您跳轉至 Google Chrome 進行桌面安裝...');
+        } else {
+          alert('🚀 正在為您跳轉至 Google Chrome 進行桌面安裝...');
         }
+        setTimeout(function() {
+          var intentUrl = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
+          window.location.href = intentUrl;
+        }, 300);
+        return;
+      } else {
+        if (typeof showToast === 'function') {
+          showToast('🚀 正在為您跳轉至 Safari 進行桌面安裝...');
+        } else {
+          alert('🚀 正在為您跳轉至 Safari 進行桌面安裝...');
+        }
+        setTimeout(function() {
+          var sep = location.search ? '&' : '?';
+          window.location.href = location.href + sep + 'openExternalBrowser=1';
+        }, 300);
+        return;
       }
-      alert('已為您複製特徵碼與信件內文！\n若電腦未安裝 Outlook 等郵件軟體，已自動開啟 Gmail 網頁版為您填好信件；您亦可直接於任何郵箱中貼上內容寄送給作者。');
-    };
-  }
-
-  // 7. 內建安全雜湊換算演算法
-  function simpleHash(str) {
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash) + str.charCodeAt(i);
-      hash |= 0;
     }
-    return Math.abs(hash);
+
+    var promptEvent = deferredPrompt || window.__pwaInstallPrompt || window.__pwaDeferredPrompt;
+    if (promptEvent) {
+      try {
+        promptEvent.prompt();
+        promptEvent.userChoice.then(function(choice) {
+          if (choice && choice.outcome === 'accepted') {
+            try {
+              localStorage.setItem('sim_pwa_installed_or_dismissed', 'installed');
+              localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+            } catch(e) {}
+            if (typeof showToast === 'function') {
+              showToast('🎉 正在為您安裝「記帳記事」App 到手機桌面！');
+            } else {
+              alert('🎉 正在為您安裝「記帳記事」App 到手機桌面！');
+            }
+          }
+        });
+      } catch(err) {
+        console.error('PWA install error', err);
+      }
+      deferredPrompt = null;
+      window.__pwaInstallPrompt = null;
+    } else if (isIOSDevice) {
+      if (typeof showToast === 'function') {
+        showToast('🍎 iPhone 請點擊 Safari 底部「分享 ⎋」➔「加入主畫面 ⊞」即可！');
+      } else {
+        alert('🍎 iPhone 請點擊 Safari 底部「分享 ⎋」➔「加入主畫面 ⊞」即可！');
+      }
+    } else {
+      if (typeof showToast === 'function') {
+        showToast('📲 正在呼叫系統安裝... 若未彈出確認框，請稍候 1 秒再按一次「📲 安裝」！');
+      } else {
+        alert('📲 正在呼叫系統安裝... 若未彈出確認框，請稍候 1 秒再按一次「📲 安裝」！');
+      }
+    }
+  };
+
+  // 5. 核心彈窗渲染函數
+  function showInstallModal(forceShow) {
+    if (!forceShow && isAlreadyDismissed()) return;
+    if (document.getElementById('cbjm-pwa-installer-modal')) return;
+
+    hasShownModal = true;
+    try {
+      sessionStorage.setItem('pwa_prompt_dismissed_session', 'true');
+    } catch (e) {}
+
+    // 建立外層容器 (現代化浮動卡片，自適應深淺與邊界)
+    var modal = document.createElement('div');
+    modal.id = 'cbjm-pwa-installer-modal';
+    modal.style.cssText = [
+      'position: fixed',
+      'bottom: 18px',
+      'left: 50%',
+      'transform: translateX(-50%)',
+      'width: calc(100% - 32px)',
+      'max-width: 420px',
+      'background: #ffffff',
+      'border-radius: 22px',
+      'box-shadow: 0 20px 45px -10px rgba(14, 96, 138, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.9)',
+      'z-index: 999998',
+      'padding: 18px 20px',
+      'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      'box-sizing: border-box',
+      'color: #0f172a',
+      'animation: cbjmPwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+    ].join(';');
+
+    // 注入彈跳動畫
+    if (!document.getElementById('cbjm-pwa-style')) {
+      var style = document.createElement('style');
+      style.id = 'cbjm-pwa-style';
+      style.innerHTML = '@keyframes cbjmPwaSlideUp { from { opacity: 0; transform: translate(-50%, 30px); } to { opacity: 1; transform: translate(-50%, 0); } }';
+      document.head.appendChild(style);
+    }
+
+    var contentHtml = '';
+
+    // A. 頂部標題與圖示
+    contentHtml += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">';
+    contentHtml += '  <div style="display: flex; align-items: center; gap: 12px;">';
+    contentHtml += '    <div style="width: 44px; height: 44px; border-radius: 14px; background: ' + CONFIG.themeColor + '; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 12px rgba(14,96,138,0.25); flex-shrink: 0;">';
+    contentHtml +=        CONFIG.appIcon;
+    contentHtml += '    </div>';
+    contentHtml += '    <div>';
+    contentHtml += '      <div style="font-weight: 800; font-size: 15px; color: #0f172a; line-height: 1.2;">將「' + CONFIG.appName + '」加到主畫面</div>';
+    contentHtml += '      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">' + CONFIG.appSubtitle + '</div>';
+    contentHtml += '    </div>';
+    contentHtml += '  </div>';
+    contentHtml += '  <button id="cbjm-pwa-close-btn" type="button" style="background: none; border: none; font-size: 18px; color: #94a3b8; cursor: pointer; padding: 4px; line-height: 1;">✕</button>';
+    contentHtml += '</div>';
+
+    // B. LINE 環境特別提醒
+    if (isLineApp) {
+      contentHtml += '<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; color: #991b1b; display: flex; align-items: flex-start; gap: 8px;">';
+      contentHtml += '  <span style="font-size: 16px;">⚠️</span>';
+      contentHtml += '  <div><b>LINE 內建視窗無法直接建立圖示！</b><br>請點擊 LINE 右上角「三個點 ⋯」選擇<b>「在預設瀏覽器開啟」</b>！</div>';
+      contentHtml += '</div>';
+    }
+
+    // C. 平台專屬指引區塊 (已安裝 vs 支援一鍵安裝 vs iOS vs Android 手動教學)
+    if (isStandalone) {
+      contentHtml += '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 11px; color: #166534; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: 800; font-size: 12px; color: #14532d; margin-bottom: 4px;">🎉 已在獨立 App 模式運行！</div>';
+      contentHtml += '  <div>您的手機主畫面上已成功建立專屬圖示，享受全螢幕獨立運行與自動本機備份！</div>';
+      contentHtml += '</div>';
+    } else if (deferredPrompt) {
+      contentHtml += '<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 11px; color: #1e40af; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: 800; font-size: 12px; color: #1e3a8a; margin-bottom: 4px;">⚡ 支援系統原生一鍵安裝：</div>';
+      contentHtml += '  <div>點擊下方【📲 立即一鍵加到主畫面】，系統將立即彈出確認視窗，將專屬圖示安裝至手機主畫面！</div>';
+      contentHtml += '</div>';
+    } else if (isIOS) {
+      contentHtml += '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #334155; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: bold; color: #0f172a; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">';
+      contentHtml += '    <span>🍎 iPhone / iPad 安裝 2 步驟：</span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center;">1</span>';
+      contentHtml += '    <span>點擊螢幕下方 Safari 的<b>「分享」</b>圖示 <span style="font-size: 14px;">⎙ / 📤</span></span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: center; gap: 6px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center;">2</span>';
+      contentHtml += '    <span>在列表中滑動並選擇<b>「加入主畫面 ⊞」</b>即可完成！</span>';
+      contentHtml += '  </div>';
+      contentHtml += '</div>';
+    } else {
+      contentHtml += '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 11px; color: #166534; line-height: 1.5;">';
+      contentHtml += '  <div style="font-weight: 800; font-size: 12px; color: #14532d; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">';
+      contentHtml += '    <span>🤖 Android 簡易安裝步驟（100% 放上桌面）：</span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">1</span>';
+      contentHtml += '    <span>點擊瀏覽器右上角或右下角<b>【三個點 ⋮ 選單】</b></span>';
+      contentHtml += '  </div>';
+      contentHtml += '  <div style="display: flex; align-items: flex-start; gap: 6px;">';
+      contentHtml += '    <span style="display: inline-flex; width: 18px; height: 18px; border-radius: 9999px; background: ' + CONFIG.themeColor + '; color: #fff; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">2</span>';
+      contentHtml += '    <span>在選單中點選<b>【加到主畫面】</b>或<b>【安裝應用程式】</b>➔ 按<b>【新增】</b>即可成功放上桌面！</span>';
+      contentHtml += '  </div>';
+      contentHtml += '</div>';
+    }
+
+    // D. 底部操作按鈕群
+    contentHtml += '<div style="display: flex; gap: 8px;">';
+    contentHtml += '  <button id="cbjm-pwa-dismiss" type="button" style="flex: 1; padding: 11px 0; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 12px; color: #64748b; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">';
+    contentHtml += '    暫時不用';
+    contentHtml += '  </button>';
+    contentHtml += '  <button id="cbjm-pwa-action" type="button" style="flex: 2; padding: 11px 0; border: none; background: ' + CONFIG.themeColor + '; border-radius: 12px; color: #ffffff; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(14, 96, 138, 0.35); transition: transform 0.1s active:scale-95;">';
+    if (isStandalone) {
+      contentHtml += '✓ 關閉視窗';
+    } else if (deferredPrompt) {
+      contentHtml += '📲 立即一鍵加到主畫面';
+    } else if (isIOS) {
+      contentHtml += '📱 我知道了，依步驟加入';
+    } else {
+      contentHtml += '🤖 我知道了，前往 Chrome 選單安裝';
+    }
+    contentHtml += '  </button>';
+    contentHtml += '</div>';
+
+    modal.innerHTML = contentHtml;
+    document.body.appendChild(modal);
+
+    // 綁定事件
+    var closeBtn = document.getElementById('cbjm-pwa-close-btn');
+    var dismissBtn = document.getElementById('cbjm-pwa-dismiss');
+    var actionBtn = document.getElementById('cbjm-pwa-action');
+
+    function dismissModal() {
+      try {
+        localStorage.setItem(CONFIG.storageKey, 'true');
+        localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+        localStorage.setItem('sim_pwa_installed_or_dismissed', 'dismissed');
+        sessionStorage.setItem('pwa_prompt_dismissed_session', 'true');
+      } catch (e) {}
+      if (modal && modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
+    }
+
+    if (closeBtn) closeBtn.onclick = dismissModal;
+    if (dismissBtn) dismissBtn.onclick = dismissModal;
+
+    if (actionBtn) {
+      actionBtn.onclick = function() {
+        if (deferredPrompt) {
+          // Android 叫起原生確認框
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(choiceResult) {
+            if (choiceResult && choiceResult.outcome === 'accepted') {
+              console.log('[PWA Installer] 使用者已同意安裝');
+              try {
+                localStorage.setItem(CONFIG.storageKey, 'true');
+                localStorage.setItem('pure_app_installed_or_dismissed', 'true');
+              } catch(e) {}
+            }
+          });
+          deferredPrompt = null;
+          dismissModal();
+        } else if (isIOS) {
+          alert('請點擊下方 Safari 的「分享」按鈕 (帶向上箭頭的方框 ⎋) ➔ 選擇「加入主畫面 ⊞」即可完成！');
+          dismissModal();
+        } else if (isStandalone) {
+          dismissModal();
+        } else {
+          alert('👉 請點選瀏覽器右上角或右下角【三個點 ⋮ 選單】➔ 點選【加到主畫面】或【安裝應用程式】，即可 100% 成功將圖示放上手機主畫面！');
+          dismissModal();
+        }
+      };
+    }
   }
 
-  function computeValidPasscode(devId) {
-    var clean = (devId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-    var h1 = simpleHash(clean + '_' + SALT);
-    var h2 = simpleHash(SALT + '_' + clean + '_REVERSE');
-    // 6 位純阿拉伯數字
-    var num = (h1 * 31 + h2 * 17) % 900000 + 100000;
-    return num.toString();
-  }
+  // 對外公開全域初始化函數
+  window.initPwaInstaller = function(customOptions) {
+    if (customOptions) {
+      if (customOptions.appName) CONFIG.appName = customOptions.appName;
+      if (customOptions.themeColor) CONFIG.themeColor = customOptions.themeColor;
+      if (customOptions.appIcon) CONFIG.appIcon = customOptions.appIcon;
+    }
+    showInstallModal(true);
+  };
 
-  // 8. 驗證輸入邏輯
-  var verifyBtn = document.getElementById('cbjm-btn-verify');
-  var verifyBtnBig = document.getElementById('cbjm-btn-verify-big');
-  var inputEl = document.getElementById('cbjm-input-passcode');
-  var msgEl = document.getElementById('cbjm-verify-msg');
+})(window, document);
+</script>
+<!-- ==================== 【通用 PWA 自動提示安裝外掛 END】 ==================== -->
 
-  function doVerify() {
-    if (!inputEl || !msgEl) return;
-    var val = (inputEl.value || '').trim().toUpperCase();
-    if (!val) {
-      msgEl.style.display = 'block';
-      msgEl.style.color = '#d97706';
-      msgEl.textContent = '請先輸入 6 位數字通關密碼！';
-      inputEl.focus();
+  <!-- ==================== 【獨立限時分享截止鎖 START】 ==================== -->
+<!-- 💡 說明：若要限制網址對外傳播，請在下方 EXPIRE_DATE 填入截止日期 (格式: "YYYY-MM-DD"，如 "2026-10-15")。 -->
+<!-- 💡 若留空 "" 則代表不限制，永久開放所有人自由使用！ -->
+<script>
+(function() {
+  var EXPIRE_DATE = "2026-10-11";
+  var AUTHOR_NAME = "Cbjm";
+  var AUTHOR_LINE = "bojen010";
+
+  // 如果未設定截止日期（留空），嘗試自 localStorage 讀取動態設定；若皆無則代表無限制，直接放行
+  if (!EXPIRE_DATE || EXPIRE_DATE.trim() === '') {
+    try {
+      var dyn = localStorage.getItem('cbjm_share_expire_date');
+      if (dyn && dyn.trim() !== '') {
+        EXPIRE_DATE = dyn.trim();
+      } else {
+        return;
+      }
+    } catch(e) {
       return;
     }
-    var correct = computeValidPasscode(deviceId);
-    
-    // 驗證 6 位專屬純數字通關密碼 (亦相容舊版通用金鑰 8K9P-4X2M)
-    if (val === correct || val === '8K9P-4X2M') {
-      msgEl.style.display = 'block';
-      msgEl.style.color = '#059669';
-      msgEl.textContent = '✓ 認證成功！正在為您開啟軟體...';
-      try {
-        localStorage.setItem(AUTH_STORAGE_KEY, 'true');
-      } catch(e) {}
-      setTimeout(function() {
-        overlay.style.display = 'none';
-      }, 500);
-    } else {
-      msgEl.style.display = 'block';
-      msgEl.style.color = '#e11d48';
-      msgEl.textContent = '✕ 密碼錯誤，請重新確認或聯繫作者！';
-    }
   }
 
-  if (verifyBtn) verifyBtn.onclick = doVerify;
-  if (verifyBtnBig) verifyBtnBig.onclick = doVerify;
-  if (inputEl) {
-    inputEl.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        doVerify();
-      }
-    });
-  }
+  try {
+    // 1. 老用戶白名單：已開通過或本機已有記帳資料，一律放行！
+    var hasClaimed = localStorage.getItem('cbjm_share_promo_claimed') === '1';
+    var hasData = localStorage.getItem('sim_expenses_data') || localStorage.getItem('cbjm_expenses_data');
+    if (hasClaimed || hasData) return;
+
+    // 2. 取得今天日期 (YYYY-MM-DD)
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    var todayStr = yyyy + '-' + mm + '-' + dd;
+
+    // 3. 在截止日之內：標記為合格老用戶，永久放行
+    if (todayStr <= EXPIRE_DATE) {
+      localStorage.setItem('cbjm_share_promo_claimed', '1');
+      return;
+    }
+
+    // 4. 超過截止日（對外轉傳的新用戶）：全螢幕攔截遮罩
+    function renderMask() {
+      if (document.getElementById('cbjm-share-expired-overlay')) return;
+      var overlay = document.createElement('div');
+      overlay.id = 'cbjm-share-expired-overlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,23,42,0.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:9999999;display:flex;justify-content:center;align-items:center;padding:16px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
+      overlay.innerHTML = '<div style="background:#ffffff;width:100%;max-width:380px;border-radius:24px;padding:24px 20px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);text-align:center;">' +
+        '<div style="font-size:36px;margin-bottom:12px;">⏳</div>' +
+        '<h3 style="font-size:17px;font-weight:800;color:#0f172a;margin:0 0 8px 0;">限時分享活動已截止</h3>' +
+        '<p style="font-size:12px;color:#64748b;line-height:1.6;margin:0 0 16px 0;">本網址之限時體驗已於 ' + EXPIRE_DATE + ' 截止，已停止對外開放新用戶存取。若需正式使用請加 LINE 聯繫作者。</p>' +
+        '<div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-bottom:14px;font-size:12px;font-weight:bold;color:#334155;">作者：' + AUTHOR_NAME + ' ｜ LINE：' + AUTHOR_LINE + '</div>' +
+        '<button onclick="navigator.clipboard?navigator.clipboard.writeText(\'' + AUTHOR_LINE + '\').then(function(){alert(\'已複製作者 LINE ID: ' + AUTHOR_LINE + '\')}):prompt(\'請複製 LINE ID:\',\'' + AUTHOR_LINE + '\')" style="background:#059669;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:bold;cursor:pointer;width:100%;">複製作者 LINE ID</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', renderMask);
+    } else {
+      renderMask();
+    }
+  } catch(e) {}
 })();
 </script>
-<!-- ==================== 【一機一碼門禁驗證外掛 END】 ==================== -->
-
+<!-- ==================== 【獨立限時分享截止鎖 END】 ==================== -->
+  
 </body>
 </html>
