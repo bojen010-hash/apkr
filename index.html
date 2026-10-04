@@ -10287,7 +10287,12 @@
         var modalContainer = document.getElementById('modal-container');
 
         function renderDatePickerContent() {
-          var lunarInfo = getLunarText(tempDate);
+          var lunarInfo = '農曆';
+          try {
+            lunarInfo = getLunarString(tempDate) || '農曆';
+          } catch (err) {
+            lunarInfo = '農曆';
+          }
           var todayStr = getTodayDateStr();
           var parts = tempDate.split('-');
           var ty = parts[0];
