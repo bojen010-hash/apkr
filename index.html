@@ -8781,14 +8781,15 @@
   {
     "id": "note-1",
     "title": "歡迎使用！重要備忘提醒範例",
-    "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈！",
-    "updatedAt": "2026-10-01 14:06",
+    "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈與聲音提醒！",
+    "updatedAt": "2026-09-29 09:00",
     "tag": "生活",
     "reminderDate": "2026-10-02",
     "reminderTime": "12:00",
     "earlyAlertDays": 3,
     "priority": "high",
-    "isCompleted": true
+    "isCompleted": false,
+    "soundAlertEnabled": true
   }
 ];
 
@@ -9430,11 +9431,10 @@
         html += '    <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">';
         html += '      <button type="button" id="header-lunar-date-badge" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-[11px] sm:text-xs font-medium tracking-tight whitespace-nowrap shrink-0 hover:bg-amber-400/25 transition-colors cursor-pointer" title="點擊切換日期（農曆自動連動更新）">' + lunarStr + '</button>';
         html += '      <div class="relative shrink-0">';
-        html += '        <div id="header-solar-date-capsule" class="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#1b2b42] border border-white/10 text-slate-200 text-[11px] sm:text-xs font-mono font-bold flex items-center gap-1 cursor-pointer hover:bg-[#253956] transition-colors whitespace-nowrap" title="點擊切換洋曆日期（農曆同步更新）">';
+        html += '        <button type="button" id="header-solar-date-capsule" class="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#1b2b42] border border-white/10 text-slate-200 text-[11px] sm:text-xs font-mono font-bold flex items-center gap-1 cursor-pointer hover:bg-[#253956] transition-colors whitespace-nowrap active:scale-95" title="點擊切換洋曆日期（農曆同步更新）">';
         html += '          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 shrink-0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>';
         html += '          <span>' + selectedDate.replace(/-/g, '/') + '</span>';
-        html += '          <input type="date" id="date-picker" value="' + selectedDate + '" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />';
-        html += '        </div>';
+        html += '        </button>';
         html += '      </div>';
         if (!isToday) {
           html += '      <button type="button" id="btn-reset-today" class="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold hover:bg-emerald-500/30 transition-colors whitespace-nowrap cursor-pointer shrink-0" title="立即回到今天日期">回到今日</button>';
@@ -9663,42 +9663,20 @@
 
         // Event bindings
         function triggerDatePicker() {
-          var p = document.getElementById('date-picker');
-          if (p) {
-            if (typeof p.showPicker === 'function') {
-              try { p.showPicker(); } catch(err) { p.focus(); p.click(); }
-            } else {
-              p.focus(); p.click();
-            }
-          }
-        }
-
-        var picker = document.getElementById('date-picker');
-        if (picker) {
-          var handleDateChange = function(e) {
-            if (e.target.value) {
-              selectedDate = e.target.value;
-              selectedMonth = selectedDate.substring(0, 7);
-              renderMain();
-            }
-          };
-          picker.onchange = handleDateChange;
-          picker.oninput = handleDateChange;
+          openDatePickerModal();
         }
 
         var solarCapsule = document.getElementById('header-solar-date-capsule');
         if (solarCapsule) {
-          solarCapsule.onclick = function(e) {
-            if (e.target !== picker) {
-              triggerDatePicker();
-            }
+          solarCapsule.onclick = function() {
+            openDatePickerModal();
           };
         }
 
         var lunarBadge = document.getElementById('header-lunar-date-badge');
         if (lunarBadge) {
           lunarBadge.onclick = function() {
-            triggerDatePicker();
+            openDatePickerModal();
           };
         }
 
@@ -10302,6 +10280,147 @@
         modalContainer.classList.remove('hidden');
       }
 
+      // ================= MODAL: DATE & MONTH PICKER (調閱歷史月份與日期彈窗) =================
+      function openDatePickerModal() {
+        var tempDate = selectedDate;
+        var modalBox = document.getElementById('modal-box');
+        var modalContainer = document.getElementById('modal-container');
+
+        function renderDatePickerContent() {
+          var lunarInfo = getLunarText(tempDate);
+          var todayStr = getTodayDateStr();
+          var parts = tempDate.split('-');
+          var ty = parts[0];
+          var tm = parts[1];
+
+          var mHtml = '';
+          mHtml += '<div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">';
+          mHtml += '  <div class="flex items-center gap-2">';
+          mHtml += '    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">📅</div>';
+          mHtml += '    <div>';
+          mHtml += '      <h3 class="text-sm font-black text-slate-900">調閱歷史月份與日期</h3>';
+          mHtml += '      <p class="text-[10px] text-slate-500">切換後可長期調閱、分析與新增該月帳目</p>';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+          mHtml += '  <button type="button" id="close-dp-modal" class="w-7 h-7 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-xs cursor-pointer">✕</button>';
+          mHtml += '</div>';
+
+          mHtml += '<div class="p-5 space-y-4 overflow-y-auto max-h-[75vh]">';
+          // Current Preview Card
+          mHtml += '  <div class="p-3.5 bg-slate-900 text-white rounded-2xl flex items-center justify-between">';
+          mHtml += '    <div>';
+          mHtml += '      <div class="text-[10px] text-slate-400 font-medium">即將調閱目標日期</div>';
+          mHtml += '      <div class="text-lg font-black font-mono tracking-tight text-white mt-0.5">' + tempDate.replace(/-/g, '/') + '</div>';
+          mHtml += '    </div>';
+          mHtml += '    <div class="text-right">';
+          mHtml += '      <div class="text-[10px] text-amber-300 font-bold bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">' + lunarInfo + '</div>';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+
+          // Quick Month Switch Buttons
+          mHtml += '  <div class="space-y-1.5">';
+          mHtml += '    <label class="text-[11px] font-bold text-slate-600 block">⚡ 快速調閱月份：</label>';
+          mHtml += '    <div class="grid grid-cols-2 gap-2">';
+          mHtml += '      <button type="button" id="btn-quick-today" class="py-2 px-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ' + (tempDate === todayStr ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200') + '"><span>🎯</span><span>回到今日 (當天)</span></button>';
+          mHtml += '      <button type="button" id="btn-quick-cur-month" class="py-2 px-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ' + (tempDate.substring(0, 7) === todayStr.substring(0, 7) ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200') + '"><span>📅</span><span>本月 (' + (new Date().getMonth() + 1) + '月)</span></button>';
+
+          var dPrev1 = new Date(); dPrev1.setMonth(dPrev1.getMonth() - 1);
+          var mPrev1 = dPrev1.getMonth() + 1;
+          mHtml += '      <button type="button" id="btn-quick-prev1" class="py-2 px-2.5 rounded-xl font-bold text-xs border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"><span>◀</span><span>上個月 (' + mPrev1 + '月)</span></button>';
+
+          var dPrev2 = new Date(); dPrev2.setMonth(dPrev2.getMonth() - 2);
+          var mPrev2 = dPrev2.getMonth() + 1;
+          mHtml += '      <button type="button" id="btn-quick-prev2" class="py-2 px-2.5 rounded-xl font-bold text-xs border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"><span>◀◀</span><span>前兩個月 (' + mPrev2 + '月)</span></button>';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+
+          // Month Stepper & Direct Picker
+          mHtml += '  <div class="space-y-1.5">';
+          mHtml += '    <label class="text-[11px] font-bold text-slate-600 block">📆 逐月翻頁或指定日期：</label>';
+          mHtml += '    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200">';
+          mHtml += '      <button type="button" id="btn-prev-month" class="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs">◀ 上個月</button>';
+          mHtml += '      <div class="flex-1 text-center font-black text-xs text-slate-900 font-mono">' + ty + ' 年 ' + tm + ' 月</div>';
+          mHtml += '      <button type="button" id="btn-next-month" class="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs">下個月 ▶</button>';
+          mHtml += '    </div>';
+          mHtml += '    <div class="mt-2">';
+          mHtml += '      <input type="date" id="dp-direct-input" value="' + tempDate + '" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+          mHtml += '</div>';
+
+          // Modal Footer
+          mHtml += '<div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2.5 shrink-0">';
+          mHtml += '  <button type="button" id="dp-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 cursor-pointer transition-colors">取消</button>';
+          mHtml += '  <button type="button" id="dp-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95">確認切換調閱</button>';
+          mHtml += '</div>';
+
+          modalBox.innerHTML = mHtml;
+
+          document.getElementById('close-dp-modal').onclick = closeModal;
+          document.getElementById('dp-cancel-btn').onclick = closeModal;
+
+          document.getElementById('btn-quick-today').onclick = function() {
+            tempDate = getTodayDateStr();
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-quick-cur-month').onclick = function() {
+            var td = new Date();
+            var y = td.getFullYear();
+            var m = String(td.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-quick-prev1').onclick = function() {
+            var td = new Date();
+            td.setMonth(td.getMonth() - 1);
+            var y = td.getFullYear();
+            var m = String(td.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-quick-prev2').onclick = function() {
+            var td = new Date();
+            td.setMonth(td.getMonth() - 2);
+            var y = td.getFullYear();
+            var m = String(td.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-prev-month').onclick = function() {
+            var parts = tempDate.split('-').map(Number);
+            var target = new Date(parts[0], parts[1] - 2, 1);
+            var y = target.getFullYear();
+            var m = String(target.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-next-month').onclick = function() {
+            var parts = tempDate.split('-').map(Number);
+            var target = new Date(parts[0], parts[1], 1);
+            var y = target.getFullYear();
+            var m = String(target.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('dp-direct-input').onchange = function(e) {
+            if (e.target.value) {
+              tempDate = e.target.value;
+              renderDatePickerContent();
+            }
+          };
+
+          document.getElementById('dp-confirm-btn').onclick = function() {
+            selectedDate = tempDate;
+            selectedMonth = tempDate.substring(0, 7);
+            closeModal();
+            renderMain();
+          };
+        }
+
+        renderDatePickerContent();
+        modalContainer.classList.remove('hidden');
+      }
+
       // ================= MODAL: ADD/EDIT EXPENSE =================
       function openExpenseModal(editItem) {
         var isEdit = !!editItem;
@@ -10651,16 +10770,19 @@
         } catch(e) {}
       }, 1200);
 
-      // ★ 即時每日自動同步：每次開啟 App、回到分頁 (visibilitychange / focus)、跨日午夜時自動同步至最新當天
-      function checkAndUpdateDate() {
+      // ★ 跨日守護：僅在使用者原本即停留在「今天」且午夜跨日時順延至新的一天，絕不強制干擾調閱歷史紀錄
+      var lastKnownToday = getTodayDateStr();
+      setInterval(function() {
         var currentToday = getTodayDateStr();
-        // 如果目前不是查看過去/未來特定日，或跨日了，自動推進至最新今天
-        if (selectedDate !== currentToday) {
-          selectedDate = currentToday;
-          selectedMonth = selectedDate.substring(0, 7);
-          renderMain();
+        if (currentToday !== lastKnownToday) {
+          if (selectedDate === lastKnownToday) {
+            selectedDate = currentToday;
+            selectedMonth = selectedDate.substring(0, 7);
+            renderMain();
+          }
+          lastKnownToday = currentToday;
         }
-      }
+      }, 60000);
 
       // ★ 全域下載函數支援 (雙軌同步：純單檔 HTML 內亦提供 downloadApkIndexHtml / downloadapkhtml)
       window.downloadApkIndexHtml = function(opts) {
@@ -10670,10 +10792,17 @@
         var a = document.createElement('a');
         a.href = url;
         a.download = (opts && opts.fileName) || 'index.html';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(function() {
+          try {
+            if (a.parentNode) document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } catch(e) {}
+        }, 60000);
         return true;
       };
       window.downloadapkindexhtml = window.downloadApkIndexHtml;
@@ -10681,14 +10810,6 @@
       window.downloadapkhtml = window.downloadApkIndexHtml;
       window.downloadApk = window.downloadApkIndexHtml;
       window.downloadapk = window.downloadApkIndexHtml;
-
-      document.addEventListener('visibilitychange', function() {
-        if (document.visibilityState === 'visible') {
-          checkAndUpdateDate();
-        }
-      });
-      window.addEventListener('focus', checkAndUpdateDate);
-      setInterval(checkAndUpdateDate, 30000);
     })();
   </script>
   
