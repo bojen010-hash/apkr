@@ -10177,6 +10177,37 @@
         html += '      </button>';
         html += '    </div>';
         html += '  </div>';
+
+        // 專屬：APK 單檔 index.html 產生中心 (供 PWABuilder 打包 APK / 離線使用 / 限時分享)
+        html += '  <div class="bg-white p-5 rounded-[2rem] border border-slate-200/80 shadow-sm space-y-3.5">';
+        html += '    <div class="flex items-center gap-3">';
+        html += '      <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">📱</div>';
+        html += '      <div>';
+        html += '        <h3 class="font-bold text-slate-900 text-sm">APK 單檔 index.html 產生中心</h3>';
+        html += '        <p class="text-[11px] text-slate-500">免開主控台！一鍵產生供 PWABuilder 打包或自訂限時分享</p>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '    <button id="btn-download-pure-apk-html" class="w-full p-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl flex items-center justify-between font-bold text-xs shadow-md shadow-indigo-500/20 transition-all cursor-pointer active:scale-98">';
+        html += '      <div class="flex items-center gap-2">';
+        html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>';
+        html += '        <span>一鍵下載純淨版 index.html</span>';
+        html += '      </div>';
+        html += '      <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">永久無期限</span>';
+        html += '    </button>';
+        html += '    <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2">';
+        html += '      <div class="flex items-center justify-between">';
+        html += '        <div class="flex items-center gap-1.5 text-xs font-bold text-amber-950">';
+        html += '          <span>⏳ 自選截止日：限時分享體驗版</span>';
+        html += '        </div>';
+        html += '        <span class="text-[10px] text-amber-700 font-bold bg-amber-100 px-2 py-0.5 rounded-full">到期自動鎖定</span>';
+        html += '      </div>';
+        html += '      <div class="flex items-center gap-2">';
+        html += '        <input type="date" id="apk-expire-input" value="2026-10-10" class="flex-1 bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500" />';
+        html += '        <button id="btn-download-expire-apk-html" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer shrink-0 active:scale-95">下載限時版</button>';
+        html += '      </div>';
+        html += '      <p class="text-[10px] text-slate-500 leading-tight">設定截止日後，截止日前開通過的老朋友永久可用；逾期新訪客將顯示作者聯繫畫面。</p>';
+        html += '    </div>';
+        html += '  </div>';
         html += '</div>';
 
         container.innerHTML = html;
@@ -10193,6 +10224,28 @@
             openMonthlyBackupReminderModal();
           };
         };
+
+        var btnPureApk = document.getElementById('btn-download-pure-apk-html');
+        if (btnPureApk) {
+          btnPureApk.onclick = function() {
+            window.downloadApkIndexHtml();
+            alert('✓ 純淨版 index.html 下載成功！(供 PWABuilder 打包 APK)');
+          };
+        }
+
+        var btnExpireApk = document.getElementById('btn-download-expire-apk-html');
+        if (btnExpireApk) {
+          btnExpireApk.onclick = function() {
+            var expInput = document.getElementById('apk-expire-input');
+            var val = (expInput && expInput.value) || '';
+            if (!val) {
+              alert('請先選擇截止日期');
+              return;
+            }
+            window.downloadApkIndexHtml({ shareExpireDate: val });
+            alert('✓ 限時版 index.html (截止日：' + val + ') 下載成功！');
+          };
+        }
 
         attachBannerEvents();
 
@@ -10604,6 +10657,26 @@
         }
       }
 
+      // ★ 全域下載函數支援 (雙軌同步：純單檔 HTML 內亦提供 downloadApkIndexHtml / downloadapkhtml)
+      window.downloadApkIndexHtml = function(opts) {
+        var content = '<!DOCTYPE html>' + String.fromCharCode(10) + document.documentElement.outerHTML;
+        var blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = (opts && opts.fileName) || 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return true;
+      };
+      window.downloadapkindexhtml = window.downloadApkIndexHtml;
+      window.downloadApkHtml = window.downloadApkIndexHtml;
+      window.downloadapkhtml = window.downloadApkIndexHtml;
+      window.downloadApk = window.downloadApkIndexHtml;
+      window.downloadapk = window.downloadApkIndexHtml;
+
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible') {
           checkAndUpdateDate();
@@ -10916,12 +10989,12 @@
 <!-- 💡 若留空 "" 則代表不限制，永久開放所有人自由使用！ -->
 <script>
 (function() {
-  var EXPIRE_DATE = "";
+  var EXPIRE_DATE = "2026-10-10";
   var AUTHOR_NAME = "Cbjm";
   var AUTHOR_LINE = "bojen010";
 
   // 如果未設定截止日期（留空），嘗試自 localStorage 讀取動態設定；若皆無則代表無限制，直接放行
-  if (!EXPIRE_DATE || EXPIRE_DATE.trim() === "2026-10-03") {
+  if (!EXPIRE_DATE || EXPIRE_DATE.trim() === '') {
     try {
       var dyn = localStorage.getItem('cbjm_share_expire_date');
       if (dyn && dyn.trim() !== '') {
