@@ -8733,39 +8733,118 @@
       var STORAGE_EXPENSES_KEY = 'pure_app_expenses_v2';
       var STORAGE_NOTES_KEY = 'pure_app_notes_v2';
 
-      var CATEGORY_COLORS = {
-        '居家日常': '#f43f5e',
-        '生活日用': '#fb7185',
-        '交通出行': '#3b82f6',
-        '其他雜項': '#10b981',
-        '餐飲飲食': '#f59e0b',
-        '休閒娛樂': '#8b5cf6',
-        '醫療保健': '#ec4899',
-        '教育進修': '#06b6d4',
-        '其他支出': '#64748b',
-        '薪資獎金': '#10b981',
-        '投資收益': '#0ea5e9',
-        '副業分潤': '#8b5cf6',
-        '紅包獎金': '#f43f5e',
-        '其他收入': '#64748b'
-      };
+      var EXPENSE_CATEGORIES_CONFIG = [
+  {
+    "name": "居家日常",
+    "shortName": "居..",
+    "icon": "🏠",
+    "color": "#f43f5e"
+  },
+  {
+    "name": "餐飲飲食",
+    "shortName": "餐..",
+    "icon": "🍜",
+    "color": "#f59e0b"
+  },
+  {
+    "name": "生活日用",
+    "shortName": "生..",
+    "icon": "🧴",
+    "color": "#fb7185"
+  },
+  {
+    "name": "交通出行",
+    "shortName": "交..",
+    "icon": "🚗",
+    "color": "#3b82f6"
+  },
+  {
+    "name": "休閒娛樂",
+    "shortName": "休..",
+    "icon": "🎮",
+    "color": "#8b5cf6"
+  },
+  {
+    "name": "醫療保健",
+    "shortName": "醫..",
+    "icon": "💊",
+    "color": "#ec4899"
+  },
+  {
+    "name": "教育進修",
+    "shortName": "教..",
+    "icon": "📚",
+    "color": "#06b6d4"
+  },
+  {
+    "name": "其他雜項",
+    "shortName": "其..",
+    "icon": "📦",
+    "color": "#10b981"
+  },
+  {
+    "name": "其他支出",
+    "shortName": "其..",
+    "icon": "💸",
+    "color": "#64748b"
+  }
+];
+      var INCOME_CATEGORIES_CONFIG = [
+  {
+    "name": "薪資獎金",
+    "shortName": "薪..",
+    "icon": "💰",
+    "color": "#10b981"
+  },
+  {
+    "name": "投資收益",
+    "shortName": "投..",
+    "icon": "📈",
+    "color": "#0ea5e9"
+  },
+  {
+    "name": "副業分潤",
+    "shortName": "副..",
+    "icon": "💼",
+    "color": "#8b5cf6"
+  },
+  {
+    "name": "紅包獎金",
+    "shortName": "紅..",
+    "icon": "🧧",
+    "color": "#f43f5e"
+  },
+  {
+    "name": "其他收入",
+    "shortName": "其..",
+    "icon": "🪙",
+    "color": "#64748b"
+  }
+];
+      var EXPENSE_MODAL_UI_CONFIG = {
+  "headerTitleAdd": "新增收支紀錄",
+  "headerTitleEdit": "修改記帳資料",
+  "typeExpenseText": "支出",
+  "typeIncomeText": "收入",
+  "amountLabel": "金額 (NT$)",
+  "amountPlaceholder": "0",
+  "defaultAmount": "",
+  "defaultExpenseCategory": "餐飲飲食",
+  "defaultIncomeCategory": "薪資獎金",
+  "categoryLabel": "分類項目",
+  "dateLabel": "記帳日期",
+  "noteLabel": "備註說明 (選填)",
+  "notePlaceholder": "例：午餐便當、生活採買...",
+  "btnCancelText": "取消",
+  "btnSubmitText": "確認儲存"
+};
 
-      var CATEGORY_ICONS = {
-        '居家日常': '🏠',
-        '生活日用': '🧴',
-        '交通出行': '🚗',
-        '其他雜項': '📦',
-        '餐飲飲食': '🍜',
-        '休閒娛樂': '🎮',
-        '醫療保健': '💊',
-        '教育進修': '📚',
-        '其他支出': '💸',
-        '薪資獎金': '💰',
-        '投資收益': '📈',
-        '副業分潤': '💼',
-        '紅包獎金': '🧧',
-        '其他收入': '💵'
-      };
+      var CATEGORY_COLORS = {};
+      var CATEGORY_ICONS = {};
+      EXPENSE_CATEGORIES_CONFIG.concat(INCOME_CATEGORIES_CONFIG).forEach(function(c) {
+        CATEGORY_COLORS[c.name] = c.color;
+        CATEGORY_ICONS[c.name] = c.icon;
+      });
 
       var defaultExpenses = [
   {
@@ -8781,14 +8860,15 @@
   {
     "id": "note-1",
     "title": "歡迎使用！重要備忘提醒範例",
-    "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈！",
-    "updatedAt": "2026-10-01 14:06",
+    "content": "點擊此卡片可修改或標記完成。支援設定到期提醒日期與提前警示天數，到期前系統會自動亮起警示燈與聲音提醒！",
+    "updatedAt": "2026-09-29 09:00",
     "tag": "生活",
     "reminderDate": "2026-10-02",
     "reminderTime": "12:00",
     "earlyAlertDays": 3,
     "priority": "high",
-    "isCompleted": true
+    "isCompleted": false,
+    "soundAlertEnabled": true
   }
 ];
 
@@ -8823,12 +8903,30 @@
       var selectedNoteTag = '全部';
       var noteFilterStatus = 'all'; // 'all' | 'alerting' | 'pending' | 'completed'
 
+      function updateAutoSnapshot() {
+        try {
+          var now = new Date();
+          var timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          var snapshot = {
+            timestamp: now.toISOString(),
+            formattedTime: timeStr,
+            expenses: expenses,
+            notes: notes,
+            version: '2.5.0'
+          };
+          localStorage.setItem('sim_auto_backup_snapshot', JSON.stringify(snapshot));
+          localStorage.setItem('cbjm_auto_backup_snapshot', JSON.stringify(snapshot));
+        } catch(e) {}
+      }
+
       function saveExpenses() {
         localStorage.setItem(STORAGE_EXPENSES_KEY, JSON.stringify(expenses));
+        updateAutoSnapshot();
       }
 
       function saveNotes() {
         localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+        updateAutoSnapshot();
       }
 
       // ================= 30-DAY MONTHLY SCHEDULED BACKUP LOGIC =================
@@ -9412,11 +9510,10 @@
         html += '    <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">';
         html += '      <button type="button" id="header-lunar-date-badge" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-[11px] sm:text-xs font-medium tracking-tight whitespace-nowrap shrink-0 hover:bg-amber-400/25 transition-colors cursor-pointer" title="點擊切換日期（農曆自動連動更新）">' + lunarStr + '</button>';
         html += '      <div class="relative shrink-0">';
-        html += '        <div id="header-solar-date-capsule" class="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#1b2b42] border border-white/10 text-slate-200 text-[11px] sm:text-xs font-mono font-bold flex items-center gap-1 cursor-pointer hover:bg-[#253956] transition-colors whitespace-nowrap" title="點擊切換洋曆日期（農曆同步更新）">';
+        html += '        <button type="button" id="header-solar-date-capsule" class="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#1b2b42] border border-white/10 text-slate-200 text-[11px] sm:text-xs font-mono font-bold flex items-center gap-1 cursor-pointer hover:bg-[#253956] transition-colors whitespace-nowrap active:scale-95" title="點擊切換洋曆日期（農曆同步更新）">';
         html += '          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 shrink-0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>';
         html += '          <span>' + selectedDate.replace(/-/g, '/') + '</span>';
-        html += '          <input type="date" id="date-picker" value="' + selectedDate + '" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />';
-        html += '        </div>';
+        html += '        </button>';
         html += '      </div>';
         if (!isToday) {
           html += '      <button type="button" id="btn-reset-today" class="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold hover:bg-emerald-500/30 transition-colors whitespace-nowrap cursor-pointer shrink-0" title="立即回到今天日期">回到今日</button>';
@@ -9645,42 +9742,20 @@
 
         // Event bindings
         function triggerDatePicker() {
-          var p = document.getElementById('date-picker');
-          if (p) {
-            if (typeof p.showPicker === 'function') {
-              try { p.showPicker(); } catch(err) { p.focus(); p.click(); }
-            } else {
-              p.focus(); p.click();
-            }
-          }
-        }
-
-        var picker = document.getElementById('date-picker');
-        if (picker) {
-          var handleDateChange = function(e) {
-            if (e.target.value) {
-              selectedDate = e.target.value;
-              selectedMonth = selectedDate.substring(0, 7);
-              renderMain();
-            }
-          };
-          picker.onchange = handleDateChange;
-          picker.oninput = handleDateChange;
+          openDatePickerModal();
         }
 
         var solarCapsule = document.getElementById('header-solar-date-capsule');
         if (solarCapsule) {
-          solarCapsule.onclick = function(e) {
-            if (e.target !== picker) {
-              triggerDatePicker();
-            }
+          solarCapsule.onclick = function() {
+            openDatePickerModal();
           };
         }
 
         var lunarBadge = document.getElementById('header-lunar-date-badge');
         if (lunarBadge) {
           lunarBadge.onclick = function() {
-            triggerDatePicker();
+            openDatePickerModal();
           };
         }
 
@@ -10168,7 +10243,15 @@
         html += '        <input type="file" id="import-json-input" accept=".json" class="hidden" />';
         html += '      </label>';
 
-        html += '      <button id="reset-default-btn" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-2.5 text-slate-700 font-bold text-xs transition-colors cursor-pointer text-left sm:col-span-2">';
+        html += '      <button id="restore-snapshot-btn" class="p-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl flex items-center gap-2.5 text-amber-950 font-bold text-xs transition-colors cursor-pointer text-left">';
+        html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-600"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+        html += '        <div>';
+        html += '          <div>回復最近自動快照</div>';
+        html += '          <div class="text-[10px] font-normal text-amber-700">一鍵回滾誤刪除之項目</div>';
+        html += '        </div>';
+        html += '      </button>';
+
+        html += '      <button id="reset-default-btn" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-2.5 text-slate-700 font-bold text-xs transition-colors cursor-pointer text-left">';
         html += '        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>';
         html += '        <div>';
         html += '          <div>重設為展示預設帳目</div>';
@@ -10217,6 +10300,30 @@
           reader.readAsText(file);
         };
 
+        var btnRestoreSnap = document.getElementById('restore-snapshot-btn');
+        if (btnRestoreSnap) {
+          btnRestoreSnap.onclick = function() {
+            try {
+              var raw = localStorage.getItem('sim_auto_backup_snapshot') || localStorage.getItem('cbjm_auto_backup_snapshot');
+              if (!raw) {
+                alert('目前尚無本機自動快照');
+                return;
+              }
+              var snap = JSON.parse(raw);
+              if (Array.isArray(snap.expenses) && Array.isArray(snap.notes)) {
+                expenses = snap.expenses;
+                notes = snap.notes;
+                saveExpenses();
+                saveNotes();
+                alert('✓ 已回復至 [' + (snap.formattedTime || '最近') + '] 自動快照！');
+                renderMain();
+              }
+            } catch (err) {
+              alert('⚠️ 讀取快照失敗');
+            }
+          };
+        }
+
         document.getElementById('reset-default-btn').onclick = function() {
           openResetConfirmModal();
         };
@@ -10252,83 +10359,247 @@
         modalContainer.classList.remove('hidden');
       }
 
-      // ================= MODAL: ADD/EDIT EXPENSE =================
+      // ================= MODAL: DATE & MONTH PICKER (調閱歷史月份與日期彈窗) =================
+      function openDatePickerModal() {
+        var tempDate = selectedDate;
+        var modalBox = document.getElementById('modal-box');
+        var modalContainer = document.getElementById('modal-container');
+
+        function renderDatePickerContent() {
+          var lunarInfo = '農曆';
+          try {
+            lunarInfo = getLunarString(tempDate) || '農曆';
+          } catch (err) {
+            lunarInfo = '農曆';
+          }
+          var todayStr = getTodayDateStr();
+          var parts = tempDate.split('-');
+          var ty = parts[0];
+          var tm = parts[1];
+
+          var mHtml = '';
+          mHtml += '<div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">';
+          mHtml += '  <div class="flex items-center gap-2">';
+          mHtml += '    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">📅</div>';
+          mHtml += '    <div>';
+          mHtml += '      <h3 class="text-sm font-black text-slate-900">調閱歷史月份與日期</h3>';
+          mHtml += '      <p class="text-[10px] text-slate-500">切換後可長期調閱、分析與新增該月帳目</p>';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+          mHtml += '  <button type="button" id="close-dp-modal" class="w-7 h-7 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-xs cursor-pointer">✕</button>';
+          mHtml += '</div>';
+
+          mHtml += '<div class="p-5 space-y-4 overflow-y-auto max-h-[75vh]">';
+          // Current Preview Card
+          mHtml += '  <div class="p-3.5 bg-slate-900 text-white rounded-2xl flex items-center justify-between">';
+          mHtml += '    <div>';
+          mHtml += '      <div class="text-[10px] text-slate-400 font-medium">即將調閱目標日期</div>';
+          mHtml += '      <div class="text-lg font-black font-mono tracking-tight text-white mt-0.5">' + tempDate.replace(/-/g, '/') + '</div>';
+          mHtml += '    </div>';
+          mHtml += '    <div class="text-right">';
+          mHtml += '      <div class="text-[10px] text-amber-300 font-bold bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">' + lunarInfo + '</div>';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+
+          // Quick Month Switch Buttons
+          mHtml += '  <div class="space-y-1.5">';
+          mHtml += '    <label class="text-[11px] font-bold text-slate-600 block">⚡ 快速調閱月份：</label>';
+          mHtml += '    <div class="grid grid-cols-2 gap-2">';
+          mHtml += '      <button type="button" id="btn-quick-today" class="py-2 px-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ' + (tempDate === todayStr ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200') + '"><span>🎯</span><span>回到今日 (當天)</span></button>';
+          mHtml += '      <button type="button" id="btn-quick-cur-month" class="py-2 px-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ' + (tempDate.substring(0, 7) === todayStr.substring(0, 7) ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200') + '"><span>📅</span><span>本月 (' + (new Date().getMonth() + 1) + '月)</span></button>';
+
+          var dPrev1 = new Date(); dPrev1.setMonth(dPrev1.getMonth() - 1);
+          var mPrev1 = dPrev1.getMonth() + 1;
+          mHtml += '      <button type="button" id="btn-quick-prev1" class="py-2 px-2.5 rounded-xl font-bold text-xs border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"><span>◀</span><span>上個月 (' + mPrev1 + '月)</span></button>';
+
+          var dPrev2 = new Date(); dPrev2.setMonth(dPrev2.getMonth() - 2);
+          var mPrev2 = dPrev2.getMonth() + 1;
+          mHtml += '      <button type="button" id="btn-quick-prev2" class="py-2 px-2.5 rounded-xl font-bold text-xs border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"><span>◀◀</span><span>前兩個月 (' + mPrev2 + '月)</span></button>';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+
+          // Month Stepper & Direct Picker
+          mHtml += '  <div class="space-y-1.5">';
+          mHtml += '    <label class="text-[11px] font-bold text-slate-600 block">📆 逐月翻頁或指定日期：</label>';
+          mHtml += '    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200">';
+          mHtml += '      <button type="button" id="btn-prev-month" class="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs">◀ 上個月</button>';
+          mHtml += '      <div class="flex-1 text-center font-black text-xs text-slate-900 font-mono">' + ty + ' 年 ' + tm + ' 月</div>';
+          mHtml += '      <button type="button" id="btn-next-month" class="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs">下個月 ▶</button>';
+          mHtml += '    </div>';
+          mHtml += '    <div class="mt-2">';
+          mHtml += '      <input type="date" id="dp-direct-input" value="' + tempDate + '" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+          mHtml += '    </div>';
+          mHtml += '  </div>';
+          mHtml += '</div>';
+
+          // Modal Footer
+          mHtml += '<div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2.5 shrink-0">';
+          mHtml += '  <button type="button" id="dp-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 cursor-pointer transition-colors">取消</button>';
+          mHtml += '  <button type="button" id="dp-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-500/20 cursor-pointer transition-all active:scale-95">確認切換調閱</button>';
+          mHtml += '</div>';
+
+          modalBox.innerHTML = mHtml;
+
+          document.getElementById('close-dp-modal').onclick = closeModal;
+          document.getElementById('dp-cancel-btn').onclick = closeModal;
+
+          document.getElementById('btn-quick-today').onclick = function() {
+            tempDate = getTodayDateStr();
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-quick-cur-month').onclick = function() {
+            var td = new Date();
+            var y = td.getFullYear();
+            var m = String(td.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-quick-prev1').onclick = function() {
+            var td = new Date();
+            td.setMonth(td.getMonth() - 1);
+            var y = td.getFullYear();
+            var m = String(td.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-quick-prev2').onclick = function() {
+            var td = new Date();
+            td.setMonth(td.getMonth() - 2);
+            var y = td.getFullYear();
+            var m = String(td.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-prev-month').onclick = function() {
+            var parts = tempDate.split('-').map(Number);
+            var target = new Date(parts[0], parts[1] - 2, 1);
+            var y = target.getFullYear();
+            var m = String(target.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('btn-next-month').onclick = function() {
+            var parts = tempDate.split('-').map(Number);
+            var target = new Date(parts[0], parts[1], 1);
+            var y = target.getFullYear();
+            var m = String(target.getMonth() + 1).padStart(2, '0');
+            tempDate = y + '-' + m + '-01';
+            renderDatePickerContent();
+          };
+          document.getElementById('dp-direct-input').onchange = function(e) {
+            if (e.target.value) {
+              tempDate = e.target.value;
+              renderDatePickerContent();
+            }
+          };
+
+          document.getElementById('dp-confirm-btn').onclick = function() {
+            selectedDate = tempDate;
+            selectedMonth = tempDate.substring(0, 7);
+            closeModal();
+            renderMain();
+          };
+        }
+
+        renderDatePickerContent();
+        modalContainer.classList.remove('hidden');
+      }
+
+      // ================= MODAL: ADD/EDIT EXPENSE (100% SHARED CONFIG & MATCHING REFERENCE 251828.jpg) =================
       function openExpenseModal(editItem) {
         var isEdit = !!editItem;
         var currentType = isEdit ? editItem.type : 'expense';
-        var currentCat = isEdit ? editItem.category : (currentType === 'expense' ? '餐飲飲食' : '薪資獎金');
-        var currentAmt = isEdit ? editItem.amount : '';
-        var currentDate = isEdit ? editItem.date : new Date().toISOString().split('T')[0];
+        var currentAmt = isEdit ? editItem.amount : (EXPENSE_MODAL_UI_CONFIG.defaultAmount || '');
+        var currentDate = isEdit ? editItem.date : (selectedDate || getTodayDateStr());
         var currentNote = isEdit ? (editItem.note || '') : '';
 
         var modalBox = document.getElementById('modal-box');
         var modalContainer = document.getElementById('modal-container');
 
-        var expenseCategories = ['居家日常', '餐飲飲食', '生活日用', '交通出行', '休閒娛樂', '醫療保健', '教育進修', '其他雜項', '其他支出'];
-        var incomeCategories = ['薪資獎金', '投資收益', '副業分潤', '紅包獎金', '其他收入'];
+        var currentCat = isEdit ? editItem.category : (currentType === 'expense' ? EXPENSE_MODAL_UI_CONFIG.defaultExpenseCategory : EXPENSE_MODAL_UI_CONFIG.defaultIncomeCategory);
+
+        function renderCategoryGridHtml() {
+          var cats = currentType === 'expense' ? EXPENSE_CATEGORIES_CONFIG : INCOME_CATEGORIES_CONFIG;
+          var gridHtml = '<div class="grid grid-cols-3 gap-2">';
+          for (var i = 0; i < cats.length; i++) {
+            var cat = cats[i];
+            var isSelected = currentCat === cat.name;
+            gridHtml += '<button type="button" class="cat-pill py-2.5 px-2 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ' + 
+              (isSelected 
+                ? 'bg-blue-600 text-white shadow-sm shadow-blue-300/40' 
+                : 'bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-slate-100') + 
+              '" data-cat-name="' + cat.name + '">';
+            gridHtml += '  <span>' + cat.icon + '</span>';
+            gridHtml += '  <span class="truncate">' + cat.name + '</span>';
+            gridHtml += '</button>';
+          }
+          gridHtml += '</div>';
+          return gridHtml;
+        }
 
         function buildModalHtml() {
-          var cats = currentType === 'expense' ? expenseCategories : incomeCategories;
           var mHtml = '';
 
+          // Modal Header
           mHtml += '<div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">';
-          mHtml += '  <div class="flex items-center gap-2">';
-          mHtml += '    <div class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs">';
+          mHtml += '  <div class="flex items-center gap-2.5">';
+          mHtml += '    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">';
           mHtml += '      ' + (isEdit ? '✏️' : '➕');
           mHtml += '    </div>';
-          mHtml += '    <h3 class="text-sm font-black text-slate-900">' + (isEdit ? '修改記帳資料' : '新增收支紀錄') + '</h3>';
+          mHtml += '    <h3 class="text-base font-black text-slate-900">' + (isEdit ? EXPENSE_MODAL_UI_CONFIG.headerTitleEdit : EXPENSE_MODAL_UI_CONFIG.headerTitleAdd) + '</h3>';
           mHtml += '  </div>';
-          mHtml += '  <button type="button" id="close-modal-x" class="text-slate-400 hover:text-slate-600 p-1 font-bold cursor-pointer">✕</button>';
+          mHtml += '  <button type="button" id="close-modal-x" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">✕</button>';
           mHtml += '</div>';
 
+          // Modal Form Body
           mHtml += '<div class="p-5 space-y-4 overflow-y-auto flex-1">';
-          // Type Buttons
-          mHtml += '  <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl">';
-          mHtml += '    <button type="button" id="type-btn-expense" class="py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ' + (currentType === 'expense' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-600 hover:text-slate-900') + '">支出</button>';
-          mHtml += '    <button type="button" id="type-btn-income" class="py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ' + (currentType === 'income' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900') + '">收入</button>';
+          
+          // Error Banner
+          mHtml += '  <div id="modal-error-banner" class="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-bold flex items-center gap-1.5 text-xs hidden">';
+          mHtml += '    <span>⚠️</span><span id="modal-error-msg">請輸入大於 0 的有效金額！</span>';
           mHtml += '  </div>';
 
-          // Amount Input
+          // Type Switcher: 支出 (Expense) / 收入 (Income)
+          mHtml += '  <div class="grid grid-cols-2 gap-2 bg-slate-100/90 p-1.5 rounded-2xl">';
+          mHtml += '    <button type="button" id="type-btn-expense" class="py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ' + (currentType === 'expense' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900') + '">' + EXPENSE_MODAL_UI_CONFIG.typeExpenseText + '</button>';
+          mHtml += '    <button type="button" id="type-btn-income" class="py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ' + (currentType === 'income' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900') + '">' + EXPENSE_MODAL_UI_CONFIG.typeIncomeText + '</button>';
+          mHtml += '  </div>';
+
+          // Amount Field (金額 (NT$))
           mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-xs font-bold text-slate-700">金額 (NT$)</label>';
-          mHtml += '    <div class="relative">';
-          mHtml += '      <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">$</span>';
-          mHtml += '      <input type="number" id="modal-amt-input" value="' + currentAmt + '" placeholder="0" class="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-xl font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+          mHtml += '    <label class="text-sm font-bold text-slate-800 block">' + EXPENSE_MODAL_UI_CONFIG.amountLabel + '</label>';
+          mHtml += '    <div class="relative bg-slate-50/50 border border-slate-200 rounded-2xl p-1 focus-within:border-blue-500 focus-within:bg-white transition-all">';
+          mHtml += '      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl select-none">$</span>';
+          mHtml += '      <input type="number" id="modal-amt-input" min="1" step="1" value="' + currentAmt + '" placeholder="' + EXPENSE_MODAL_UI_CONFIG.amountPlaceholder + '" class="w-full pl-9 pr-4 py-2.5 bg-transparent font-mono text-2xl font-bold text-slate-900 focus:outline-hidden" />';
           mHtml += '    </div>';
           mHtml += '  </div>';
 
-          // Category Grid
-          mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-xs font-bold text-slate-700">分類項目</label>';
-          mHtml += '    <div class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto pr-1">';
-          cats.forEach(function(cat) {
-            var isSelected = cat === currentCat;
-            var cColor = CATEGORY_COLORS[cat] || '#64748b';
-            var icon = CATEGORY_ICONS[cat] || '🏷️';
-            mHtml += '      <button type="button" class="cat-pill py-2 px-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ' + (isSelected ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-slate-100') + '" data-cat="' + cat + '">';
-            mHtml += '        <span>' + icon + '</span><span class="truncate">' + cat + '</span>';
-            mHtml += '      </button>';
-          });
+          // Category Field: Grid Buttons (九宮格圖示按鈕)
+          mHtml += '  <div class="space-y-2">';
+          mHtml += '    <label class="text-sm font-bold text-slate-800 block">' + EXPENSE_MODAL_UI_CONFIG.categoryLabel + '</label>';
+          mHtml += '    <div id="modal-category-grid-container">';
+          mHtml +=        renderCategoryGridHtml();
           mHtml += '    </div>';
           mHtml += '  </div>';
 
-          // Date Input
+          // Date Field
           mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-xs font-bold text-slate-700">記帳日期</label>';
-          mHtml += '    <input type="date" id="modal-date-input" value="' + currentDate + '" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+          mHtml += '    <label class="text-xs font-bold text-slate-700 block">' + EXPENSE_MODAL_UI_CONFIG.dateLabel + '</label>';
+          mHtml += '    <input type="date" id="modal-date-input" value="' + currentDate + '" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
           mHtml += '  </div>';
 
-          // Note Input
+          // Note Field
           mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-xs font-bold text-slate-700">備註說明 (選填)</label>';
-          mHtml += '    <input type="text" id="modal-note-input" value="' + currentNote + '" placeholder="例：午餐便當、生活採買..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+          mHtml += '    <label class="text-xs font-bold text-slate-700 block">' + EXPENSE_MODAL_UI_CONFIG.noteLabel + '</label>';
+          mHtml += '    <input type="text" id="modal-note-input" value="' + currentNote + '" placeholder="' + EXPENSE_MODAL_UI_CONFIG.notePlaceholder + '" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
           mHtml += '  </div>';
+
           mHtml += '</div>';
 
-          // Modal Footer Actions
-          mHtml += '<div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2 shrink-0">';
-          mHtml += '  <button type="button" id="modal-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer">取消</button>';
-          mHtml += '  <button type="button" id="modal-submit-btn" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-md shadow-blue-300/40 transition-all cursor-pointer">確認儲存</button>';
+          // Action Buttons
+          mHtml += '<div class="p-4 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0">';
+          mHtml += '  <button type="button" id="modal-cancel-btn" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer">' + EXPENSE_MODAL_UI_CONFIG.btnCancelText + '</button>';
+          mHtml += '  <button type="button" id="modal-submit-btn" class="flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black shadow-md shadow-blue-400/30 transition-all cursor-pointer"><span>' + EXPENSE_MODAL_UI_CONFIG.btnSubmitText + '</span></button>';
           mHtml += '</div>';
 
           return mHtml;
@@ -10337,35 +10608,76 @@
         function refreshModal() {
           modalBox.innerHTML = buildModalHtml();
 
+          var errBanner = document.getElementById('modal-error-banner');
+          var errText = document.getElementById('modal-error-msg');
+          var amtInput = document.getElementById('modal-amt-input');
+          var dateInput = document.getElementById('modal-date-input');
+          var noteInput = document.getElementById('modal-note-input');
+          var btnExpense = document.getElementById('type-btn-expense');
+          var btnIncome = document.getElementById('type-btn-income');
+
           document.getElementById('close-modal-x').onclick = closeModal;
           document.getElementById('modal-cancel-btn').onclick = closeModal;
 
-          document.getElementById('type-btn-expense').onclick = function() {
+          function bindCategoryEvents() {
+            var pills = modalBox.querySelectorAll('.cat-pill');
+            for (var i = 0; i < pills.length; i++) {
+              pills[i].onclick = function() {
+                currentCat = this.getAttribute('data-cat-name');
+                var gridContainer = document.getElementById('modal-category-grid-container');
+                if (gridContainer) {
+                  gridContainer.innerHTML = renderCategoryGridHtml();
+                  bindCategoryEvents();
+                }
+              };
+            }
+          }
+
+          bindCategoryEvents();
+
+          btnExpense.onclick = function() {
             currentType = 'expense';
-            currentCat = '餐飲飲食';
-            refreshModal();
+            currentCat = EXPENSE_MODAL_UI_CONFIG.defaultExpenseCategory;
+            btnExpense.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer bg-rose-500 text-white shadow-sm';
+            btnIncome.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+            var gridContainer = document.getElementById('modal-category-grid-container');
+            if (gridContainer) {
+              gridContainer.innerHTML = renderCategoryGridHtml();
+              bindCategoryEvents();
+            }
           };
 
-          document.getElementById('type-btn-income').onclick = function() {
+          btnIncome.onclick = function() {
             currentType = 'income';
-            currentCat = '薪資獎金';
-            refreshModal();
+            currentCat = EXPENSE_MODAL_UI_CONFIG.defaultIncomeCategory;
+            btnIncome.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer bg-emerald-600 text-white shadow-sm';
+            btnExpense.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+            var gridContainer = document.getElementById('modal-category-grid-container');
+            if (gridContainer) {
+              gridContainer.innerHTML = renderCategoryGridHtml();
+              bindCategoryEvents();
+            }
           };
 
-          modalBox.querySelectorAll('.cat-pill').forEach(function(btn) {
-            btn.onclick = function() {
-              currentCat = this.getAttribute('data-cat');
-              refreshModal();
-            };
-          });
+          amtInput.oninput = function() {
+            if (errBanner) errBanner.classList.add('hidden');
+          };
 
           document.getElementById('modal-submit-btn').onclick = function() {
-            var amt = parseFloat(document.getElementById('modal-amt-input').value);
-            var date = document.getElementById('modal-date-input').value;
-            var note = document.getElementById('modal-note-input').value;
+            var amt = parseFloat(amtInput.value);
+            var date = dateInput.value;
+            var note = noteInput.value.trim();
 
             if (isNaN(amt) || amt <= 0) {
-              alert('請輸入大於 0 的正確金額！');
+              if (errText) errText.textContent = '請輸入大於 0 的有效金額！';
+              if (errBanner) errBanner.classList.remove('hidden');
+              amtInput.focus();
+              return;
+            }
+
+            if (!date) {
+              if (errText) errText.textContent = '請選擇有效日期！';
+              if (errBanner) errBanner.classList.remove('hidden');
               return;
             }
 
@@ -10384,6 +10696,13 @@
                 date: date,
                 note: note
               });
+            }
+
+            if (date) {
+              selectedDate = date;
+              selectedMonth = date.substring(0, 7);
+              var picker = document.getElementById('solar-date-picker');
+              if (picker) picker.value = date;
             }
 
             saveExpenses();
@@ -10594,16 +10913,19 @@
         } catch(e) {}
       }, 1200);
 
-      // ★ 即時每日自動同步：每次開啟 App、回到分頁 (visibilitychange / focus)、跨日午夜時自動同步至最新當天
-      function checkAndUpdateDate() {
+      // ★ 跨日守護：僅在使用者原本即停留在「今天」且午夜跨日時順延至新的一天，絕不強制干擾調閱歷史紀錄
+      var lastKnownToday = getTodayDateStr();
+      setInterval(function() {
         var currentToday = getTodayDateStr();
-        // 如果目前不是查看過去/未來特定日，或跨日了，自動推進至最新今天
-        if (selectedDate !== currentToday) {
-          selectedDate = currentToday;
-          selectedMonth = selectedDate.substring(0, 7);
-          renderMain();
+        if (currentToday !== lastKnownToday) {
+          if (selectedDate === lastKnownToday) {
+            selectedDate = currentToday;
+            selectedMonth = selectedDate.substring(0, 7);
+            renderMain();
+          }
+          lastKnownToday = currentToday;
         }
-      }
+      }, 60000);
 
       // ★ 全域下載函數支援 (雙軌同步：純單檔 HTML 內亦提供 downloadApkIndexHtml / downloadapkhtml)
       window.downloadApkIndexHtml = function(opts) {
@@ -10613,10 +10935,17 @@
         var a = document.createElement('a');
         a.href = url;
         a.download = (opts && opts.fileName) || 'index.html';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(function() {
+          try {
+            if (a.parentNode) document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } catch(e) {}
+        }, 60000);
         return true;
       };
       window.downloadapkindexhtml = window.downloadApkIndexHtml;
@@ -10624,14 +10953,6 @@
       window.downloadapkhtml = window.downloadApkIndexHtml;
       window.downloadApk = window.downloadApkIndexHtml;
       window.downloadapk = window.downloadApkIndexHtml;
-
-      document.addEventListener('visibilitychange', function() {
-        if (document.visibilityState === 'visible') {
-          checkAndUpdateDate();
-        }
-      });
-      window.addEventListener('focus', checkAndUpdateDate);
-      setInterval(checkAndUpdateDate, 30000);
     })();
   </script>
   
@@ -10937,7 +11258,7 @@
 <!-- 💡 若留空 "" 則代表不限制，永久開放所有人自由使用！ -->
 <script>
 (function() {
-  var EXPIRE_DATE = "2026-10-11";
+  var EXPIRE_DATE = "2026-10-08";
   var AUTHOR_NAME = "Cbjm";
   var AUTHOR_LINE = "bojen010";
 
