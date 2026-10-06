@@ -8733,41 +8733,128 @@
       var STORAGE_EXPENSES_KEY = 'pure_app_expenses_v2';
       var STORAGE_NOTES_KEY = 'pure_app_notes_v2';
 
-      var CATEGORY_COLORS = {
-        '居家日常': '#f43f5e',
-        '生活日用': '#fb7185',
-        '交通出行': '#3b82f6',
-        '其他雜項': '#10b981',
-        '餐飲飲食': '#f59e0b',
-        '休閒娛樂': '#8b5cf6',
-        '醫療保健': '#ec4899',
-        '教育進修': '#06b6d4',
-        '其他支出': '#64748b',
-        '薪資獎金': '#10b981',
-        '投資收益': '#0ea5e9',
-        '副業分潤': '#8b5cf6',
-        '紅包獎金': '#f43f5e',
-        '其他收入': '#64748b'
-      };
+      var EXPENSE_CATEGORIES_CONFIG = [
+  {
+    "name": "居家日常",
+    "shortName": "居..",
+    "icon": "🏠",
+    "color": "#f43f5e"
+  },
+  {
+    "name": "餐飲飲食",
+    "shortName": "餐..",
+    "icon": "🍜",
+    "color": "#f59e0b"
+  },
+  {
+    "name": "生活日用",
+    "shortName": "生..",
+    "icon": "🧴",
+    "color": "#fb7185"
+  },
+  {
+    "name": "交通出行",
+    "shortName": "交..",
+    "icon": "🚗",
+    "color": "#3b82f6"
+  },
+  {
+    "name": "休閒娛樂",
+    "shortName": "休..",
+    "icon": "🎮",
+    "color": "#8b5cf6"
+  },
+  {
+    "name": "醫療保健",
+    "shortName": "醫..",
+    "icon": "💊",
+    "color": "#ec4899"
+  },
+  {
+    "name": "教育進修",
+    "shortName": "教..",
+    "icon": "📚",
+    "color": "#06b6d4"
+  },
+  {
+    "name": "其他雜項",
+    "shortName": "其..",
+    "icon": "📦",
+    "color": "#10b981"
+  },
+  {
+    "name": "其他支出",
+    "shortName": "其..",
+    "icon": "💸",
+    "color": "#64748b"
+  }
+];
+      var INCOME_CATEGORIES_CONFIG = [
+  {
+    "name": "薪資獎金",
+    "shortName": "薪..",
+    "icon": "💰",
+    "color": "#10b981"
+  },
+  {
+    "name": "投資收益",
+    "shortName": "投..",
+    "icon": "📈",
+    "color": "#0ea5e9"
+  },
+  {
+    "name": "副業分潤",
+    "shortName": "副..",
+    "icon": "💼",
+    "color": "#8b5cf6"
+  },
+  {
+    "name": "紅包獎金",
+    "shortName": "紅..",
+    "icon": "🧧",
+    "color": "#f43f5e"
+  },
+  {
+    "name": "其他收入",
+    "shortName": "其..",
+    "icon": "🪙",
+    "color": "#64748b"
+  }
+];
+      var EXPENSE_MODAL_UI_CONFIG = {
+  "headerTitleAdd": "新增收支紀錄",
+  "headerTitleEdit": "修改記帳資料",
+  "typeExpenseText": "支出",
+  "typeIncomeText": "收入",
+  "amountLabel": "金額 (NT$)",
+  "amountPlaceholder": "0",
+  "defaultAmount": "",
+  "defaultExpenseCategory": "餐飲飲食",
+  "defaultIncomeCategory": "薪資獎金",
+  "categoryLabel": "分類項目",
+  "dateLabel": "記帳日期",
+  "noteLabel": "備註說明 (選填)",
+  "notePlaceholder": "例：午餐便當、生活採買...",
+  "btnCancelText": "取消",
+  "btnSubmitText": "確認儲存"
+};
 
-      var CATEGORY_ICONS = {
-        '居家日常': '🏠',
-        '生活日用': '🧴',
-        '交通出行': '🚗',
-        '其他雜項': '📦',
-        '餐飲飲食': '🍜',
-        '休閒娛樂': '🎮',
-        '醫療保健': '💊',
-        '教育進修': '📚',
-        '其他支出': '💸',
-        '薪資獎金': '💰',
-        '投資收益': '📈',
-        '副業分潤': '💼',
-        '紅包獎金': '🧧',
-        '其他收入': '💵'
-      };
+      var CATEGORY_COLORS = {};
+      var CATEGORY_ICONS = {};
+      EXPENSE_CATEGORIES_CONFIG.concat(INCOME_CATEGORIES_CONFIG).forEach(function(c) {
+        CATEGORY_COLORS[c.name] = c.color;
+        CATEGORY_ICONS[c.name] = c.icon;
+      });
 
       var defaultExpenses = [
+  {
+    "id": "exp-1791253223264",
+    "type": "expense",
+    "category": "餐飲飲食",
+    "amount": 1,
+    "date": "2026-10-06",
+    "note": ""
+  },
   {
     "id": "exp-1",
     "type": "expense",
@@ -10426,23 +10513,39 @@
         modalContainer.classList.remove('hidden');
       }
 
-      // ================= MODAL: ADD/EDIT EXPENSE (RESTORED TO MATCH 251828.jpg) =================
+      // ================= MODAL: ADD/EDIT EXPENSE (100% SHARED CONFIG & MATCHING REFERENCE 251828.jpg) =================
       function openExpenseModal(editItem) {
         var isEdit = !!editItem;
         var currentType = isEdit ? editItem.type : 'expense';
-        var currentAmt = isEdit ? editItem.amount : '';
+        var currentAmt = isEdit ? editItem.amount : (EXPENSE_MODAL_UI_CONFIG.defaultAmount || '');
         var currentDate = isEdit ? editItem.date : (selectedDate || getTodayDateStr());
         var currentNote = isEdit ? (editItem.note || '') : '';
 
         var modalBox = document.getElementById('modal-box');
         var modalContainer = document.getElementById('modal-container');
 
-        var expenseCategories = ['居家日常', '餐飲飲食', '生活日用', '交通出行', '休閒娛樂', '醫療保健', '教育進修', '其他雜項', '其他支出'];
-        var incomeCategories = ['薪資獎金', '投資收益', '副業分潤', '紅包獎金', '其他收入'];
-        var currentCat = isEdit ? editItem.category : (currentType === 'expense' ? '餐飲飲食' : '薪資獎金');
+        var currentCat = isEdit ? editItem.category : (currentType === 'expense' ? EXPENSE_MODAL_UI_CONFIG.defaultExpenseCategory : EXPENSE_MODAL_UI_CONFIG.defaultIncomeCategory);
+
+        function renderCategoryGridHtml() {
+          var cats = currentType === 'expense' ? EXPENSE_CATEGORIES_CONFIG : INCOME_CATEGORIES_CONFIG;
+          var gridHtml = '<div class="grid grid-cols-3 gap-2">';
+          for (var i = 0; i < cats.length; i++) {
+            var cat = cats[i];
+            var isSelected = currentCat === cat.name;
+            gridHtml += '<button type="button" class="cat-pill py-2.5 px-2 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ' + 
+              (isSelected 
+                ? 'bg-blue-600 text-white shadow-sm shadow-blue-300/40' 
+                : 'bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-slate-100') + 
+              '" data-cat-name="' + cat.name + '">';
+            gridHtml += '  <span>' + cat.icon + '</span>';
+            gridHtml += '  <span class="truncate">' + cat.name + '</span>';
+            gridHtml += '</button>';
+          }
+          gridHtml += '</div>';
+          return gridHtml;
+        }
 
         function buildModalHtml() {
-          var cats = currentType === 'expense' ? expenseCategories : incomeCategories;
           var mHtml = '';
 
           // Modal Header
@@ -10451,60 +10554,60 @@
           mHtml += '    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">';
           mHtml += '      ' + (isEdit ? '✏️' : '➕');
           mHtml += '    </div>';
-          mHtml += '    <h3 class="text-base font-black text-slate-900">' + (isEdit ? '修改記帳資料' : '新增收支紀錄') + '</h3>';
+          mHtml += '    <h3 class="text-base font-black text-slate-900">' + (isEdit ? EXPENSE_MODAL_UI_CONFIG.headerTitleEdit : EXPENSE_MODAL_UI_CONFIG.headerTitleAdd) + '</h3>';
           mHtml += '  </div>';
           mHtml += '  <button type="button" id="close-modal-x" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">✕</button>';
           mHtml += '</div>';
 
+          // Modal Form Body
           mHtml += '<div class="p-5 space-y-4 overflow-y-auto flex-1">';
           
-          // Type Switcher (支出 / 收入)
-          mHtml += '  <div class="grid grid-cols-2 gap-2 bg-slate-100/90 p-1.5 rounded-2xl">';
-          mHtml += '    <button type="button" id="type-btn-expense" class="py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ' + (currentType === 'expense' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900') + '">支出</button>';
-          mHtml += '    <button type="button" id="type-btn-income" class="py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ' + (currentType === 'income' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900') + '">收入</button>';
+          // Error Banner
+          mHtml += '  <div id="modal-error-banner" class="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-bold flex items-center gap-1.5 text-xs hidden">';
+          mHtml += '    <span>⚠️</span><span id="modal-error-msg">請輸入大於 0 的有效金額！</span>';
           mHtml += '  </div>';
 
-          // Amount Input (金額 (NT$))
+          // Type Switcher: 支出 (Expense) / 收入 (Income)
+          mHtml += '  <div class="grid grid-cols-2 gap-2 bg-slate-100/90 p-1.5 rounded-2xl">';
+          mHtml += '    <button type="button" id="type-btn-expense" class="py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ' + (currentType === 'expense' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900') + '">' + EXPENSE_MODAL_UI_CONFIG.typeExpenseText + '</button>';
+          mHtml += '    <button type="button" id="type-btn-income" class="py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ' + (currentType === 'income' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900') + '">' + EXPENSE_MODAL_UI_CONFIG.typeIncomeText + '</button>';
+          mHtml += '  </div>';
+
+          // Amount Field (金額 (NT$))
           mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-sm font-bold text-slate-800">金額 (NT$)</label>';
+          mHtml += '    <label class="text-sm font-bold text-slate-800 block">' + EXPENSE_MODAL_UI_CONFIG.amountLabel + '</label>';
           mHtml += '    <div class="relative bg-slate-50/50 border border-slate-200 rounded-2xl p-1 focus-within:border-blue-500 focus-within:bg-white transition-all">';
           mHtml += '      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl select-none">$</span>';
-          mHtml += '      <input type="number" id="modal-amt-input" min="1" step="1" value="' + currentAmt + '" placeholder="0" class="w-full pl-9 pr-4 py-2.5 bg-transparent font-mono text-2xl font-bold text-slate-900 focus:outline-hidden" />';
+          mHtml += '      <input type="number" id="modal-amt-input" min="1" step="1" value="' + currentAmt + '" placeholder="' + EXPENSE_MODAL_UI_CONFIG.amountPlaceholder + '" class="w-full pl-9 pr-4 py-2.5 bg-transparent font-mono text-2xl font-bold text-slate-900 focus:outline-hidden" />';
           mHtml += '    </div>';
           mHtml += '  </div>';
 
-          // Category Grid (九宮格圖示按鈕)
+          // Category Field: Grid Buttons (九宮格圖示按鈕)
           mHtml += '  <div class="space-y-2">';
-          mHtml += '    <label class="text-sm font-bold text-slate-800">分類項目</label>';
-          mHtml += '    <div class="grid grid-cols-3 gap-2">';
-          cats.forEach(function(cat) {
-            var isSelected = cat === currentCat;
-            var icon = CATEGORY_ICONS[cat] || '🏷️';
-            mHtml += '      <button type="button" class="cat-pill py-2.5 px-2 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ' + (isSelected ? 'bg-blue-600 text-white shadow-sm shadow-blue-300/40' : 'bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-slate-100') + '" data-cat="' + cat + '">';
-            mHtml += '        <span>' + icon + '</span><span class="truncate">' + cat + '</span>';
-            mHtml += '      </button>';
-          });
+          mHtml += '    <label class="text-sm font-bold text-slate-800 block">' + EXPENSE_MODAL_UI_CONFIG.categoryLabel + '</label>';
+          mHtml += '    <div id="modal-category-grid-container">';
+          mHtml +=        renderCategoryGridHtml();
           mHtml += '    </div>';
           mHtml += '  </div>';
 
-          // Date Input
+          // Date Field
           mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-xs font-bold text-slate-700">記帳日期</label>';
+          mHtml += '    <label class="text-xs font-bold text-slate-700 block">' + EXPENSE_MODAL_UI_CONFIG.dateLabel + '</label>';
           mHtml += '    <input type="date" id="modal-date-input" value="' + currentDate + '" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
           mHtml += '  </div>';
 
-          // Note Input
+          // Note Field
           mHtml += '  <div class="space-y-1.5">';
-          mHtml += '    <label class="text-xs font-bold text-slate-700">備註說明 (選填)</label>';
-          mHtml += '    <input type="text" id="modal-note-input" value="' + currentNote + '" placeholder="例：午餐便當、生活採買..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
+          mHtml += '    <label class="text-xs font-bold text-slate-700 block">' + EXPENSE_MODAL_UI_CONFIG.noteLabel + '</label>';
+          mHtml += '    <input type="text" id="modal-note-input" value="' + currentNote + '" placeholder="' + EXPENSE_MODAL_UI_CONFIG.notePlaceholder + '" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden" />';
           mHtml += '  </div>';
 
           mHtml += '</div>';
 
-          // Modal Footer Actions (取消 / 確認儲存)
+          // Action Buttons
           mHtml += '<div class="p-4 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0">';
-          mHtml += '  <button type="button" id="modal-cancel-btn" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer">取消</button>';
-          mHtml += '  <button type="button" id="modal-submit-btn" class="flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black shadow-md shadow-blue-400/30 transition-all cursor-pointer">確認儲存</button>';
+          mHtml += '  <button type="button" id="modal-cancel-btn" class="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer">' + EXPENSE_MODAL_UI_CONFIG.btnCancelText + '</button>';
+          mHtml += '  <button type="button" id="modal-submit-btn" class="flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black shadow-md shadow-blue-400/30 transition-all cursor-pointer"><span>' + EXPENSE_MODAL_UI_CONFIG.btnSubmitText + '</span></button>';
           mHtml += '</div>';
 
           return mHtml;
@@ -10513,45 +10616,76 @@
         function refreshModal() {
           modalBox.innerHTML = buildModalHtml();
 
+          var errBanner = document.getElementById('modal-error-banner');
+          var errText = document.getElementById('modal-error-msg');
+          var amtInput = document.getElementById('modal-amt-input');
+          var dateInput = document.getElementById('modal-date-input');
+          var noteInput = document.getElementById('modal-note-input');
+          var btnExpense = document.getElementById('type-btn-expense');
+          var btnIncome = document.getElementById('type-btn-income');
+
           document.getElementById('close-modal-x').onclick = closeModal;
           document.getElementById('modal-cancel-btn').onclick = closeModal;
 
-          document.getElementById('type-btn-expense').onclick = function() {
-            currentAmt = document.getElementById('modal-amt-input').value;
-            currentDate = document.getElementById('modal-date-input').value;
-            currentNote = document.getElementById('modal-note-input').value;
+          function bindCategoryEvents() {
+            var pills = modalBox.querySelectorAll('.cat-pill');
+            for (var i = 0; i < pills.length; i++) {
+              pills[i].onclick = function() {
+                currentCat = this.getAttribute('data-cat-name');
+                var gridContainer = document.getElementById('modal-category-grid-container');
+                if (gridContainer) {
+                  gridContainer.innerHTML = renderCategoryGridHtml();
+                  bindCategoryEvents();
+                }
+              };
+            }
+          }
+
+          bindCategoryEvents();
+
+          btnExpense.onclick = function() {
             currentType = 'expense';
-            currentCat = expenseCategories[0];
-            refreshModal();
+            currentCat = EXPENSE_MODAL_UI_CONFIG.defaultExpenseCategory;
+            btnExpense.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer bg-rose-500 text-white shadow-sm';
+            btnIncome.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+            var gridContainer = document.getElementById('modal-category-grid-container');
+            if (gridContainer) {
+              gridContainer.innerHTML = renderCategoryGridHtml();
+              bindCategoryEvents();
+            }
           };
 
-          document.getElementById('type-btn-income').onclick = function() {
-            currentAmt = document.getElementById('modal-amt-input').value;
-            currentDate = document.getElementById('modal-date-input').value;
-            currentNote = document.getElementById('modal-note-input').value;
+          btnIncome.onclick = function() {
             currentType = 'income';
-            currentCat = incomeCategories[0];
-            refreshModal();
+            currentCat = EXPENSE_MODAL_UI_CONFIG.defaultIncomeCategory;
+            btnIncome.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer bg-emerald-600 text-white shadow-sm';
+            btnExpense.className = 'py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+            var gridContainer = document.getElementById('modal-category-grid-container');
+            if (gridContainer) {
+              gridContainer.innerHTML = renderCategoryGridHtml();
+              bindCategoryEvents();
+            }
           };
 
-          modalBox.querySelectorAll('.cat-pill').forEach(function(btn) {
-            btn.onclick = function() {
-              currentAmt = document.getElementById('modal-amt-input').value;
-              currentDate = document.getElementById('modal-date-input').value;
-              currentNote = document.getElementById('modal-note-input').value;
-              currentCat = this.getAttribute('data-cat');
-              refreshModal();
-            };
-          });
+          amtInput.oninput = function() {
+            if (errBanner) errBanner.classList.add('hidden');
+          };
 
           document.getElementById('modal-submit-btn').onclick = function() {
-            var amt = parseFloat(document.getElementById('modal-amt-input').value);
-            var date = document.getElementById('modal-date-input').value;
-            var note = document.getElementById('modal-note-input').value.trim();
+            var amt = parseFloat(amtInput.value);
+            var date = dateInput.value;
+            var note = noteInput.value.trim();
 
             if (isNaN(amt) || amt <= 0) {
-              alert('請輸入大於 0 的正確金額！');
-              document.getElementById('modal-amt-input').focus();
+              if (errText) errText.textContent = '請輸入大於 0 的有效金額！';
+              if (errBanner) errBanner.classList.remove('hidden');
+              amtInput.focus();
+              return;
+            }
+
+            if (!date) {
+              if (errText) errText.textContent = '請選擇有效日期！';
+              if (errBanner) errBanner.classList.remove('hidden');
               return;
             }
 
